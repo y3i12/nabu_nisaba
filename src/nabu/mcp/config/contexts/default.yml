@@ -1,0 +1,26 @@
+name: development
+description: Development context with observability tools
+
+# Tool filtering logic:
+# - If enabled_tools is empty, all default tools are enabled
+# - If enabled_tools has values, ONLY those tools are enabled (exclusive list)
+# - disabled_tools takes precedence and removes tools from final list
+
+# Option 1: Use all defaults (comment out or use empty list)
+enabled_tools: []
+
+# Disable specific tools (works with any option above)
+disabled_tools: []
+
+# File watcher configuration (optional)
+watch_enabled: false
+watch_debounce_seconds: 30.0
+extra_ignore_patterns:
+  - .git/**
+  - __pycache__/**
+  - "*.pyc"
+  - .venv/**
+  - venv/**
+  - "*.kuzu/**"
+  - .dev-docs/**
+  - .claude/**

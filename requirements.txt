@@ -1,0 +1,64 @@
+# Nabu - Code Analysis Framework
+# Ancient wisdom meets modern code analysis
+
+# Core Dependencies
+# -----------------
+
+# Graph database for storing code structure
+# Pinned to final release 0.11.3 (Oct 2024) - includes bundled extensions (algo, fts, json, vector)
+# Note: KuzuDB project archived, 0.11.3 is the last official release
+kuzu==0.11.3
+
+# Data manipulation for dataframe operations in exporter
+pandas>=2.0.0
+
+# Tree-sitter core parser
+tree-sitter>=0.21.0
+
+# Tree-sitter language packs (Python, C++, Java, Perl support)
+tree-sitter-language-pack>=0.2.0
+
+# Git repository operations (for MCP server)
+GitPython>=3.1.0
+
+# Model Context Protocol server
+mcp>=1.0.0
+
+# Token counting for accurate context estimation
+tiktoken>=0.5.0
+
+# CodeBERT embeddings for vector search (optional but recommended)
+transformers>=4.30.0   # HuggingFace transformers for CodeBERT
+torch>=2.0.0          # PyTorch for model inference (use GPU if available)
+pillow>=10.0.0        # Image processing for correlation matrix visualization (GIF generation)
+
+
+# Development Dependencies (optional)
+# ------------------------------------
+# Uncomment these for development work:
+#
+# pytest>=7.0.0              # Testing framework
+# pytest-cov>=4.0.0          # Coverage reporting
+# black>=23.0.0              # Code formatting
+# mypy>=1.0.0                # Type checking
+# ruff>=0.1.0                # Linting
+
+
+# Installation Notes
+# ------------------
+#
+# Basic installation:
+#   pip install -r requirements.txt
+#
+# Development installation:
+#   pip install -e .
+#
+# For specific language support, tree-sitter-language-pack includes:
+#   - Python
+#   - C/C++
+#   - Java
+#   - Perl
+#   - And many more...
+#
+# To check installed versions:
+#   pip list | grep -E 'kuzu|pandas|tree-sitter|mcp|GitPython'
