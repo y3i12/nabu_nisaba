@@ -15,6 +15,9 @@ from typing import Optional, List, TYPE_CHECKING
 from mitmproxy import http
 import tiktoken
 
+import importlib
+
+
 if TYPE_CHECKING:
     from nisaba.augments import AugmentManager
 
@@ -144,7 +147,6 @@ class AugmentInjector:
         self.log_context_enabled:bool = False#os.getenv("NISABA_LOG_CONTEXT", "false").lower() == "true"
         self.log_context_rate:float = 1.0
         self.log_context_counter:int = 0
-
         self.filtered_tools:set[str] = {"Read", "Write", "Edit", "Glob", "Grep", "Bash", "TodoWrite"}
 
         # Initial load
@@ -242,6 +244,10 @@ class AugmentInjector:
         try:
             # Parse request body as JSON
             body = json.loads(flow.request.content)
+
+            import nisaba.wrapper.request_modifier
+            importlib.reload(nisaba.wrapper.request_modifier)
+            nisaba.wrapper.request_modifier.RequestModifier().process_request(body)
 
             # Detect delta and generate notifications
             self._process_notifications(body)

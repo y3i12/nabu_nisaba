@@ -20,3 +20,6 @@
 .nabu/hf_cache/**
 nabu_nisaba.code-workspace
 .dev_docs/.private/**
+**/*.egg-info/**
+.nisaba/request_cache
+.nisaba/request_cache/**
