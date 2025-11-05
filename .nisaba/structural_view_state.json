@@ -1,8 +1,10 @@
 {
   "expanded_paths": [
     "kuzuthulu_git",
-    "kuzuthulu_git.python_root",
-    "kuzuthulu_git.python_root.nisaba"
+    "kuzuthulu_git.cpp_root",
+    "kuzuthulu_git.java_root",
+    "kuzuthulu_git.perl_root",
+    "kuzuthulu_git.python_root"
   ],
   "search_query": null,
   "search_hits": {}

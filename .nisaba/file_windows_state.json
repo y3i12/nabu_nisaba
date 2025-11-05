@@ -1,13 +1,3 @@
 {
-  "windows": {
-    "1f004ae5-f0c7-42e0-865e-cd94d2951ae3": {
-      "id": "1f004ae5-f0c7-42e0-865e-cd94d2951ae3",
-      "file_path": ".nisaba/augments/foundation/manifold_geometry_computation.md",
-      "start_line": 1,
-      "end_line": 200,
-      "window_type": "range",
-      "metadata": {},
-      "opened_at": 1762344365.8223736
-    }
-  }
+  "windows": {}
 }
