@@ -30,14 +30,16 @@ class NisabaToolResultStateTool(NisabaTool):
             if operation not in ['open', 'close', 'close_all']:
                 return {
                     "success": False,
-                    "error": f"Invalid operation '{operation}'. Use 'open', 'close', or 'close_all'."
+                    "error": f"Invalid operation '{operation}'. Use 'open', 'close', or 'close_all'.",
+                    "nisaba": True,
                 }
             
             # For close_all, we don't need tool_ids
             if operation != 'close_all' and not tool_ids:
                 return {
                     "success": False,
-                    "error": "No tool IDs provided"
+                    "error": "No tool IDs provided",
+                    "nisaba": True,
                 }
             
             # Get reference to request_modifier from proxy
@@ -47,7 +49,8 @@ class NisabaToolResultStateTool(NisabaTool):
             if not request_modifier:
                 return {
                     "success": False,
-                    "error": "RequestModifier not available"
+                    "error": "RequestModifier not available",
+                    "nisaba": True,
                 }
             
             # Call the appropriate method
@@ -61,7 +64,8 @@ class NisabaToolResultStateTool(NisabaTool):
                             "operation": "close_all",
                             "modified": [],
                             "message": "No tools to close"
-                        }
+                        },
+                        "nisaba": True,
                     }
                 result = request_modifier.close_tool_results(all_tool_ids)
             elif operation == 'close':
@@ -73,15 +77,14 @@ class NisabaToolResultStateTool(NisabaTool):
                 return {
                     "success": False,
                     "error": "None of the specified tool IDs found in state",
-                    "not_found": result['not_found']
+                    "not_found": result['not_found'],
+                    "nisaba": True,
                 }
             
             return_data = {
                 "success": True,
-                "data": {
-                    "operation": operation,
-                    "modified": result['modified']
-                }
+                "message": f"operation: {operation}, modified: {result['modified']}",
+                "nisaba": True
             }
             
             if result['not_found']:
@@ -94,5 +97,6 @@ class NisabaToolResultStateTool(NisabaTool):
             return {
                 "success": False,
                 "error": str(e),
+                "nisaba": True,
                 "error_type": type(e).__name__
             }

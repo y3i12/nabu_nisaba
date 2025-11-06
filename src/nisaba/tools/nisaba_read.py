@@ -35,6 +35,7 @@ class NisabaReadTool(NisabaTool):
                 return {
                     "success": False,
                     "error": "Tool result manager not initialized",
+                    "nisaba": True,
                     "error_type": "ConfigurationError"
                 }
 
@@ -54,6 +55,7 @@ class NisabaReadTool(NisabaTool):
             return {
                 "success": True,
                 "message": f"Created read window: {path} - {window_id}",
+                "nisaba": True
                 #"window_id": window_id,
                 #**summary
             }

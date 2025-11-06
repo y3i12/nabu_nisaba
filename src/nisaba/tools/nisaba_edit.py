@@ -40,14 +40,16 @@ class NisabaEditTool(NisabaTool):
                 return {
                     "success": False,
                     "error": f"String not found in {path}",
-                    "error_type": "ValueError"
+                    "error_type": "ValueError",
+                    "nisaba": True,
                 }
 
             if not replace_all and content.count(old_string) > 1:
                 return {
                     "success": False,
                     "error": f"Multiple occurrences found. Use replace_all=True",
-                    "error_type": "ValueError"
+                    "error_type": "ValueError",
+                    "nisaba": True,
                 }
 
             if replace_all:
@@ -62,7 +64,8 @@ class NisabaEditTool(NisabaTool):
 
             return {
                 "success": True,
-                "message": f"Replaced {count} occurrence(s) in {path}"
+                "message": f"Replaced {count} occurrence(s) in {path}",
+                "nisaba": True
             }
         except Exception as e:
             self.logger.error(f"Failed to edit file: {e}", exc_info=True)

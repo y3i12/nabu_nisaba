@@ -33,7 +33,8 @@ class NisabaBashTool(NisabaTool):
                 return {
                     "success": False,
                     "error": "Tool result manager not initialized",
-                    "error_type": "ConfigurationError"
+                    "error_type": "ConfigurationError",
+                    "nisaba": True,
                 }
 
             window_id = self.factory.tool_result_manager.create_bash_window(command, cwd)
@@ -52,6 +53,7 @@ class NisabaBashTool(NisabaTool):
             return {
                 "success": True,
                 "message": f"Executed command: {command[:30]}... (return {window.exit_code}) - {window_id}",
+                "nisaba": True
                 #"window_id": window_id,
                 #"exit_code": window.exit_code,
                 #**summary

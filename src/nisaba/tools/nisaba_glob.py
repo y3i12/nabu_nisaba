@@ -33,7 +33,8 @@ class NisabaGlobTool(NisabaTool):
                 return {
                     "success": False,
                     "error": "Tool result manager not initialized",
-                    "error_type": "ConfigurationError"
+                    "error_type": "ConfigurationError",
+                    "nisaba": True,
                 }
 
             window_id = self.factory.tool_result_manager.create_glob_window(pattern, path)
@@ -50,6 +51,7 @@ class NisabaGlobTool(NisabaTool):
             return {
                 "success": True,
                 "message": f"Found files matching: {pattern} - {window_id}",
+                "nisaba": True
                 #"window_id": window_id,
                 #**summary
             }

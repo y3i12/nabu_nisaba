@@ -119,14 +119,16 @@ class NisabaTodoWriteTool(NisabaTool):
                 todos_file.write_text("")
                 return {
                     "success": True,
-                    "message": "Cleared all todos"
+                    "message": "Cleared all todos",
+                    "nisaba": True,
                 }
             
             elif operation == "set":
                 if todos is None:
                     return {
                         "success": False,
-                        "error": "operation 'set' requires 'todos' parameter"
+                        "error": "operation 'set' requires 'todos' parameter",
+                        "nisaba": True,
                     }
                 # Convert input format to internal format
                 parsed = []
@@ -139,14 +141,16 @@ class NisabaTodoWriteTool(NisabaTool):
                 todos_file.write_text(content)
                 return {
                     "success": True,
-                    "message": f"Set {len(parsed)} todo(s)"
+                    "message": f"Set {len(parsed)} todo(s)",
+                    "nisaba": True,
                 }
             
             elif operation == "extend":
                 if todos is None:
                     return {
                         "success": False,
-                        "error": "operation 'extend' requires 'todos' parameter"
+                        "error": "operation 'extend' requires 'todos' parameter",
+                        "nisaba": True,
                     }
                 
                 # Parse existing
@@ -190,6 +194,7 @@ class NisabaTodoWriteTool(NisabaTool):
                 return {
                     "success": True,
                     "message": msg,
+                    "nisaba": True,
                     "position": actual_position,
                     "items": [item["content"] for item in new_todos]
                 }
@@ -198,7 +203,8 @@ class NisabaTodoWriteTool(NisabaTool):
                 if not target_indices:
                     return {
                         "success": False,
-                        "error": "operation 'remove' requires 'index' or 'indices' parameter"
+                        "error": "operation 'remove' requires 'index' or 'indices' parameter",
+                        "nisaba": True,
                     }
                 
                 # Parse existing
@@ -233,6 +239,7 @@ class NisabaTodoWriteTool(NisabaTool):
                 return {
                     "success": True,
                     "message": msg,
+                    "nisaba": True,
                     "removed": removed_items
                 }
             
@@ -240,7 +247,8 @@ class NisabaTodoWriteTool(NisabaTool):
                 if not target_indices:
                     return {
                         "success": False,
-                        "error": "operation 'mark_done' requires 'index' or 'indices' parameter"
+                        "error": "operation 'mark_done' requires 'index' or 'indices' parameter",
+                        "nisaba": True,
                     }
                 
                 # Parse existing
@@ -275,6 +283,7 @@ class NisabaTodoWriteTool(NisabaTool):
                 return {
                     "success": True,
                     "message": msg,
+                    "nisaba": True,
                     "indices": target_indices,
                     "items": marked_items
                 }
@@ -283,7 +292,8 @@ class NisabaTodoWriteTool(NisabaTool):
                 if not target_indices:
                     return {
                         "success": False,
-                        "error": "operation 'mark_undone' requires 'index' or 'indices' parameter"
+                        "error": "operation 'mark_undone' requires 'index' or 'indices' parameter",
+                        "nisaba": True,
                     }
                 
                 # Parse existing
@@ -318,6 +328,7 @@ class NisabaTodoWriteTool(NisabaTool):
                 return {
                     "success": True,
                     "message": msg,
+                    "nisaba": True,
                     "indices": target_indices,
                     "items": unmarked_items
                 }
@@ -335,12 +346,14 @@ class NisabaTodoWriteTool(NisabaTool):
                 todos_file.write_text(content)
                 return {
                     "success": True,
+                    "nisaba": True,
                     "message": f"Marked all {len(existing)} todo(s) as done"
                 }
             
             else:
                 return {
                     "success": False,
+                    "nisaba": True,
                     "error": f"Unknown operation: {operation}"
                 }
         
@@ -349,6 +362,7 @@ class NisabaTodoWriteTool(NisabaTool):
             return {
                 "success": False,
                 "error": str(e),
+                "nisaba": True,
                 "error_type": "ValueError"
             }
         except Exception as e:
@@ -356,5 +370,6 @@ class NisabaTodoWriteTool(NisabaTool):
             return {
                 "success": False,
                 "error": str(e),
+                "nisaba": True,
                 "error_type": type(e).__name__
             }

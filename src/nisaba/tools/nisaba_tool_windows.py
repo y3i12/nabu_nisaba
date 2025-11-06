@@ -30,6 +30,7 @@ class NisabaToolWindowsTool(NisabaTool):
                 return {
                     "success": False,
                     "error": "Tool result manager not initialized",
+                    "nisaba": True,
                     "error_type": "ConfigurationError"
                 }
 
@@ -40,6 +41,7 @@ class NisabaToolWindowsTool(NisabaTool):
                     return {
                         "success": False,
                         "error": "close operation requires 'window_id' parameter",
+                        "nisaba": True,
                         "error_type": "ValueError"
                     }
                 manager.close_window(window_id)
@@ -56,6 +58,7 @@ class NisabaToolWindowsTool(NisabaTool):
                 return {
                     "success": False,
                     "error": f"Unknown operation: {operation}",
+                    "nisaba": True,
                     "error_type": "ValueError"
                 }
 
@@ -71,6 +74,7 @@ class NisabaToolWindowsTool(NisabaTool):
             return {
                 "success": True,
                 "message": message,
+                "nisaba": True
                 #**summary
             }
         except Exception as e:
