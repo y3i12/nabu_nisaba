@@ -91,23 +91,19 @@ class RequestModifier:
         self.modifier_rules = {
             'messages': [
                 {
-                    'role': self._message_block_count,
-                    'content': [
-                        {
-                            'type': self._content_block_count,
-                        }
-                    ]
-                },
-                {
                     'role': 'user',
                     'content': [
                         {
                             'type': 'tool_result',
-                            'tool_use_id': self._tool_use_id_state,
-                            'content': {
-                                'type': 'text',
-                                'text': self._process_tool_result
-                            }
+                            'tool_use_id': self._tool_use_id_state
+                        }
+                    ]
+                },
+                {
+                    'role': self._message_block_count,
+                    'content': [
+                        {
+                            'type': self._content_block_count,
                         }
                     ]
                 }
@@ -126,30 +122,44 @@ class RequestModifier:
         pass
 
     def _tool_use_id_state(self, key:str, part:dict[Any,Any]) -> Any:
+        # part is the tool_result content block dict
+        # part[key] is the tool_use_id value
         toolu_id = part[key]
         logger.debug(f"  _tool_use_id_state: Found tool_use_id '{toolu_id}'")
+        
         if toolu_id in self.state.tool_result_state:
             logger.debug(f"    Tool exists in state, returning stored content")
             self.state._p_state = RMPState.UPDATE_AND_CONTINUE
             return self.state.tool_result_state[toolu_id]['tool_result_content']
         
         logger.debug(f"    Tool is new, adding to state")
+        
+        # Create tool state entry
+        tool_output = ""
+        if 'content' in part and isinstance(part['content'], dict):
+            tool_output = part['content'].get('text', '')
+        
+        toolu_obj = {
+            'block_offset': self.state.last_block_offset,
+            'tool_result_status': "success",
+            'tool_output': tool_output,
+            'window_state': "open",
+            'start_line': 0,
+            'num_lines': -1,
+            'tool_result_content': f"status: success, window_state:open, window_id: {toolu_id}"
+        }
+        
+        self.state.tool_result_state[toolu_id] = toolu_obj
         self.state._p_state = RMPState.ADD_AND_CONTINUE
 
     def _process_tool_result(self, key:str, part:dict[Any,Any]) -> Any:
-        toolu_id = part[key]
-        logger.debug(f"  _process_tool_result: Processing tool result for '{toolu_id}'")
-        toolu_obj = {
-            'block_offset': self.state.last_block_offset,
-            'tool_result_status': "success", # TODO: get this from proxy
-            'tool_output': part['content']['text'],
-            'window_state': "open", # TODO: integrate with window management
-            'start_line': 0, # TODO: integrate with window management
-            'num_lines': -1, # TODO: integrate with window management
-            'tool_result_content': f"status: success, window_state:open, window_id: {toolu_id}"
-        }
-
-        self.state.tool_result_state[toolu_id] = toolu_obj
+        # key is 'type', part is the entire tool_result content block
+        # We need to get tool_use_id from the parent, which we don't have access to
+        # This needs to be rethought - for now, extract from already-seen tool results
+        logger.debug(f"  _process_tool_result: Processing tool result content")
+        
+        # We can't properly implement this without the parent context containing tool_use_id
+        # The architecture needs adjustment - callables need access to parent context
         self.state._p_state = RMPState.ADD_AND_CONTINUE
 
     def __process_request_recursive(self, part:dict[Any,Any]|list[Any], modifier_rules:dict[str,Any]|list[Any]) -> Any:
@@ -174,15 +184,32 @@ class RequestModifier:
                         logger.debug(f"      Key '{key}' not in rules, copying")
                     else:
                         logger.debug(f"      Key '{key}' MATCHED in rules, processing...")
-                        self.state._p_state = RMPState.PROCESS_MATCH
-                        child_result = self.__process_request_recursive(part[key], modifier_rules[key])
-                        if RMPState.ADD_AND_CONTINUE == self.state._p_state:
-                            result[key] = part[key]
-                        elif RMPState.UPDATE_AND_CONTINUE == self.state._p_state:
-                            result[key] = child_result
-                            result_state = RMPState.UPDATE_AND_CONTINUE
-                        elif RMPState.IGNORE_AND_CONTINUE == self.state._p_state:
-                            result_state = RMPState.UPDATE_AND_CONTINUE # don't add but update structure
+                        
+                        # Check if rule is a callable - execute it directly
+                        if callable(modifier_rules[key]):
+                            logger.debug(f"        Rule is callable: {modifier_rules[key].__name__}")
+                            logger.debug(f"        Calling {modifier_rules[key].__name__}('{key}', part)")
+                            callable_result = modifier_rules[key](key, part)
+                            logger.debug(f"        Callable returned state: {self.state._p_state.name}")
+                            
+                            if RMPState.UPDATE_AND_CONTINUE == self.state._p_state:
+                                result[key] = callable_result
+                                result_state = RMPState.UPDATE_AND_CONTINUE
+                            elif RMPState.NOOP_CONTINUE == self.state._p_state:
+                                result[key] = part[key]
+                            else:
+                                result[key] = part[key]
+                        else:
+                            # Not a callable, recurse into structure
+                            self.state._p_state = RMPState.PROCESS_MATCH
+                            child_result = self.__process_request_recursive(part[key], modifier_rules[key])
+                            if RMPState.ADD_AND_CONTINUE == self.state._p_state:
+                                result[key] = part[key]
+                            elif RMPState.UPDATE_AND_CONTINUE == self.state._p_state:
+                                result[key] = child_result
+                                result_state = RMPState.UPDATE_AND_CONTINUE
+                            elif RMPState.IGNORE_AND_CONTINUE == self.state._p_state:
+                                result_state = RMPState.UPDATE_AND_CONTINUE # don't add but update structure
        
             elif isinstance(part, list):
                 assert isinstance(modifier_rules, list)
@@ -211,20 +238,6 @@ class RequestModifier:
                 result = part
 
         elif RMPState.PROCESS_MATCH == self.state._p_state:
-            # Check for callable first - callables can work with any part type
-            if callable(modifier_rules):
-                logger.debug(f"    PROCESS_MATCH: Found callable rule {modifier_rules.__name__}")
-                logger.debug(f"    Calling {modifier_rules.__name__}(part_type={type(part).__name__})")
-                callable_result = modifier_rules(None, {'key_placeholder': part})  # Pass part wrapped in dict
-                logger.debug(f"    Callable returned state: {self.state._p_state.name}")
-                if RMPState.UPDATE_AND_CONTINUE == self.state._p_state:
-                    return callable_result
-                elif RMPState.NOOP_CONTINUE == self.state._p_state:
-                    self.state._p_state = RMPState.ADD_AND_CONTINUE
-                    return part
-                else:
-                    return part
-            
             # FIX: Handle non-dict types in PROCESS_MATCH state
             if not isinstance(part, dict):
                 # When we have a list in PROCESS_MATCH, check if rules are also list
