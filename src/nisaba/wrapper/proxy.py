@@ -34,7 +34,7 @@ log_dir.mkdir(parents=True, exist_ok=True)
 if not any(isinstance(h, RotatingFileHandler) for h in logger.handlers):
     file_handler = RotatingFileHandler(
         log_dir / "proxy.log",
-        maxBytes=10*1024*1024,  # 10MB
+        maxBytes=1*1024*1024,  # 10MB
         backupCount=3
     )
     file_handler.setFormatter(logging.Formatter(
