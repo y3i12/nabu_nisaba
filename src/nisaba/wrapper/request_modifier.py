@@ -95,7 +95,8 @@ class RequestModifier:
                     'content': [
                         {
                             'type': self._content_block_count,
-                            'tool_use_id': self._tool_use_id_state
+                            'tool_use_id': self._tool_use_id_state,
+                            'content': self._modify_tool_result_content
                         }
                     ]
                 }
@@ -144,15 +145,28 @@ class RequestModifier:
         self.state.tool_result_state[toolu_id] = toolu_obj
         self.state._p_state = RMPState.ADD_AND_CONTINUE
 
-    def _process_tool_result(self, key:str, part:dict[Any,Any]) -> Any:
-        # key is 'type', part is the entire tool_result content block
-        # We need to get tool_use_id from the parent, which we don't have access to
-        # This needs to be rethought - for now, extract from already-seen tool results
-        logger.debug(f"  _process_tool_result: Processing tool result content")
+    def _modify_tool_result_content(self, key:str, part:dict[Any,Any]) -> Any:
+        # key is 'content', part is the entire tool_result block
+        # Check if this tool_use_id is in state and should be compacted
+        logger.debug(f"  _modify_tool_result_content: Checking if content should be replaced")
         
-        # We can't properly implement this without the parent context containing tool_use_id
-        # The architecture needs adjustment - callables need access to parent context
-        self.state._p_state = RMPState.ADD_AND_CONTINUE
+        toolu_id = part.get('tool_use_id')
+        if not toolu_id:
+            logger.debug(f"    No tool_use_id found, keeping original")
+            self.state._p_state = RMPState.ADD_AND_CONTINUE
+            return None
+        
+        if toolu_id in self.state.tool_result_state:
+            # Tool exists in state - replace with compact version
+            compact_content = self.state.tool_result_state[toolu_id]['tool_result_content']
+            logger.debug(f"    Tool {toolu_id} found in state, replacing with: {compact_content}")
+            self.state._p_state = RMPState.UPDATE_AND_CONTINUE
+            return [{"type": "text", "text": compact_content}]
+        else:
+            # Tool not in state yet (shouldn't happen if _tool_use_id_state ran first)
+            logger.debug(f"    Tool {toolu_id} not in state, keeping original")
+            self.state._p_state = RMPState.ADD_AND_CONTINUE
+            return None
 
     def __process_request_recursive(self, part:dict[Any,Any]|list[Any], modifier_rules:dict[str,Any]|list[Any]) -> Any:
         if RMPState.IDLE == self.state._p_state:
