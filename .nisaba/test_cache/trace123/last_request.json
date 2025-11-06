@@ -1,0 +1,44 @@
+{
+  "model": "claude-3",
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Hello"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Let me help"
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_123",
+          "name": "read_file"
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_ABC",
+          "content": {
+            "type": "text",
+            "text": "File contents here"
+          }
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "user_id": "test_session_trace123"
+  }
+}
