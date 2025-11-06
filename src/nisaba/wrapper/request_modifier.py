@@ -61,6 +61,25 @@ class RequestModifierState:
         #       'tool_result_content': f"status:{tool_result_status}, window_state:{window_state}, window_id: {toolu_{hash}}"
         #   }
         }
+    
+    def to_dict(self) -> dict:
+        """Convert state to JSON-serializable dict"""
+        return {
+            'session_id': self.session_id,
+            'last_block_offset': self.last_block_offset,
+            '_p_state': self._p_state.value,  # Convert enum to int
+            'tool_result_state': self.tool_result_state
+        }
+    
+    @classmethod
+    def from_dict(cls, data: dict) -> 'RequestModifierState':
+        """Reconstruct state from dict"""
+        state = cls()
+        state.session_id = data.get('session_id', '')
+        state.last_block_offset = data.get('last_block_offset', [-1, -1])
+        state._p_state = RMPState(data.get('_p_state', 0))  # Convert int back to enum
+        state.tool_result_state = data.get('tool_result_state', {})
+        return state
 
 
 class RequestModifier:
@@ -139,16 +158,22 @@ class RequestModifier:
         
         result = None
         result_state = RMPState.ADD_AND_CONTINUE
+        
+        logger.debug(f"  __process_request_recursive: state={self.state._p_state.name}, part_type={type(part).__name__}, rules_type={type(modifier_rules).__name__}")
 
         if RMPState.RECURSE_AND_ADD == self.state._p_state:
             if isinstance(part, dict):
                 assert isinstance(modifier_rules, dict)
                 result = {}
+                
+                logger.debug(f"    Processing dict with keys: {list(part.keys())}")
 
                 for key in part.keys():
                     if key not in modifier_rules:
                         result[key] = part[key]
+                        logger.debug(f"      Key '{key}' not in rules, copying")
                     else:
+                        logger.debug(f"      Key '{key}' MATCHED in rules, processing...")
                         self.state._p_state = RMPState.PROCESS_MATCH
                         child_result = self.__process_request_recursive(part[key], modifier_rules[key])
                         if RMPState.ADD_AND_CONTINUE == self.state._p_state:
@@ -162,9 +187,12 @@ class RequestModifier:
             elif isinstance(part, list):
                 assert isinstance(modifier_rules, list)
                 result = []
-                for block in part:
+                logger.debug(f"    Processing list with {len(part)} items against {len(modifier_rules)} rules")
+                for i, block in enumerate(part):
+                    logger.debug(f"      List item [{i}]: {type(block).__name__}")
                     self.state._p_state = RMPState.RECURSE_AND_ADD
-                    for modifier_rule in modifier_rules:
+                    for rule_idx, modifier_rule in enumerate(modifier_rules):
+                        logger.debug(f"        Trying rule #{rule_idx} on item [{i}]")
                         child_result = self.__process_request_recursive(block, modifier_rule)
                         if RMPState.ADD_AND_CONTINUE == self.state._p_state:
                             result.append(block)
@@ -187,14 +215,18 @@ class RequestModifier:
             if not isinstance(part, dict):
                 # When we encounter non-dict (list, str, etc) in PROCESS_MATCH,
                 # it means the structure doesn't match the pattern - skip this rule
+                logger.debug(f"    PROCESS_MATCH got non-dict ({type(part).__name__}), skipping rule")
                 self.state._p_state = RMPState.ADD_AND_CONTINUE
                 return part
             
             # Also check modifier_rules is dict
             if not isinstance(modifier_rules, dict):
                 # Modifier rules don't match the data structure
+                logger.debug(f"    PROCESS_MATCH got non-dict rules ({type(modifier_rules).__name__}), skipping")
                 self.state._p_state = RMPState.ADD_AND_CONTINUE
                 return part
+            
+            logger.debug(f"    PROCESS_MATCH: Checking dict keys: {list(part.keys())} against rules: {list(modifier_rules.keys())}")
             
             # Now safe to proceed with dict handling
             assert isinstance(part, dict)
@@ -211,17 +243,23 @@ class RequestModifier:
                         return
 
             # call functors, they can change results
+            logger.debug(f"    Checking for callable rules...")
             for key in modifier_rules:
                 if not callable(modifier_rules[key]):
                     continue
 
+                logger.debug(f"      Found callable for key '{key}'")
                 if key not in part:
+                    logger.debug(f"        Key '{key}' not in part, skipping callable")
                     self.state._p_state = RMPState.ADD_AND_CONTINUE
                     return
                 
+                logger.debug(f"        Calling {modifier_rules[key].__name__}('{key}', ...)")
                 callable_result = modifier_rules[key](key, part)
+                logger.debug(f"        Callable returned state: {self.state._p_state.name}")
 
                 if RMPState.UPDATE_AND_CONTINUE == self.state._p_state:
+                    logger.debug(f"        Updating result with callable return value")
                     result = callable_result
                     result_state = RMPState.UPDATE_AND_CONTINUE
                 elif RMPState.IGNORE_AND_CONTINUE == self.state._p_state:
@@ -275,8 +313,8 @@ class RequestModifier:
         session_path.mkdir(exist_ok=True)
 
         body = self._process_request_recursive(body)
-        self._write_to_file(session_path / 'state.json', json.dumps(self.state, indent=2, ensure_ascii=False))
         self._write_to_file(session_path / 'last_request.json', json.dumps(body, indent=2, ensure_ascii=False))
+        self._write_to_file(session_path / 'state.json', json.dumps(self.state.to_dict(), indent=2, ensure_ascii=False))
         return body
 
 

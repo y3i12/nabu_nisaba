@@ -275,7 +275,6 @@ class AugmentInjector:
                 logger.debug("RequestModifier processing complete")
             except Exception as e:
                 logger.error(f"RequestModifier failed: {e}", exc_info=True)
-                self._write_to_file('.nisaba/session_cache/exception.log', str(e), mode='a')
                 pass
 
             # Detect delta and generate notifications
