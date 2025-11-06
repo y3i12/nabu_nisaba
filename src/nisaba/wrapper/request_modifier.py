@@ -8,7 +8,7 @@ import tiktoken
 
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional, List, TYPE_CHECKING
+from typing import Any, Optional, List, Dict, TYPE_CHECKING
 from logging.handlers import RotatingFileHandler
 
 
@@ -429,4 +429,90 @@ class RequestModifier:
         except Exception as e:
             # Don't crash proxy if logging fails
             logger.error(f"Failed to log context: {e}")
+    
+    def close_tool_results(self, tool_ids: List[str]) -> Dict[str, Any]:
+        """
+        Close tool results (compact view in future requests).
+        
+        Args:
+            tool_ids: List of tool IDs to close
+            
+        Returns:
+            Dict with success status and modified tool IDs
+        """
+        modified = []
+        not_found = []
+        
+        for tool_id in tool_ids:
+            if tool_id in self.state.tool_result_state:
+                self.state.tool_result_state[tool_id]['window_state'] = 'closed'
+                # Update the content string for consistency
+                tool_obj = self.state.tool_result_state[tool_id]
+                tool_obj['tool_result_content'] = (
+                    f"id: {tool_id}, "
+                    f"status: {tool_obj.get('tool_result_status', 'success')}, "
+                    f"state: closed"
+                )
+                modified.append(tool_id)
+                logger.debug(f"Closed tool result: {tool_id}")
+            else:
+                not_found.append(tool_id)
+                logger.debug(f"Tool result not found: {tool_id}")
+        
+        return {
+            'modified': modified,
+            'not_found': not_found
+        }
+    
+    def open_tool_results(self, tool_ids: List[str]) -> Dict[str, Any]:
+        """
+        Open tool results (full view in future requests).
+        
+        Args:
+            tool_ids: List of tool IDs to open
+            
+        Returns:
+            Dict with success status and modified tool IDs
+        """
+        modified = []
+        not_found = []
+        
+        for tool_id in tool_ids:
+            if tool_id in self.state.tool_result_state:
+                self.state.tool_result_state[tool_id]['window_state'] = 'open'
+                # Restore full content format
+                tool_obj = self.state.tool_result_state[tool_id]
+                tool_obj['tool_result_content'] = (
+                    f"status: {tool_obj.get('tool_result_status', 'success')}, "
+                    f"window_state: open, "
+                    f"window_id: {tool_id}\n"
+                    f"---\n"
+                    f"{tool_obj.get('tool_output', '')}"
+                )
+                modified.append(tool_id)
+                logger.debug(f"Opened tool result: {tool_id}")
+            else:
+                not_found.append(tool_id)
+                logger.debug(f"Tool result not found: {tool_id}")
+        
+        return {
+            'modified': modified,
+            'not_found': not_found
+        }
+    
+    def get_tool_states(self) -> Dict[str, Dict]:
+        """
+        Get all tracked tool states.
+        
+        Returns:
+            Dict of tool_id -> tool state info
+        """
+        return {
+            tool_id: {
+                'window_state': info['window_state'],
+                'status': info['tool_result_status'],
+                'offset': info['block_offset']
+            }
+            for tool_id, info in self.state.tool_result_state.items()
+        }
         

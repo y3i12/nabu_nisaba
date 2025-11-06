@@ -1,8 +1,6 @@
 """
 Manage tool result visibility states.
 """
-import json
-from pathlib import Path
 from typing import Any, Dict, List
 from nisaba.tools.base import NisabaTool
 
@@ -40,85 +38,41 @@ class NisabaToolResultStateTool(NisabaTool):
                     "error": "No tool IDs provided"
                 }
             
-            # Find current session state file
-            cache_dir = Path('.nisaba/request_cache')
-            if not cache_dir.exists():
+            # Get reference to request_modifier from proxy
+            from nisaba.wrapper.proxy import get_request_modifier
+            
+            request_modifier = get_request_modifier()
+            if not request_modifier:
                 return {
                     "success": False,
-                    "error": "No active session cache found"
+                    "error": "RequestModifier not available"
                 }
             
-            # Find most recent session directory
-            sessions = sorted(cache_dir.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
-            session_dir = None
-            for s in sessions:
-                if s.is_dir() and (s / 'state.json').exists():
-                    session_dir = s
-                    break
+            # Call the appropriate method
+            if operation == 'close':
+                result = request_modifier.close_tool_results(tool_ids)
+            else:  # open
+                result = request_modifier.open_tool_results(tool_ids)
             
-            if not session_dir:
+            if not result['modified']:
                 return {
                     "success": False,
-                    "error": "No session with state.json found"
+                    "error": "None of the specified tool IDs found in state",
+                    "not_found": result['not_found']
                 }
             
-            state_file = session_dir / 'state.json'
-            
-            # Load current state
-            try:
-                with open(state_file, 'r') as f:
-                    state_data = json.load(f)
-            except json.JSONDecodeError as e:
-                return {
-                    "success": False,
-                    "error": f"Failed to parse state.json: {e}"
-                }
-            
-            tool_result_state = state_data.get('tool_result_state', {})
-            
-            # Update window states
-            new_state = 'open' if operation == 'open' else 'closed'
-            modified = []
-            not_found = []
-            
-            for tool_id in tool_ids:
-                if tool_id in tool_result_state:
-                    tool_result_state[tool_id]['window_state'] = new_state
-                    # Update the content string as well
-                    tool_obj = tool_result_state[tool_id]
-                    tool_obj['tool_result_content'] = (
-                        f"status: {tool_obj.get('tool_result_status', 'success')}, "
-                        f"window_state:{new_state}, "
-                        f"window_id: {tool_id}"
-                    )
-                    modified.append(tool_id)
-                else:
-                    not_found.append(tool_id)
-            
-            if not modified:
-                return {
-                    "success": False,
-                    "error": f"None of the specified tool IDs found in state",
-                    "not_found": not_found
-                }
-            
-            # Write updated state
-            state_data['tool_result_state'] = tool_result_state
-            with open(state_file, 'w') as f:
-                json.dump(state_data, f, indent=2, ensure_ascii=False)
-            
-            result = {
+            return_data = {
                 "success": True,
                 "data": {
                     "operation": operation,
-                    "modified": modified
+                    "modified": result['modified']
                 }
             }
             
-            if not_found:
-                result["data"]["not_found"] = not_found
+            if result['not_found']:
+                return_data["data"]["not_found"] = result['not_found']
             
-            return result
+            return return_data
             
         except Exception as e:
             self.logger.error(f"Failed to {operation} tool results: {e}", exc_info=True)

@@ -45,6 +45,19 @@ if not any(isinstance(h, RotatingFileHandler) for h in logger.handlers):
     logger.info("Proxy logging initialized to .nisaba/logs/proxy.log")
 
 
+# Module-level singleton for RequestModifier access
+_REQUEST_MODIFIER_INSTANCE = None
+
+def _set_request_modifier(instance):
+    """Store the RequestModifier instance for tool access."""
+    global _REQUEST_MODIFIER_INSTANCE
+    _REQUEST_MODIFIER_INSTANCE = instance
+
+def get_request_modifier():
+    """Get the active RequestModifier instance."""
+    return _REQUEST_MODIFIER_INSTANCE
+
+
 class FileCache:
     """Manages file loading with mtime-based caching."""
 
@@ -171,6 +184,8 @@ class AugmentInjector:
         self.filtered_tools:set[str] = {"Read", "Write", "Edit", "Glob", "Grep", "Bash", "TodoWrite"}
         
         self.request_modifier:RequestModifier = RequestModifier()
+        # Store reference globally for tool access
+        _set_request_modifier(self.request_modifier)
 
         # Initial load
         if augment_manager is None:
