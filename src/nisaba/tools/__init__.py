@@ -16,6 +16,7 @@ from nisaba.tools.nisaba_grep import NisabaGrepTool
 from nisaba.tools.nisaba_glob import NisabaGlobTool
 from nisaba.tools.nisaba_tool_windows import NisabaToolWindowsTool
 from nisaba.tools.todos_tool import NisabaTodoWriteTool
+from nisaba.tools.tool_result_state import NisabaToolResultStateTool
 
 __all__ = [
     "NisabaTool",
@@ -32,4 +33,5 @@ __all__ = [
     "NisabaGlobTool",
     "NisabaToolWindowsTool",
     "NisabaTodoWriteTool",
+    "NisabaToolResultStateTool",
 ]

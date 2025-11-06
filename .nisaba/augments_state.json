@@ -4,6 +4,7 @@
     "__base/001_compressed_workspace_paradigm",
     "__base/002_compressed_environment_mechanics",
     "__base/003_compressed_workspace_operations",
+    "dev_mode_architecture_reference/nisaba_tool_implementation",
     "foundation/manifold_geometry_computation"
   ],
   "pinned_augments": [
