@@ -1,3 +1,3 @@
-MODEL(claude-haiku-4-5-20251001) | WS(11k) | SYSTEM(PROMPT:3k, TOOL_REF:0k, TSCPT:(0k))
-AUG(7k) | VIEW(0k) | FILES(0, 0k) | TOOLS(0, 0k) | MSG:12k
-23k/200k
+MODEL(claude-sonnet-4-5-20250929) | WS(30k) | SYSTEM(PROMPT:2k, TOOL_REF:12k, TSCPT:(0k))
+AUG(14k) | VIEW(1k) | FILES(0, 0k) | TOOLS(0, 0k) | MSG:0k
+30k/200k

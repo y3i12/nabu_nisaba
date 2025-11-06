@@ -91,6 +91,27 @@ All: minimal_result, content → sections ↑
 
 ---
 
+## Tool Result State Management (`nisaba_tool_result_state`)
+
+```
+close(tool_ids[])    → compact tool results | save tokens
+open(tool_ids[])     → restore full view
+close_all()          → compact all tracked tools
+
+Effect: Retroactive transformation in messages array
+  Before: Full tool_result with header + content
+  After:  "id: toolu_X, status: success, state: closed"
+  
+Pattern: Execute tools → observe results → close unnecessary → lean context
+```
+
+**Notes:**
+- Only affects non-nisaba tools (nisaba tools auto-skipped)
+- Changes appear on next request (stateful proxy transformation)
+- Tool IDs available in tool_result blocks: `tool_use_id: toolu_X`
+
+---
+
 ## Augments (`activate_augments`, `deactivate_augments`, `learn_augment`, `pin_augment`, `unpin_augment`)
 
 ```
