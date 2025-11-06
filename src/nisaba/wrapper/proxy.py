@@ -16,12 +16,33 @@ from mitmproxy import http
 import tiktoken
 
 import importlib
+from logging.handlers import RotatingFileHandler
 
 
 if TYPE_CHECKING:
     from nisaba.augments import AugmentManager
 
+# Setup logging
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Ensure log directory exists
+log_dir = Path(".nisaba/logs")
+log_dir.mkdir(parents=True, exist_ok=True)
+
+# Add file handler for proxy logs
+if not any(isinstance(h, RotatingFileHandler) for h in logger.handlers):
+    file_handler = RotatingFileHandler(
+        log_dir / "proxy.log",
+        maxBytes=10*1024*1024,  # 10MB
+        backupCount=3
+    )
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    ))
+    file_handler.setLevel(logging.DEBUG)
+    logger.addHandler(file_handler)
+    logger.info("Proxy logging initialized to .nisaba/logs/proxy.log")
 
 
 class FileCache:
@@ -164,14 +185,14 @@ class AugmentInjector:
         self.todos_cache.load()
         self.notifications_cache.load()
 
-    def _write_to_file(self, file_path:str, content: str, log_message: str ) -> None:
+    def _write_to_file(self, file_path:str, content: str, log_message: str|None = None, mode:str = 'w') -> None:
         path_obj = Path(file_path)
         try:
             # Create/truncate file (only last message)
-            with open(path_obj, "w", encoding="utf-8") as f:
+            with open(path_obj, mode, encoding="utf-8") as f:
                 f.write(content)
 
-            logger.debug(log_message)
+            if log_message: logger.debug(log_message)
 
         except Exception as e:
             # Don't crash proxy if logging fails
@@ -246,10 +267,15 @@ class AugmentInjector:
             body = json.loads(flow.request.content)
 
             try:
+                logger.debug("Loading RequestModifier module...")
                 import nisaba.wrapper.request_modifier
                 importlib.reload(nisaba.wrapper.request_modifier)
+                logger.debug(f"Processing request with RequestModifier. Messages: {len(body.get('messages', []))}")
                 nisaba.wrapper.request_modifier.RequestModifier().process_request(body)
+                logger.debug("RequestModifier processing complete")
             except Exception as e:
+                logger.error(f"RequestModifier failed: {e}", exc_info=True)
+                self._write_to_file('.nisaba/session_cache/exception.log', str(e), mode='a')
                 pass
 
             # Detect delta and generate notifications

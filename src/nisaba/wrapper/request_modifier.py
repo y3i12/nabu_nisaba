@@ -9,6 +9,7 @@ import tiktoken
 from enum import Enum
 from pathlib import Path
 from typing import Any, Optional, List, TYPE_CHECKING
+from logging.handlers import RotatingFileHandler
 
 
 class RequestModifierPrrocessingState(Enum):
@@ -25,6 +26,24 @@ class RequestModifierPrrocessingState(Enum):
 RMPState = RequestModifierPrrocessingState
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Setup file logging to .nisaba/logs/proxy.log
+log_dir = Path(".nisaba/logs")
+log_dir.mkdir(parents=True, exist_ok=True)
+
+# Add file handler if not already present
+if not any(isinstance(h, RotatingFileHandler) for h in logger.handlers):
+    file_handler = RotatingFileHandler(
+        log_dir / "proxy.log",
+        maxBytes=10*1024*1024,  # 10MB
+        backupCount=3
+    )
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    ))
+    file_handler.setLevel(logging.DEBUG)
+    logger.addHandler(file_handler)
 
 class RequestModifierState:
     def __init__(self) -> None:
@@ -89,14 +108,18 @@ class RequestModifier:
 
     def _tool_use_id_state(self, key:str, part:dict[Any,Any]) -> Any:
         toolu_id = part[key]
+        logger.debug(f"  _tool_use_id_state: Found tool_use_id '{toolu_id}'")
         if toolu_id in self.state.tool_result_state:
+            logger.debug(f"    Tool exists in state, returning stored content")
             self.state._p_state = RMPState.UPDATE_AND_CONTINUE
             return self.state.tool_result_state[toolu_id]['tool_result_content']
         
+        logger.debug(f"    Tool is new, adding to state")
         self.state._p_state = RMPState.ADD_AND_CONTINUE
 
     def _process_tool_result(self, key:str, part:dict[Any,Any]) -> Any:
         toolu_id = part[key]
+        logger.debug(f"  _process_tool_result: Processing tool result for '{toolu_id}'")
         toolu_obj = {
             'block_offset': self.state.last_block_offset,
             'tool_result_status': "success", # TODO: get this from proxy
@@ -160,6 +183,20 @@ class RequestModifier:
                 result = part
 
         elif RMPState.PROCESS_MATCH == self.state._p_state:
+            # FIX: Handle non-dict types in PROCESS_MATCH state
+            if not isinstance(part, dict):
+                # When we encounter non-dict (list, str, etc) in PROCESS_MATCH,
+                # it means the structure doesn't match the pattern - skip this rule
+                self.state._p_state = RMPState.ADD_AND_CONTINUE
+                return part
+            
+            # Also check modifier_rules is dict
+            if not isinstance(modifier_rules, dict):
+                # Modifier rules don't match the data structure
+                self.state._p_state = RMPState.ADD_AND_CONTINUE
+                return part
+            
+            # Now safe to proceed with dict handling
             assert isinstance(part, dict)
             assert isinstance(modifier_rules, dict)
 
@@ -198,6 +235,7 @@ class RequestModifier:
 
                 if key not in modifier_rules:
                     result[key] = part[key]
+                    continue
 
                 self.state._p_state = RMPState.RECURSE_AND_ADD
                 child_result = self.__process_request_recursive(part[key], modifier_rules[key])
@@ -219,12 +257,16 @@ class RequestModifier:
         return new_body_part
 
     def process_request(self, body: dict[str, Any]) -> dict[str, Any]:
-
+        logger.debug("=" * 60)
+        logger.debug("RequestModifier.process_request() starting")
+        logger.debug(f"Messages count: {len(body.get('messages', []))}")
+        
         current_session_id = ""
         try:
             user_id = body.get('metadata', {}).get('user_id', '')
             if '_session_' in user_id:
                 current_session_id = user_id.split('_session_')[1]
+                logger.debug(f"Session ID: {current_session_id}")
         except Exception as e:
             logger.error(f"Failed to extract session ID: {e}")
             raise e
@@ -233,6 +275,7 @@ class RequestModifier:
         session_path.mkdir(exist_ok=True)
 
         body = self._process_request_recursive(body)
+        self._write_to_file(session_path / 'state.json', json.dumps(self.state, indent=2, ensure_ascii=False))
         self._write_to_file(session_path / 'last_request.json', json.dumps(body, indent=2, ensure_ascii=False))
         return body
 
