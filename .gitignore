@@ -21,5 +21,6 @@
 nabu_nisaba.code-workspace
 .dev_docs/.private/**
 **/*.egg-info/**
+.nisaba/logs
 .nisaba/request_cache
 .nisaba/request_cache/**
