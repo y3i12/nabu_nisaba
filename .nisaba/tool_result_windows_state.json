@@ -1,3 +1,42 @@
 {
-  "windows": {}
+  "windows": {
+    "3c12f86e-b46b-4bfc-9de9-335fe713bf7a": {
+      "id": "3c12f86e-b46b-4bfc-9de9-335fe713bf7a",
+      "window_type": "read_result",
+      "content": [
+        "                            result[key] = part[key]",
+        "                        elif RMPState.UPDATE_AND_CONTINUE == self.state._p_state:",
+        "                            result[key] = child_result",
+        "                            result_state = RMPState.UPDATE_AND_CONTINUE",
+        "                        elif RMPState.IGNORE_AND_CONTINUE == self.state._p_state:",
+        "                            result_state = RMPState.UPDATE_AND_CONTINUE # don't add but update structure",
+        "       ",
+        "            elif isinstance(part, list):",
+        "                assert isinstance(modifier_rules, list)",
+        "                result = []",
+        "                logger.debug(f\"    Processing list with {len(part)} items against {len(modifier_rules)} rules\")",
+        "                for i, block in enumerate(part):",
+        "                    logger.debug(f\"      List item [{i}]: {type(block).__name__}\")",
+        "                    self.state._p_state = RMPState.RECURSE_AND_ADD",
+        "                    for rule_idx, modifier_rule in enumerate(modifier_rules):",
+        "                        logger.debug(f\"        Trying rule #{rule_idx} on item [{i}]\")",
+        "                        child_result = self.__process_request_recursive(block, modifier_rule)",
+        "                        if RMPState.ADD_AND_CONTINUE == self.state._p_state:",
+        "                            result.append(block)",
+        "                            break",
+        "                        elif RMPState.UPDATE_AND_CONTINUE == self.state._p_state:"
+      ],
+      "metadata": {
+        "total_lines": 21
+      },
+      "opened_at": 1762430974.111928,
+      "file_path": "src/nisaba/wrapper/request_modifier.py",
+      "start_line": 180,
+      "end_line": 200,
+      "command": "",
+      "exit_code": 0,
+      "pattern": "",
+      "glob_pattern": ""
+    }
+  }
 }

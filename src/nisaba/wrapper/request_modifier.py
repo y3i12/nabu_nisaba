@@ -213,24 +213,36 @@ class RequestModifier:
         elif RMPState.PROCESS_MATCH == self.state._p_state:
             # FIX: Handle non-dict types in PROCESS_MATCH state
             if not isinstance(part, dict):
-                # When we encounter non-dict (list, str, etc) in PROCESS_MATCH,
-                # it means the structure doesn't match the pattern - skip this rule
-                logger.debug(f"    PROCESS_MATCH got non-dict ({type(part).__name__}), skipping rule")
-                self.state._p_state = RMPState.ADD_AND_CONTINUE
-                return part
+                # When we have a list in PROCESS_MATCH, check if rules are also list
+                if isinstance(part, list) and isinstance(modifier_rules, list):
+                    # Valid list-to-list pattern matching - switch to RECURSE_AND_ADD and re-process
+                    logger.debug(f"    PROCESS_MATCH got list with list rules, switching to RECURSE_AND_ADD")
+                    self.state._p_state = RMPState.RECURSE_AND_ADD
+                    # Re-process with new state
+                    return self.__process_request_recursive(part, modifier_rules)
+                else:
+                    # Structure mismatch - skip this rule
+                    logger.debug(f"    PROCESS_MATCH got non-dict ({type(part).__name__}), skipping rule")
+                    self.state._p_state = RMPState.ADD_AND_CONTINUE
+                    return part
             
-            # Also check modifier_rules is dict
+            # Check if both are dicts for dict processing
             if not isinstance(modifier_rules, dict):
-                # Modifier rules don't match the data structure
-                logger.debug(f"    PROCESS_MATCH got non-dict rules ({type(modifier_rules).__name__}), skipping")
-                self.state._p_state = RMPState.ADD_AND_CONTINUE
-                return part
+                if isinstance(part, dict):
+                    # part is dict but rules aren't - structure mismatch
+                    logger.debug(f"    PROCESS_MATCH got non-dict rules ({type(modifier_rules).__name__}), skipping")
+                    self.state._p_state = RMPState.ADD_AND_CONTINUE
+                    return part
             
-            logger.debug(f"    PROCESS_MATCH: Checking dict keys: {list(part.keys())} against rules: {list(modifier_rules.keys())}")
-            
-            # Now safe to proceed with dict handling
-            assert isinstance(part, dict)
-            assert isinstance(modifier_rules, dict)
+            # Now safe to proceed with dict handling (only log if we have dicts)
+            if isinstance(part, dict) and isinstance(modifier_rules, dict):
+                logger.debug(f"    PROCESS_MATCH: Checking dict keys: {list(part.keys())} against rules: {list(modifier_rules.keys())}")
+                assert isinstance(part, dict)
+                assert isinstance(modifier_rules, dict)
+            else:
+                # If we get here, we're in RECURSE_AND_ADD state after list detection
+                # This is the fall-through case - return to continue processing
+                pass
 
             result = {}
 
