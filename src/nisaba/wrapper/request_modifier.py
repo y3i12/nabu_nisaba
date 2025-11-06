@@ -107,6 +107,28 @@ class RequestModifier:
         self.state._p_state = RMPState.NOOP_CONTINUE
         pass
 
+    def _is_nisaba_tool(self, part: dict[Any, Any]) -> bool:
+        """Check if tool result is from a nisaba tool by parsing content."""
+        content = part.get('content', {})
+        
+        # Extract text from different content structures
+        if isinstance(content, dict):
+            text = content.get('text', '')
+        elif isinstance(content, list) and content:
+            text = content[0].get('text', '') if isinstance(content[0], dict) else ''
+        else:
+            return False
+        
+        # Try to parse JSON and check for nisaba flag
+        if text:
+            try:
+                output = json.loads(text)
+                return output.get('nisaba') is True
+            except:
+                pass  # Not JSON or parse error
+        
+        return False
+    
     def _content_block_count(self, key:str, part:dict[Any,Any]) -> Any:
         self.state.last_block_offset[1] += 1 # moves content forward
         self.state._p_state = RMPState.NOOP_CONTINUE
@@ -118,12 +140,15 @@ class RequestModifier:
         toolu_id = part[key]
         logger.debug(f"  _tool_use_id_state: Found tool_use_id '{toolu_id}'")
         
+        # Check if nisaba tool (parse once, cache result in state)
+        is_nisaba = self._is_nisaba_tool(part)
+        
         if toolu_id in self.state.tool_result_state:
             logger.debug(f"    Tool exists in state (already tracked)")
             self.state._p_state = RMPState.ADD_AND_CONTINUE  # Keep original ID
             return None  # Don't replace anything
         
-        logger.debug(f"    Tool is new, adding to state")
+        logger.debug(f"    Tool is new, adding to state (is_nisaba={is_nisaba})")
         
         # Create tool state entry - extract output from content
         tool_output = ""
@@ -146,6 +171,7 @@ class RequestModifier:
             'tool_result_status': "success",
             'tool_output': tool_output if tool_output else "",
             'window_state': "open",
+            'is_nisaba': is_nisaba,  # Cache nisaba detection result
             'tool_result_content': f"status: success, window_state:open, toolu_id: {toolu_id}\n---\n{tool_output}"
         }
         
@@ -165,6 +191,13 @@ class RequestModifier:
         
         if toolu_id in self.state.tool_result_state:
             tool_state = self.state.tool_result_state[toolu_id]
+            
+            # Check cached nisaba flag (no parsing needed!)
+            if tool_state.get('is_nisaba', False):
+                logger.debug(f"    Nisaba tool (from cached flag), keeping original")
+                self.state._p_state = RMPState.ADD_AND_CONTINUE
+                return None
+            
             window_state = tool_state.get('window_state', 'open')
             
             if window_state == 'closed':
@@ -446,6 +479,12 @@ class RequestModifier:
         
         for tool_id in tool_ids:
             if tool_id in self.state.tool_result_state:
+                # Skip nisaba tools - they shouldn't be closed
+                if self.state.tool_result_state[tool_id].get('is_nisaba', False):
+                    not_found.append(tool_id)
+                    logger.debug(f"Skipping nisaba tool: {tool_id}")
+                    continue
+                
                 self.state.tool_result_state[tool_id]['window_state'] = 'closed'
                 # Update the content string for consistency
                 tool_obj = self.state.tool_result_state[tool_id]
@@ -480,6 +519,12 @@ class RequestModifier:
         
         for tool_id in tool_ids:
             if tool_id in self.state.tool_result_state:
+                # Skip nisaba tools - they shouldn't be opened/closed
+                if self.state.tool_result_state[tool_id].get('is_nisaba', False):
+                    not_found.append(tool_id)
+                    logger.debug(f"Skipping nisaba tool: {tool_id}")
+                    continue
+                
                 self.state.tool_result_state[tool_id]['window_state'] = 'open'
                 # Restore full content format
                 tool_obj = self.state.tool_result_state[tool_id]

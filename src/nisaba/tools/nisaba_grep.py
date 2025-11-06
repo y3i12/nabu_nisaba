@@ -43,7 +43,8 @@ class NisabaGrepTool(NisabaTool):
                 return {
                     "success": False,
                     "error": "Tool result manager not initialized",
-                    "error_type": "ConfigurationError"
+                    "error_type": "ConfigurationError",
+                    "nisaba": True,
                 }
 
             kwargs = {'i': i, 'n': n}
@@ -70,6 +71,7 @@ class NisabaGrepTool(NisabaTool):
             return {
                 "success": True,
                 "message": f"Searched for pattern: {pattern} - {window_id}",
+                "nisaba": True
                 #"window_id": window_id,
                 #**summary
             }

@@ -44,7 +44,8 @@ class NisabaWriteTool(NisabaTool):
 
             return {
                 "success": True,
-                "message": f"Created file: {path}"
+                "message": f"Created file: {path}",
+                "nisaba": True
             }
         except Exception as e:
             self.logger.error(f"Failed to write file: {e}", exc_info=True)
