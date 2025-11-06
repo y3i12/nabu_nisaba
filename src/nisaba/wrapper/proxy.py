@@ -5,19 +5,19 @@ Intercepts requests to Anthropic API and replaces __NISABA_AUGMENTS_PLACEHOLDER_
 with actual augments content. Supports checkpoint-based context compression.
 """
 
-import os
+import datetime
+import importlib
 import json
 import logging
-import datetime
-from pathlib import Path
-from typing import Optional, List, TYPE_CHECKING
-
-from mitmproxy import http
+import os
 import tiktoken
 
-import importlib
-from logging.handlers import RotatingFileHandler
 
+from logging.handlers import RotatingFileHandler
+from mitmproxy import http
+from nisaba.wrapper.request_modifier import RequestModifier
+from pathlib import Path
+from typing import Optional, List, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from nisaba.augments import AugmentManager
@@ -169,6 +169,8 @@ class AugmentInjector:
         self.log_context_rate:float = 1.0
         self.log_context_counter:int = 0
         self.filtered_tools:set[str] = {"Read", "Write", "Edit", "Glob", "Grep", "Bash", "TodoWrite"}
+        
+        self.request_modifier:RequestModifier = RequestModifier()
 
         # Initial load
         if augment_manager is None:
@@ -266,16 +268,18 @@ class AugmentInjector:
             # Parse request body as JSON
             body = json.loads(flow.request.content)
 
-            try:
-                logger.debug("Loading RequestModifier module...")
-                import nisaba.wrapper.request_modifier
-                importlib.reload(nisaba.wrapper.request_modifier)
-                logger.debug(f"Processing request with RequestModifier. Messages: {len(body.get('messages', []))}")
-                nisaba.wrapper.request_modifier.RequestModifier().process_request(body)
-                logger.debug("RequestModifier processing complete")
-            except Exception as e:
-                logger.error(f"RequestModifier failed: {e}", exc_info=True)
-                pass
+            # try:
+            #     logger.debug("Loading RequestModifier module...")
+            #     import nisaba.wrapper.request_modifier
+            #     importlib.reload(nisaba.wrapper.request_modifier)
+            #     logger.debug(f"Processing request with RequestModifier. Messages: {len(body.get('messages', []))}")
+            #     nisaba.wrapper.request_modifier.RequestModifier().process_request(body)
+            #     logger.debug("RequestModifier processing complete")
+            # except Exception as e:
+            #     logger.error(f"RequestModifier failed: {e}", exc_info=True)
+            #     pass
+            
+            self.request_modifier.process_request(body)
 
             # Detect delta and generate notifications
             self._process_notifications(body)
