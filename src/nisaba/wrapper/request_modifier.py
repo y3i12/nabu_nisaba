@@ -48,7 +48,7 @@ if not any(isinstance(h, RotatingFileHandler) for h in logger.handlers):
 class RequestModifierState:
     def __init__(self) -> None:
         self.session_id: str = ""
-        self.last_block_offset: list[int] = [-1, -1] # message block, content_block
+        self.last_block_offset: list[int] = [0, 0] # message block, content_block
         self._p_state:RMPState = RMPState.IDLE
         self.tool_result_state:dict[str,dict] = {
         #   "toolu_{hash}": {
@@ -91,19 +91,11 @@ class RequestModifier:
         self.modifier_rules = {
             'messages': [
                 {
-                    'role': 'user',
-                    'content': [
-                        {
-                            'type': 'tool_result',
-                            'tool_use_id': self._tool_use_id_state
-                        }
-                    ]
-                },
-                {
                     'role': self._message_block_count,
                     'content': [
                         {
                             'type': self._content_block_count,
+                            'tool_use_id': self._tool_use_id_state
                         }
                     ]
                 }
@@ -112,7 +104,7 @@ class RequestModifier:
     
     def _message_block_count(self, key:str, part:dict[Any,Any]) -> Any:
         self.state.last_block_offset[0] += 1 # moves message forward
-        self.state.last_block_offset[1]  = -1 # resets content block
+        self.state.last_block_offset[1]  = 0 # resets content block
         self.state._p_state = RMPState.NOOP_CONTINUE
         pass
 
@@ -140,7 +132,7 @@ class RequestModifier:
             tool_output = part['content'].get('text', '')
         
         toolu_obj = {
-            'block_offset': self.state.last_block_offset,
+            'block_offset': list(self.state.last_block_offset),  # Copy the offset, don't reference it
             'tool_result_status': "success",
             'tool_output': tool_output,
             'window_state': "open",
