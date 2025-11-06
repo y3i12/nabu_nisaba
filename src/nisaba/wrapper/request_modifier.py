@@ -119,9 +119,9 @@ class RequestModifier:
         logger.debug(f"  _tool_use_id_state: Found tool_use_id '{toolu_id}'")
         
         if toolu_id in self.state.tool_result_state:
-            logger.debug(f"    Tool exists in state, returning stored content")
-            self.state._p_state = RMPState.UPDATE_AND_CONTINUE
-            return self.state.tool_result_state[toolu_id]['tool_result_content']
+            logger.debug(f"    Tool exists in state (already tracked)")
+            self.state._p_state = RMPState.ADD_AND_CONTINUE  # Keep original ID
+            return None  # Don't replace anything
         
         logger.debug(f"    Tool is new, adding to state")
         
