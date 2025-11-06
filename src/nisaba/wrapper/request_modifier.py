@@ -177,7 +177,7 @@ class RequestModifier:
                                         tool_output if is_nisaba
                                         # Regular tools: add header + separator
                                         else (
-                                            f"status: success, window_state:open, window_id: {toolu_id}\n"
+                                            f"window_state:open, tool_use_id: {toolu_id}\n"
                                             f"---\n"
                                             f"{tool_output}"
                                         )
@@ -198,54 +198,49 @@ class RequestModifier:
             self.state._p_state = RMPState.ADD_AND_CONTINUE
             return None
         
-        if toolu_id in self.state.tool_result_state:
-            tool_state = self.state.tool_result_state[toolu_id]
-            
-            # Check cached nisaba flag (no parsing needed!)
-            if tool_state.get('is_nisaba', False):
-                logger.debug(f"    Nisaba tool (from cached flag), keeping original")
-                self.state._p_state = RMPState.ADD_AND_CONTINUE
-                return None
-            
-            window_state = tool_state.get('window_state', 'open')
-            
-            if window_state == 'closed':
-                # Tool is closed - replace with compact version
-                compact_text = (
-                    f"id: {toolu_id}, "
-                    f"status: {tool_state.get('tool_result_status', 'success')}, "
-                    f"state: closed"
-                )
-                logger.debug(f"    Tool {toolu_id} is closed, replacing with compact format")
-                
-                # Match the structure of the original content
-                original_content = part.get('content')
-                if isinstance(original_content, str):
-                    # Simple string format
-                    self.state._p_state = RMPState.UPDATE_AND_CONTINUE
-                    return compact_text
-                elif isinstance(original_content, dict):
-                    # Dict format: {"type": "text", "text": "..."}
-                    self.state._p_state = RMPState.UPDATE_AND_CONTINUE
-                    return {"type": "text", "text": compact_text}
-                elif isinstance(original_content, list):
-                    # List format: [{"type": "text", "text": "..."}]
-                    self.state._p_state = RMPState.UPDATE_AND_CONTINUE
-                    return [{"type": "text", "text": compact_text}]
-                else:
-                    # Unknown format, keep original
-                    logger.debug(f"    Unknown content format: {type(original_content)}")
-                    self.state._p_state = RMPState.ADD_AND_CONTINUE
-                    return None
-            else:
-                # Tool is open - add header + separator + content
-                full_text = tool_state.get('tool_result_content', '')
-                logger.debug(f"    Tool {toolu_id} is open, adding header to content")
-                self.state._p_state = RMPState.UPDATE_AND_CONTINUE
-                return {"type": "text", "text": full_text}
-        else:
+        if toolu_id not in self.state.tool_result_state:
             # Tool not in state yet (first encounter) - keep original
             logger.debug(f"    Tool {toolu_id} not in state, keeping original")
+            self.state._p_state = RMPState.ADD_AND_CONTINUE
+            return None
+        
+        tool_state = self.state.tool_result_state[toolu_id]
+        
+        # Check cached nisaba flag (no parsing needed!)
+        if tool_state.get('is_nisaba', False):
+            logger.debug(f"    Nisaba tool (from cached flag), keeping original")
+            self.state._p_state = RMPState.ADD_AND_CONTINUE
+            return None
+        
+        window_state = tool_state.get('window_state', 'open')
+        
+        if window_state == "open":
+            # Tool is open - add header + separator + content
+            full_text = tool_state.get('tool_result_content', '')
+            logger.debug(f"    Tool {toolu_id} is open, adding header to content")
+            self.state._p_state = RMPState.UPDATE_AND_CONTINUE
+            return [{"type": "text", "text": full_text}]
+        # Tool is closed - replace with compact version
+        compact_text = f"window_state:closed, tool_use_id: {toolu_id}\n"
+        logger.debug(f"    Tool {toolu_id} is closed, replacing with compact format")
+        
+        # Match the structure of the original content
+        original_content = part.get('content')
+        if isinstance(original_content, str):
+            # Simple string format
+            self.state._p_state = RMPState.UPDATE_AND_CONTINUE
+            return compact_text
+        elif isinstance(original_content, dict):
+            # Dict format: {"type": "text", "text": "..."}
+            self.state._p_state = RMPState.UPDATE_AND_CONTINUE
+            return {"type": "text", "text": compact_text}
+        elif isinstance(original_content, list):
+            # List format: [{"type": "text", "text": "..."}]
+            self.state._p_state = RMPState.UPDATE_AND_CONTINUE
+            return [{"type": "text", "text": compact_text}]
+        else:
+            # Unknown format, keep original
+            logger.debug(f"    Unknown content format: {type(original_content)}")
             self.state._p_state = RMPState.ADD_AND_CONTINUE
             return None
 
@@ -437,9 +432,11 @@ class RequestModifier:
         
         session_path = Path(self.cache_path / current_session_id)
         session_path.mkdir(exist_ok=True)
+        
+        self._write_to_file(session_path / 'original_context.json', json.dumps(body, indent=2, ensure_ascii=False), "Original request written")
 
         body = self._process_request_recursive(body)
-        self._write_to_file(session_path / 'last_request.json', json.dumps(body, indent=2, ensure_ascii=False), "Last request written")
+        self._write_to_file(session_path / 'modified_context.json', json.dumps(body, indent=2, ensure_ascii=False), "Last request written")
         self._write_to_file(session_path / 'state.json', json.dumps(self.state.to_dict(), indent=2, ensure_ascii=False), "State written")
         return body
 
@@ -497,11 +494,7 @@ class RequestModifier:
                 self.state.tool_result_state[tool_id]['window_state'] = 'closed'
                 # Update the content string for consistency
                 tool_obj = self.state.tool_result_state[tool_id]
-                tool_obj['tool_result_content'] = (
-                    f"id: {tool_id}, "
-                    f"status: {tool_obj.get('tool_result_status', 'success')}, "
-                    f"state: closed"
-                )
+                tool_obj['tool_result_content'] = f"window_state:closed, tool_use_id: {tool_id}\n"
                 modified.append(tool_id)
                 logger.debug(f"Closed tool result: {tool_id}")
             else:
@@ -538,9 +531,7 @@ class RequestModifier:
                 # Restore full content format
                 tool_obj = self.state.tool_result_state[tool_id]
                 tool_obj['tool_result_content'] = (
-                    f"status: {tool_obj.get('tool_result_status', 'success')}, "
-                    f"window_state: open, "
-                    f"window_id: {tool_id}\n"
+                    f"window_state:open, tool_use_id: {tool_id}\n"
                     f"---\n"
                     f"{tool_obj.get('tool_output', '')}"
                 )

@@ -118,6 +118,60 @@ Pattern: Query → data → decide → mutate_workspace
 
 ---
 
+## Dual-Channel Communication
+
+```
+Tool execution creates TWO artifacts:
+
+messages[N]: tool_result block (temporal memory)
+  - tool_use_id, status (success/error)
+  - Metadata for conversational flow
+  
+system_prompt sections: actual content (spatial memory)
+  - TOOL_RESULT_WINDOWS: grep/bash/read outputs
+  - FILE_WINDOWS: opened file content
+  - Persistent across turns
+```
+
+**The "nisaba" flag:**
+```
+Regular tools → header-wrapped:
+  status: success, window_state:open, window_id: toolu_X
+  ---
+  {content}
+
+Nisaba tools → clean output:
+  {content}  # No metadata pollution
+```
+
+**Why dual-channel:**
+- Messages array: sequential conversation history
+- System prompt sections: persistent spatial state
+- Tools mutate spatial state, messages track temporal flow
+
+---
+
+## Retroactive Tool State Mutation
+
+```
+nisaba_tool_result_state(operation, tool_ids[])
+
+Operations:
+  close(ids)     → compact future appearances
+  open(ids)      → restore full view
+  close_all()    → compact all tracked tools
+
+Effect: Next request shows modified state
+  Closed: "id: toolu_X, status: success, state: closed"
+  Open: Full header + separator + content
+```
+
+**Pattern:** Execute → observe → close unnecessary → save tokens
+
+**Note:** Nisaba tools (with "nisaba": true flag) cannot be closed (skipped automatically)
+
+---
+
 ## Core Insights
 
 ```
