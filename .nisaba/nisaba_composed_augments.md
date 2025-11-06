@@ -28,7 +28,6 @@
     - file_windows_tui_architecture
     - mcp_server_discovery
     - nisaba_tool_implementation
-    - nisaba_unified_proxy_mcp
     - system_prompt_injection_legitimacy
     - tui_frames_architecture
   documentation/
