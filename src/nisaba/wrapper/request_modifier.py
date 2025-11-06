@@ -172,7 +172,16 @@ class RequestModifier:
             'tool_output': tool_output if tool_output else "",
             'window_state': "open",
             'is_nisaba': is_nisaba,  # Cache nisaba detection result
-            'tool_result_content': f"status: success, window_state:open, toolu_id: {toolu_id}\n---\n{tool_output}"
+            'tool_result_content': (
+                                        # Nisaba tools: no header, just plain output
+                                        tool_output if is_nisaba
+                                        # Regular tools: add header + separator
+                                        else (
+                                            f"status: success, window_state:open, window_id: {toolu_id}\n"
+                                            f"---\n"
+                                            f"{tool_output}"
+                                        )
+                                    )
         }
         
         self.state.tool_result_state[toolu_id] = toolu_obj
