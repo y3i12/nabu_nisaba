@@ -245,9 +245,12 @@ class AugmentInjector:
             # Parse request body as JSON
             body = json.loads(flow.request.content)
 
-            import nisaba.wrapper.request_modifier
-            importlib.reload(nisaba.wrapper.request_modifier)
-            nisaba.wrapper.request_modifier.RequestModifier().process_request(body)
+            try:
+                import nisaba.wrapper.request_modifier
+                importlib.reload(nisaba.wrapper.request_modifier)
+                nisaba.wrapper.request_modifier.RequestModifier().process_request(body)
+            except Exception as e:
+                pass
 
             # Detect delta and generate notifications
             self._process_notifications(body)
