@@ -181,7 +181,7 @@ class AugmentInjector:
         self.log_context_enabled:bool = False#os.getenv("NISABA_LOG_CONTEXT", "false").lower() == "true"
         self.log_context_rate:float = 1.0
         self.log_context_counter:int = 0
-        self.filtered_tools:set[str] = {"Read", "Write", "Edit", "Glob", "Grep", "Bash", "TodoWrite"}
+        self.filtered_tools:set[str] = {"Read", "Write", "Edit", "TodoWrite"} # returned to native: "Glob", "Grep", "Bash"
         
         self.request_modifier:RequestModifier = RequestModifier()
         # Store reference globally for tool access

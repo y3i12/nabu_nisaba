@@ -78,15 +78,50 @@ clear_all()  → remove_all
 
 ---
 
-## Nisaba Tools (Create Result Windows)
+## Native Tools (Transient Query Layer)
 
 ```
-nisaba_read(file, start?, end?)    → {window_id} | content → TOOL_WINDOWS
-nisaba_grep(pattern, path, flags)  → {window_id} | i,n,C,A,B flags
-nisaba_bash(command, cwd?)         → {window_id} | stdout/stderr → TOOL_WINDOWS  
-nisaba_glob(pattern, path?)        → {window_id} | file_matches → TOOL_WINDOWS
+bash(command, cwd?)           → stdout/stderr | transient execution
+grep(pattern, path, flags?)   → matches | quick pattern check
+glob(pattern, path?)          → file_list | find files by pattern
+
+Philosophy: disposable results, close after observation
+Use when: one-shot confirmation, quick validation, transient info
+
+Pattern: execute → observe → close
+  bash("git status") → observe → nisaba_tool_result_state(close, [id])
+  grep("pattern", "file") → observe → close
+  glob("*.py", "src/") → observe → close
+```
+
+---
+
+## Nisaba Tools (Workspace Persistence Layer)
+
+```
+nisaba_read(file, start?, end?)    → {window_id} | content → FILE_WINDOWS
+nisaba_write(file, content)        → create | workspace-aware
+nisaba_edit(file, old, new)        → modify | workspace-aware
+nisaba_grep(pattern, path, flags)  → {window_id} | i,n,C,A,B flags → TOOL_WINDOWS
+nisaba_glob(pattern, path?)        → {window_id} | matches → TOOL_WINDOWS
+nisaba_bash(command, cwd?)         → {window_id} | stdout/stderr → TOOL_WINDOWS
+
+Philosophy: persistent visibility, spatial synthesis
+Use when: building context, investigation, need to reference across turns
+
+Pattern: execute → persist → synthesize
+  nisaba_read(file) → FILE_WINDOWS (keep for comparison)
+  nisaba_grep(pattern) → TOOL_WINDOWS (investigate usage)
+  nisaba_bash(command) → TOOL_WINDOWS (analyze output)
 
 All: minimal_result, content → sections ↑
+```
+
+**Decision boundary:**
+```
+Will you reference the result across turns?
+├─ YES → nisaba tools (workspace sections, persistent)
+└─ NO  → native tools + close (transient, disposable)
 ```
 
 ---
@@ -109,6 +144,7 @@ Pattern: Execute tools → observe results → close unnecessary → lean contex
 - Only affects non-nisaba tools (nisaba tools auto-skipped)
 - Changes appear on next request (stateful proxy transformation)
 - Tool IDs available in tool_result blocks: `tool_use_id: toolu_X`
+- Use to close native bash/grep/glob after observation
 
 ---
 
@@ -162,6 +198,11 @@ Tool_Windows:
   Close after synthesis
   clear_all when switching_tasks
 
+Native_Results:
+  Close immediately after observation
+  Use nisaba_tool_result_state(close_all) for cleanup
+  Don't let transient results bloat context
+
 Augments:
   Load: 2-5 typically
   Foundation: ~3000 tokens baseline
@@ -173,6 +214,7 @@ Management:
   Close: proactively after understanding
   Prefer: clear_all when switching
   open_search: efficient (snippets vs full files)
+  Native tools: close immediately
   Aim: lean_visibility
 ```
 
@@ -205,6 +247,16 @@ query_relationships(cypher) → file_windows(open) | inspect_callers
 search(semantic) → structural_view(expand) → file_windows(open) | deep_dive
 nisaba_grep(pattern) → file_windows(open_frame) | detailed_inspection
 check_impact(frame) → file_windows(open) | review_affected
+
+Quick validation patterns:
+bash("git status") → observe → close
+grep("pattern", file) → confirm → close
+glob("*.test.py") → list → close
+
+Hybrid patterns:
+grep("pattern", "src/") → confirm_exists → nisaba_grep(pattern) → investigate
+bash("pytest -k test_foo") → observe → close
+nisaba_read(failing_file) → FILE_WINDOWS → investigate
 ```
 
 ---
@@ -219,8 +271,13 @@ check_impact(frame) → file_windows(open) | review_affected
 ∆(cleanup):
   file_windows.clear_all()
   nisaba_tool_windows.clear_all()
+  nisaba_tool_result_state(close_all) → compact native results
   
 Pattern: status → decide → close/keep
+
+Dual paradigm:
+  Transient → native + close
+  Persistent → nisaba + workspace
 ```
 
 ---
@@ -240,6 +297,7 @@ Pattern: status → decide → close/keep
 - | : or/such that
 - ≥ : greater than or equal
 - < : less than
+- ? : optional parameter
 
 **REQUIRES:** __base/002_compressed_environment_mechanics
 
