@@ -196,10 +196,11 @@ class RequestModifier:
                     self.state._p_state = RMPState.ADD_AND_CONTINUE
                     return None
             else:
-                # Tool is open - keep full content
-                logger.debug(f"    Tool {toolu_id} is open, keeping full content")
-                self.state._p_state = RMPState.ADD_AND_CONTINUE
-                return None
+                # Tool is open - add header + separator + content
+                full_text = tool_state.get('tool_result_content', '')
+                logger.debug(f"    Tool {toolu_id} is open, adding header to content")
+                self.state._p_state = RMPState.UPDATE_AND_CONTINUE
+                return {"type": "text", "text": full_text}
         else:
             # Tool not in state yet (first encounter) - keep original
             logger.debug(f"    Tool {toolu_id} not in state, keeping original")
