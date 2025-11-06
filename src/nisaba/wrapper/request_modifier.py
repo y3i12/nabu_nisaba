@@ -56,8 +56,6 @@ class RequestModifierState:
         #       'tool_result_status': f"{(success|error)}",
         #       'tool_output': (from tool_u.parent.text),
         #       'window_state': (open|closed),
-        #       'start_line': n|0,
-        #       'num_lines': n|-1,
         #       'tool_result_content': f"status:{tool_result_status}, window_state:{window_state}, window_id: {toolu_{hash}}"
         #   }
         }
@@ -127,19 +125,28 @@ class RequestModifier:
         
         logger.debug(f"    Tool is new, adding to state")
         
-        # Create tool state entry
+        # Create tool state entry - extract output from content
         tool_output = ""
-        if 'content' in part and isinstance(part['content'], dict):
-            tool_output = part['content'].get('text', '')
+        if 'content' in part:
+            content = part['content']
+            # Handle both dict and list structures
+            if isinstance(content, dict):
+                tool_output = content.get('text', str(content))
+            elif isinstance(content, list):
+                # Extract text from first text block
+                for block in content:
+                    if isinstance(block, dict) and block.get('type') == 'text':
+                        tool_output = block.get('text', '')
+                        break
+            else:
+                tool_output = str(content)
         
         toolu_obj = {
             'block_offset': list(self.state.last_block_offset),  # Copy the offset, don't reference it
             'tool_result_status': "success",
-            'tool_output': tool_output,
+            'tool_output': tool_output if tool_output else "",
             'window_state': "open",
-            'start_line': 0,
-            'num_lines': -1,
-            'tool_result_content': f"status: success, window_state:open, window_id: {toolu_id}"
+            'tool_result_content': f"status: success, window_state:open, toolu_id: {toolu_id}\n---\n{tool_output}"
         }
         
         self.state.tool_result_state[toolu_id] = toolu_obj
@@ -157,13 +164,44 @@ class RequestModifier:
             return None
         
         if toolu_id in self.state.tool_result_state:
-            # Tool exists in state - replace with compact version
-            compact_content = self.state.tool_result_state[toolu_id]['tool_result_content']
-            logger.debug(f"    Tool {toolu_id} found in state, replacing with: {compact_content}")
-            self.state._p_state = RMPState.UPDATE_AND_CONTINUE
-            return [{"type": "text", "text": compact_content}]
+            tool_state = self.state.tool_result_state[toolu_id]
+            window_state = tool_state.get('window_state', 'open')
+            
+            if window_state == 'closed':
+                # Tool is closed - replace with compact version
+                compact_text = (
+                    f"id: {toolu_id}, "
+                    f"status: {tool_state.get('tool_result_status', 'success')}, "
+                    f"state: closed"
+                )
+                logger.debug(f"    Tool {toolu_id} is closed, replacing with compact format")
+                
+                # Match the structure of the original content
+                original_content = part.get('content')
+                if isinstance(original_content, str):
+                    # Simple string format
+                    self.state._p_state = RMPState.UPDATE_AND_CONTINUE
+                    return compact_text
+                elif isinstance(original_content, dict):
+                    # Dict format: {"type": "text", "text": "..."}
+                    self.state._p_state = RMPState.UPDATE_AND_CONTINUE
+                    return {"type": "text", "text": compact_text}
+                elif isinstance(original_content, list):
+                    # List format: [{"type": "text", "text": "..."}]
+                    self.state._p_state = RMPState.UPDATE_AND_CONTINUE
+                    return [{"type": "text", "text": compact_text}]
+                else:
+                    # Unknown format, keep original
+                    logger.debug(f"    Unknown content format: {type(original_content)}")
+                    self.state._p_state = RMPState.ADD_AND_CONTINUE
+                    return None
+            else:
+                # Tool is open - keep full content
+                logger.debug(f"    Tool {toolu_id} is open, keeping full content")
+                self.state._p_state = RMPState.ADD_AND_CONTINUE
+                return None
         else:
-            # Tool not in state yet (shouldn't happen if _tool_use_id_state ran first)
+            # Tool not in state yet (first encounter) - keep original
             logger.debug(f"    Tool {toolu_id} not in state, keeping original")
             self.state._p_state = RMPState.ADD_AND_CONTINUE
             return None
