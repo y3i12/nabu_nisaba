@@ -1,9 +1,9 @@
 {
   "version": "1.0",
   "servers": {
-    "nabu_mcp_468438": {
+    "nabu_mcp_471945": {
       "name": "nabu_mcp",
-      "pid": 468438,
+      "pid": 471945,
       "stdio_active": true,
       "http": {
         "enabled": true,
@@ -11,7 +11,7 @@
         "port": 1338,
         "url": "http://localhost:1338"
       },
-      "started_at": "2025-11-06T11:57:56.178806Z",
+      "started_at": "2025-11-06T12:06:52.507992Z",
       "cwd": "/home/y3i12/nabu_nisaba"
     }
   }
