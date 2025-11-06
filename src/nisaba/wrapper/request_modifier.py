@@ -36,7 +36,7 @@ log_dir.mkdir(parents=True, exist_ok=True)
 if not any(isinstance(h, RotatingFileHandler) for h in logger.handlers):
     file_handler = RotatingFileHandler(
         log_dir / "proxy.log",
-        maxBytes=10*1024*1024,  # 10MB
+        maxBytes=1*1024*1024,  # 1MB
         backupCount=3
     )
     file_handler.setFormatter(logging.Formatter(
@@ -211,6 +211,20 @@ class RequestModifier:
                 result = part
 
         elif RMPState.PROCESS_MATCH == self.state._p_state:
+            # Check for callable first - callables can work with any part type
+            if callable(modifier_rules):
+                logger.debug(f"    PROCESS_MATCH: Found callable rule {modifier_rules.__name__}")
+                logger.debug(f"    Calling {modifier_rules.__name__}(part_type={type(part).__name__})")
+                callable_result = modifier_rules(None, {'key_placeholder': part})  # Pass part wrapped in dict
+                logger.debug(f"    Callable returned state: {self.state._p_state.name}")
+                if RMPState.UPDATE_AND_CONTINUE == self.state._p_state:
+                    return callable_result
+                elif RMPState.NOOP_CONTINUE == self.state._p_state:
+                    self.state._p_state = RMPState.ADD_AND_CONTINUE
+                    return part
+                else:
+                    return part
+            
             # FIX: Handle non-dict types in PROCESS_MATCH state
             if not isinstance(part, dict):
                 # When we have a list in PROCESS_MATCH, check if rules are also list
@@ -325,8 +339,8 @@ class RequestModifier:
         session_path.mkdir(exist_ok=True)
 
         body = self._process_request_recursive(body)
-        self._write_to_file(session_path / 'last_request.json', json.dumps(body, indent=2, ensure_ascii=False))
-        self._write_to_file(session_path / 'state.json', json.dumps(self.state.to_dict(), indent=2, ensure_ascii=False))
+        self._write_to_file(session_path / 'last_request.json', json.dumps(body, indent=2, ensure_ascii=False), "Last request written")
+        self._write_to_file(session_path / 'state.json', json.dumps(self.state.to_dict(), indent=2, ensure_ascii=False), "State written")
         return body
 
 
