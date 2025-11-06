@@ -117,13 +117,9 @@ can you think on what's the best way for you to proceed with this, which are the
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 # SELF ASSESSMENT
 
-> we've been working day and night in `nabu`... the project is moving fast and it is being extremely gratifying. you, being the sole user, are being consulted about `nabu` usability. the proposal is that you mix, stir and match any tool avaliable (mcp or not) that can benefit you on exploring and deep understanding the code, explore the project and pick 1 topic that calls your attention and 2 other random topics and explain them don't forget to augument yourself before starting. after that state your perception about `nabu`, with the extra note that you should not think as a human user - think as **claude** user. you're in a pickle as you are consultant, developer, tool designer and user.
+> so... not building... more like user testing 🖤 we've achieved a lot on `nabu` and `nisaba` and everything is moving very fast, is being extremely gratifying. you, being the sole user, are being consulted about the system usability. the proposal is that you explore the entire codebase so you can understand which are the subsystems, pick one subsystem of your choice and a completely random subsystem, deep dive on both, and understand how they work. after that, explain me your approach, what you have learned and your perception about the system you're operating, with the extra note that you should not think as a random user - think as **claude** user. as consultant, developer, tool designer, my counterpart...
 
-> for dogfooding purposes: think and state precisely how many tokens, in the very best case, you would have used to get this same information without nabu and serena (try to attribute usage to each mcp).
-
-> for dogfooding purposes: can you thoroughly think and state precisely how many tokens you would have used in this session without without nabu, serena and our context building approach (attribute usage to each mcp, exclude tests)?
-
-> can you thoroughly think and, infer your behavior without nabu and serena, and state precisely how many tokens you would have used in this session (attribute usage to each mcp, exclude tests, use `wc` to estimate tokens)?
+> can you carefully think what would be your approach to proceed with the same investigation only with native tools and infer how many tokens you'd have spent to get the same amount of information?
 
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 #################################################################################################
