@@ -294,7 +294,7 @@ class AugmentInjector:
             #     logger.error(f"RequestModifier failed: {e}", exc_info=True)
             #     pass
             
-            self.request_modifier.process_request(body)
+            body = self.request_modifier.process_request(body)
 
             # Detect delta and generate notifications
             self._process_notifications(body)

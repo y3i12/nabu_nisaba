@@ -78,7 +78,7 @@ Issues = "https://github.com/yourusername/nabu/issues"
 [project.scripts]
 nabu = "nabu.mcp.cli:cli"
 nabu-server = "nabu.mcp.server:main"
-nesaba = "nisaba.cli:cli"
+nisaba = "nisaba.cli:cli"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
