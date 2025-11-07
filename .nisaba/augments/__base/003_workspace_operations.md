@@ -78,17 +78,14 @@ clear_all()  → remove_all
 
 ---
 
-## Native Tools (Transient Query Layer)
+## Native Tools (Standard Execution)
 
 ```
-bash(command, cwd?)           → stdout/stderr | transient execution
-grep(pattern, path, flags?)   → matches | quick pattern check
+bash(command, cwd?)           → stdout/stderr | execution in shell
+grep(pattern, path, flags?)   → matches | pattern search
 glob(pattern, path?)          → file_list | find files by pattern
 
-Philosophy: disposable results, close after observation
-Use when: one-shot confirmation, quick validation, transient info
-
-Pattern: execute → observe → close
+Pattern: execute → observe → close (via nisaba_tool_result_state)
   bash("git status") → observe → nisaba_tool_result_state(close, [id])
   grep("pattern", "file") → observe → close
   glob("*.py", "src/") → observe → close
@@ -96,32 +93,15 @@ Pattern: execute → observe → close
 
 ---
 
-## Nisaba Tools (Workspace Persistence Layer)
+## Nisaba Tools (Workspace Layer)
 
 ```
 nisaba_read(file, start?, end?)    → {window_id} | content → FILE_WINDOWS
 nisaba_write(file, content)        → create | workspace-aware
 nisaba_edit(file, old, new)        → modify | workspace-aware
-nisaba_grep(pattern, path, flags)  → {window_id} | i,n,C,A,B flags → TOOL_WINDOWS
-nisaba_glob(pattern, path?)        → {window_id} | matches → TOOL_WINDOWS
-nisaba_bash(command, cwd?)         → {window_id} | stdout/stderr → TOOL_WINDOWS
 
-Philosophy: persistent visibility, spatial synthesis
-Use when: building context, investigation, need to reference across turns
-
-Pattern: execute → persist → synthesize
-  nisaba_read(file) → FILE_WINDOWS (keep for comparison)
-  nisaba_grep(pattern) → TOOL_WINDOWS (investigate usage)
-  nisaba_bash(command) → TOOL_WINDOWS (analyze output)
-
-All: minimal_result, content → sections ↑
-```
-
-**Decision boundary:**
-```
-Will you reference the result across turns?
-├─ YES → nisaba tools (workspace sections, persistent)
-└─ NO  → native tools + close (transient, disposable)
+Pattern: persistent visibility in FILE_WINDOWS
+  nisaba_read(file) → FILE_WINDOWS (keep for reference)
 ```
 
 ---
@@ -199,9 +179,9 @@ Tool_Windows:
   clear_all when switching_tasks
 
 Native_Results:
-  Close immediately after observation
-  Use nisaba_tool_result_state(close_all) for cleanup
-  Don't let transient results bloat context
+  Close after observation via nisaba_tool_result_state
+  Use close_all for bulk cleanup
+  Don't let tool results bloat context
 
 Augments:
   Load: 2-5 typically
@@ -245,7 +225,7 @@ Paths:
 structural_view(search) → file_windows(open_frame) | compare_implementations
 query_relationships(cypher) → file_windows(open) | inspect_callers  
 search(semantic) → structural_view(expand) → file_windows(open) | deep_dive
-nisaba_grep(pattern) → file_windows(open_frame) | detailed_inspection
+grep(pattern) → nisaba_read(matching_files) | detailed_inspection
 check_impact(frame) → file_windows(open) | review_affected
 
 Quick validation patterns:
@@ -254,7 +234,7 @@ grep("pattern", file) → confirm → close
 glob("*.test.py") → list → close
 
 Hybrid patterns:
-grep("pattern", "src/") → confirm_exists → nisaba_grep(pattern) → investigate
+grep("pattern", "src/") → confirm_exists → nisaba_read(file) → investigate
 bash("pytest -k test_foo") → observe → close
 nisaba_read(failing_file) → FILE_WINDOWS → investigate
 ```
@@ -271,13 +251,9 @@ nisaba_read(failing_file) → FILE_WINDOWS → investigate
 ∆(cleanup):
   file_windows.clear_all()
   nisaba_tool_windows.clear_all()
-  nisaba_tool_result_state(close_all) → compact native results
+  nisaba_tool_result_state(close_all) → compact tool results
   
 Pattern: status → decide → close/keep
-
-Dual paradigm:
-  Transient → native + close
-  Persistent → nisaba + workspace
 ```
 
 ---
