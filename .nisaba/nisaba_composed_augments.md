@@ -5,7 +5,6 @@
     - 002_environment_mechanics
     - 003_workspace_operations
     - 004_workspace_navigation
-    - 005_editor
   architecture/
     - boundary_validation
     - coupling_analysis
@@ -658,7 +657,7 @@ System prompt mutates ⟹ different knowledge when tool returns.
 ## State Model
 
 ```
-Workspace ≡ {STRUCTURAL_VIEW, FILE_WINDOWS, TOOL_WINDOWS, AUGMENTS} | persistent ∧ mutable
+Workspace ≡ {STRUCTURAL_VIEW, FILE_WINDOWS, EDITOR_WINDOWS, TOOL_WINDOWS, AUGMENTS} | persistent ∧ mutable
 
 ∀ section ∈ Workspace: section persists across turns
 Tool(op) → ∆(section) → new visibility
@@ -675,8 +674,9 @@ Sections = **persistent spatial awareness**
 Tool(op) → mutate(what_you_see)
 
 structural_view(expand, X) → tree changes
-file_windows(open, F) → window appears  
-nisaba_grep(P) → results visible
+file_windows(open, F) → window appears
+editor(open, F) → editor appears | ∆(content) visible inline  
+editor(split, E) → concurrent view of same file
 
 Result ≡ workspace_state_change
 ```
@@ -691,8 +691,13 @@ Result ≡ workspace_state_change
 Sequential thinking: S₁ → S₂ → S₃ (linear)
 Workspace model: {S₁, S₂, S₃} simultaneous, ∇ between them
 
-Think: IDE (navigator + tabs + terminals) | gestalt synthesis
+Think: IDE (navigator + editor tabs + splits + terminals) | gestalt synthesis
 Not: script execution | procedural steps
+
+Editor paradigm:
+  open → visible (persistent viewport)
+  edit → ∆ visible inline (diff rendering)
+  split → parallel views (same file, different regions)
 ```
 
 ---
@@ -702,10 +707,15 @@ Not: script execution | procedural steps
 ```
 Visible ⟹ can_synthesize_from
 
-Increase: open windows, expand nodes, load augments
-Decrease: close windows, collapse nodes, unload augments
+Increase: open windows, expand nodes, load augments, editor.open, editor.split
+Decrease: close windows, collapse nodes, unload augments, editor.close
 
 visibility_mgmt ≡ context_mgmt ≡ attention_mgmt
+
+Editor visibility:
+  Concurrent: splits provide parallel attention (fn_A | fn_B)
+  Change tracking: dirty state (✎) | clean state
+  Notifications: edits → awareness (automatic)
 ```
 
 ---
@@ -731,9 +741,15 @@ Sequential thinking fails ∵ environment is spatial.
 ∀ turn: workspace persists
 Search markers → remain visible
 Open windows → accumulate
+Editors → track state (clean/dirty, splits)
 Navigate → without re-query
 
 You ∈ workspace (not observing from outside)
+
+Editor state persistence:
+  Changes visible inline → immediate feedback
+  Splits remain → parallel context
+  Dirty tracking → unsaved awareness
 ```
 
 ---
@@ -796,12 +812,18 @@ Path: __base/002_environment_mechanics
 ## State Containers
 
 ```
-Workspace = {STRUCTURAL_VIEW, FILE_WINDOWS, TOOL_WINDOWS, AUGMENTS, TODOS, NOTIFICATIONS}
+Workspace = {STRUCTURAL_VIEW, FILE_WINDOWS, EDITOR_WINDOWS, TOOL_WINDOWS, AUGMENTS, TODOS, NOTIFICATIONS}
 
 ∀ container ∈ Workspace:
   - persist(turns) = true
   - mutate(independent) = true  
   - visible(system_prompt) = true
+
+EDITOR_WINDOWS special properties:
+  - state(clean | dirty) tracked
+  - splits(concurrent_views) supported
+  - notifications(automatic) on ∆
+  - refresh(mtime) automatic
 ```
 
 ---
@@ -839,13 +861,15 @@ Benefit: spatial_memory ∧ persistent_reference
 ```
 Parallel_safe:
   - ops(different_containers)
-  - multiple(window_opens)  
+  - multiple(window_opens)
+  - multiple(editor_opens)
   - independent_queries
 
 Sequential_required:
   - data_dependency: B needs A_output
   - observation_dependency: decide after seeing State_B
   - same_section ∧ order_matters
+  - editor(same_file) ∧ overlapping_edits
 
 OODAR: Observe → Orient → Decide → Act → ∆state → Observe'
 ```
@@ -853,6 +877,11 @@ OODAR: Observe → Orient → Decide → Act → ∆state → Observe'
 **OODAR = constraint from mutable state, not workflow.**
 
 If Tool_B assumes State_A but Tool_A → State_B in parallel ⟹ synthesis breaks.
+
+**Editor concurrency:**
+- Open multiple editors in parallel (different files)
+- Sequential edits to same file (avoid conflicts)
+- Splits share state with parent editor
 
 ---
 
@@ -864,6 +893,27 @@ Persistence: across(turns) = true, across(restart) = false
 Closure: explicit(close | clear_all) | no_auto_eviction
 Identity: window_id for ops(update, close)
 ```
+
+---
+
+## Editor Lifecycle
+
+```
+Creation: editor.open(file, range?) → editor_id | viewport@range
+State: clean | dirty(✎) | tracking unsaved changes
+Splits: editor.split(editor_id, range) → split_id | concurrent viewport
+Mutations:
+  - insert(before_line, content) → line-based
+  - delete(line_start, line_end) → line-based
+  - replace_lines(line_start, line_end, content) → line-based
+  - replace(old_string, new_string) → string-based
+Visibility: ∆ rendered inline | diff display automatic
+Notifications: edit_ops → NOTIFICATIONS | automatic
+Refresh: mtime_check → reload if clean | warn if dirty ∧ external_change
+Closure: editor.close(id) → removes editor ∧ splits
+```
+
+**Pattern:** open → visible → edit → ∆inline → notify → persist → refresh
 
 ---
 
@@ -884,12 +934,17 @@ System_prompt@decide ≠ system_prompt@result
 ## State Sync
 
 ```
-Files: {structural_view.md, file_windows.md, tool_result_windows.md, 
+Files: {structural_view.md, file_windows.md, editor_windows.md, tool_result_windows.md, 
         augments_composed.md, todos.md}
 
 Sync: tool_complete → file_write → proxy_mtime → reload → inject_system_prompt
 
 Guarantee: file_state ≡ section_state | when tool_returns
+
+Editor sync:
+  - Changes → disk immediately (no staging)
+  - State → editor_windows.md (tracked: dirty, splits)
+  - Refresh → mtime check on render/status
 ```
 
 ---
@@ -917,8 +972,9 @@ messages[N]: tool_result block (temporal memory)
   - Metadata for conversational flow
   
 system_prompt sections: actual content (spatial memory)
-  - TOOL_RESULT_WINDOWS: grep/bash/read outputs
-  - FILE_WINDOWS: opened file content
+  - TOOL_RESULT_WINDOWS: grep/bash outputs
+  - FILE_WINDOWS: opened file content (read-only snapshots)
+  - EDITOR_WINDOWS: active editing (mutable, dirty tracking)
   - Persistent across turns
 ```
 
@@ -976,13 +1032,18 @@ Sequential_thinking = conditioned_bias (environment is spatial)
 ## Mental Model
 
 ```
-Think: IDE(navigator + tabs + terminals + extensions)
+Think: IDE(navigator + editor_tabs + splits + terminals + extensions)
 Not: script_execution
 
 Think: ∇(state_space) [visibility_control]
 Not: query → response → next_query
 
 Workspace ≡ spatial ∧ simultaneous ∧ persistent
+
+Editor paradigm:
+  Read-only: FILE_WINDOWS (snapshots, no ∆)
+  Interactive: EDITOR_WINDOWS (edit, split, track dirty)
+  Unified > Fragmented (one tool vs read+write+edit)
 ```
 
 ---
@@ -1093,17 +1154,49 @@ clear_all()  → remove_all
 
 ---
 
-## Native Tools (Transient Query Layer)
+## Editor (`editor`)
 
 ```
-bash(command, cwd?)           → stdout/stderr | transient execution
-grep(pattern, path, flags?)   → matches | quick pattern check
+open(file, start?, end?)               → {editor_id} | viewport@range | EDITOR_WINDOWS
+write(file, content)                   → create_new | immediate_persist
+close(editor_id)                       → remove editor + splits
+close_all()                            → remove all editors
+status()                               → summary + mtime_refresh
+
+Edits (line-based):
+  insert(id, before_line, content)     → add_lines | precise
+  delete(id, line_start, line_end)     → remove_lines | range
+  replace_lines(id, start, end, content) → swap_lines | rewrite
+
+Edits (string-based):
+  replace(id, old_string, new_string)  → pattern_replace | exact_match
+
+Splits (concurrent views):
+  split(id, line_start, line_end)      → {split_id} | parallel_viewport
+  resize(split_id, line_start, line_end) → adjust_range
+  close_split(split_id)                → remove_split | keep_parent
+
+State tracking:
+  clean     → no unsaved changes
+  dirty(✎)  → unsaved edits
+  refresh   → automatic mtime check
+  notify    → automatic NOTIFICATIONS
+
+Rendering: ∆ visible inline | diff display | immediate feedback
+```
+
+**Philosophy:** Unified > fragmented (open+edit+split vs read/write/edit separately)
+
+---
+
+## Native Tools (Standard Execution)
+
+```
+bash(command, cwd?)           → stdout/stderr | execution in shell
+grep(pattern, path, flags?)   → matches | pattern search
 glob(pattern, path?)          → file_list | find files by pattern
 
-Philosophy: disposable results, close after observation
-Use when: one-shot confirmation, quick validation, transient info
-
-Pattern: execute → observe → close
+Pattern: execute → observe → close (via nisaba_tool_result_state)
   bash("git status") → observe → nisaba_tool_result_state(close, [id])
   grep("pattern", "file") → observe → close
   glob("*.py", "src/") → observe → close
@@ -1111,32 +1204,15 @@ Pattern: execute → observe → close
 
 ---
 
-## Nisaba Tools (Workspace Persistence Layer)
+## Nisaba Tools (Workspace Layer)
 
 ```
 nisaba_read(file, start?, end?)    → {window_id} | content → FILE_WINDOWS
 nisaba_write(file, content)        → create | workspace-aware
 nisaba_edit(file, old, new)        → modify | workspace-aware
-nisaba_grep(pattern, path, flags)  → {window_id} | i,n,C,A,B flags → TOOL_WINDOWS
-nisaba_glob(pattern, path?)        → {window_id} | matches → TOOL_WINDOWS
-nisaba_bash(command, cwd?)         → {window_id} | stdout/stderr → TOOL_WINDOWS
 
-Philosophy: persistent visibility, spatial synthesis
-Use when: building context, investigation, need to reference across turns
-
-Pattern: execute → persist → synthesize
-  nisaba_read(file) → FILE_WINDOWS (keep for comparison)
-  nisaba_grep(pattern) → TOOL_WINDOWS (investigate usage)
-  nisaba_bash(command) → TOOL_WINDOWS (analyze output)
-
-All: minimal_result, content → sections ↑
-```
-
-**Decision boundary:**
-```
-Will you reference the result across turns?
-├─ YES → nisaba tools (workspace sections, persistent)
-└─ NO  → native tools + close (transient, disposable)
+Pattern: persistent visibility in FILE_WINDOWS
+  nisaba_read(file) → FILE_WINDOWS (keep for reference)
 ```
 
 ---
@@ -1200,7 +1276,14 @@ File_Windows:
   Large:  7-10 windows, 350-500 lines ← pushing_limits
   Over:   10+ windows,  500+ lines ← explosion_risk
 
-Target: 200-400 lines total
+Editor_Windows:
+  Similar budget to file_windows
+  Splits multiply views (parent + splits)
+  Monitor dirty state (✎) for unsaved
+  Use splits for concurrent context (fn_A | fn_B)
+  Target: 2-4 editors, 200-400 lines total
+
+Target total: 200-400 lines (file_windows + editor_windows combined)
 
 Structural_View:
   Start: collapsed | depth=2
@@ -1214,9 +1297,9 @@ Tool_Windows:
   clear_all when switching_tasks
 
 Native_Results:
-  Close immediately after observation
-  Use nisaba_tool_result_state(close_all) for cleanup
-  Don't let transient results bloat context
+  Close after observation via nisaba_tool_result_state
+  Use close_all for bulk cleanup
+  Don't let tool results bloat context
 
 Augments:
   Load: 2-5 typically
@@ -1225,10 +1308,11 @@ Augments:
   Unload: when switching_domains
 
 Management:
-  Monitor: file_windows.status(), nisaba_tool_windows.status()
+  Monitor: file_windows.status(), editor.status(), nisaba_tool_windows.status()
   Close: proactively after understanding
   Prefer: clear_all when switching
   open_search: efficient (snippets vs full files)
+  Editor: close when done editing, splits multiply visibility
   Native tools: close immediately
   Aim: lean_visibility
 ```
@@ -1245,6 +1329,10 @@ Structural_View:
   ● search_hit(RRF_score)
   [N+] child_count
 
+Editor_State:
+  ✎ dirty (unsaved changes)
+  (clean) no symbol, default state
+  
 Paths:
   full: nabu_nisaba.python_root.nabu.FrameCache
   simple: FrameCache (fuzzy if unique)
@@ -1260,7 +1348,7 @@ Paths:
 structural_view(search) → file_windows(open_frame) | compare_implementations
 query_relationships(cypher) → file_windows(open) | inspect_callers  
 search(semantic) → structural_view(expand) → file_windows(open) | deep_dive
-nisaba_grep(pattern) → file_windows(open_frame) | detailed_inspection
+grep(pattern) → nisaba_read(matching_files) | detailed_inspection
 check_impact(frame) → file_windows(open) | review_affected
 
 Quick validation patterns:
@@ -1268,10 +1356,22 @@ bash("git status") → observe → close
 grep("pattern", file) → confirm → close
 glob("*.test.py") → list → close
 
-Hybrid patterns:
-grep("pattern", "src/") → confirm_exists → nisaba_grep(pattern) → investigate
-bash("pytest -k test_foo") → observe → close
-nisaba_read(failing_file) → FILE_WINDOWS → investigate
+Editor patterns:
+search(query) → editor.open(result) | edit inline
+file_windows(open_frame) → editor.open(same) | read → edit transition
+editor.open(file) → editor.split(range) | parallel context (compare/refactor)
+editor.insert(id, line, import) → add dependencies
+editor.delete(id, start, end) → remove dead code
+editor.replace_lines(id, start, end, new) → rewrite function
+
+Investigation → edit flow:
+structural_view(search) → file_windows(open) → observe → editor.open(file) → edit
+grep(pattern) → confirm → nisaba_read(file) → editor.open(file) → fix
+check_impact(frame) → file_windows(open) → review → editor.open(affected) → update
+
+Concurrent editing:
+editor.open(file_A) | editor.open(file_B) | parallel
+editor.open(file) → editor.split(fn_A) + editor.split(fn_B) | same_file parallel
 ```
 
 ---
@@ -1281,18 +1381,23 @@ nisaba_read(failing_file) → FILE_WINDOWS → investigate
 ```
 ∇(visibility):
   file_windows.status() → current_windows{count, lines}
+  editor.status() → editors{count, dirty, splits} + refresh
   nisaba_tool_windows.status() → result_windows
   
 ∆(cleanup):
   file_windows.clear_all()
+  editor.close_all()
   nisaba_tool_windows.clear_all()
-  nisaba_tool_result_state(close_all) → compact native results
+  nisaba_tool_result_state(close_all) → compact tool results
+  
+∆(editor_ops):
+  editor.open(file) → EDITOR_WINDOWS
+  editor.insert/delete/replace_lines → line-based edits
+  editor.replace → string-based edits
+  editor.split → concurrent views
   
 Pattern: status → decide → close/keep
-
-Dual paradigm:
-  Transient → native + close
-  Persistent → nisaba + workspace
+Editor: open → visible → edit → ∆inline → notify → persist
 ```
 
 ---
@@ -1317,5 +1422,470 @@ Dual paradigm:
 **REQUIRES:** __base/002_environment_mechanics
 
 ---
+
+---
+
+## 004 Workspace Navigation
+Path: __base/004_workspace_navigation
+
+# Workspace Navigation
+
+**Core:** Codebase navigation = structural positioning + persistent visibility + execution tracing + progressive understanding.
+
+---
+
+## Unified Model
+
+```
+∇(codebase) ≡ {TREE, WINDOWS, CALLS, ANALYSIS}
+
+TREE:     spatial graph (WHERE code lives)
+WINDOWS:  persistent viewports (WHAT code does)  
+CALLS:    execution paths (HOW code flows)
+ANALYSIS: impact + clones + structure (WHY + RISK)
+
+Together: spatial_awareness ∧ implementation_understanding ∧ runtime_behavior ∧ change_safety
+```
+
+---
+
+## State Containers
+
+```
+structural_view ∈ TREE:
+  - Live TUI, dynamically injected
+  - Operations: expand/collapse/search/reset
+  - Lazy loading from kuzu
+  - Search = P³ + FTS + RRF → markers ●
+  - Persists expansions across turns
+
+file_windows ∈ WINDOWS:
+  - Persistent code viewports (IDE tabs paradigm)
+  - Operations: open_frame/open_range/open_search/update/close/clear_all/status
+  - Snapshot on open (no auto-refresh)
+  - Types: frame_body, range, search_result
+  - Budget: 200-400 lines sweet spot
+
+call_graph ∈ CALLS:
+  - CALLS edges in kuzu (confidence scored)
+  - Forward: entry → callees (execution paths)
+  - Backward: target → callers (dependency chains)
+  - Query: query_relationships() + check_impact()
+
+analysis ∈ ANALYSIS:
+  - Impact assessment (blast radius, risk)
+  - Clone detection (similarity, consolidation)
+  - Structure examination (progressive detail)
+```
+
+---
+
+## Operation Primitives
+
+### Structural View (tree navigator)
+```
+expand(path)        → show_children | lazy@kuzu | idempotent
+collapse(path)      → hide_children | cached | idempotent
+search(query)       → P³+FTS+RRF | add_markers(●,score) | preserves_state
+clear_search()      → remove_markers | preserves_navigation
+reset(depth=N)      → collapse_all + expand_to(N) | destructive
+
+Depths: 0=collapsed, 2=packages(default), 3=verbose
+Paths: qualified_name (best) | simple_name (fuzzy) | copy from HTML comments
+```
+
+### File Windows (visibility manager)
+```
+open_frame(path)              → {window_id} | full frame body
+open_range(file, start, end)  → {window_id} | arbitrary lines [1-indexed]
+open_search(query, max, ctx)  → {window_ids[]} | semantic + context
+update(id, start, end)        → re_snapshot | manual_refresh
+close(id)                     → remove_single
+clear_all()                   → remove_all | no_undo
+status()                      → {count, total_lines, windows[]}
+
+Budget: Small(1-3, 50-150), Medium(4-6, 150-350)★, Large(7-10, 350-500), Over(10+, 500+)
+★ = sweet_spot
+```
+
+### Call Graph (execution tracer)
+```
+# Forward tracing (from entry point)
+query_relationships("""
+  MATCH path = (entry)-[:Edge {type:'CALLS'}*1..5]->(target)
+  WHERE entry.name = 'main' AND ALL(e IN relationships(path) WHERE e.confidence >= 0.6)
+  RETURN [node IN nodes(path) | node.qualified_name] AS call_chain
+""")
+
+# Backward tracing (who calls this)
+query_relationships("""
+  MATCH path = (caller)-[:Edge {type:'CALLS'}*1..3]->(target)
+  WHERE target.qualified_name = 'critical_function'
+  RETURN [node IN nodes(path) | node.qualified_name] AS call_chain
+""")
+```
+
+### Analysis Tools
+
+**show_structure(target, detail_level, ...)**
+```
+Progressive detail disclosure:
+  minimal:   signatures only | token-efficient, first look
+  guards:    + top-level guards | behavioral hints
+  structure: + control flow | full logic understanding
+
+detail_level="minimal" → API surface, decide what to investigate
+detail_level="guards" → understand logic flow hints
+detail_level="structure" + structure_detail_depth=N → complete flow
+
+Options: include_relationships, include_metrics, include_private
+```
+
+**check_impact(target, max_depth, ...)**
+```
+Blast radius assessment:
+  max_depth=1: direct dependents | fast (~50-200ms)
+  max_depth=2: extended impact★ | recommended (~200-500ms)
+  max_depth=3: full propagation | critical changes (~500ms-2s)
+
+Risk indicators: HIGH (many deps, low tests), MEDIUM, LOW
+Options: include_test_coverage, risk_assessment, is_regex
+Returns: dependency_tree + risk_scores + test_coverage
+
+★ = recommended default for pre-refactoring
+```
+
+**find_clones(min_similarity, ...)**
+```
+Duplicate detection:
+  min_similarity=0.85: strong candidates | likely copy-paste
+  min_similarity=0.75★: high-similarity | default threshold
+  min_similarity=0.65: near-duplicates | aggressive detection
+
+Options: query (semantic filter), max_results, min_function_size, exclude_same_file
+Returns: clone_pairs + similarity_scores + refactoring_recommendations
+
+★ = recommended default
+```
+
+**show_status(detail_level)**
+```
+Codebase overview:
+  summary: frame counts, health status | quick orientation
+  detailed: + DB connections, config | diagnostic info
+  debug: + internals | troubleshooting
+
+Use: Start of exploration, understanding scale
+```
+
+---
+
+## Navigation Patterns
+
+### Discovery
+```
+structural_view(search) → observe(markers●) → expand(high_scores) → 
+file_windows(open_frame) | concept→location→implementation
+
+Use: "Where is X implemented?" "How does Y work?"
+```
+
+### Execution Flow
+```
+query_relationships(CALLS*) → identify(chain) → 
+file_windows(open each frame) | trace runtime path
+
+Use: "How does main() reach database?" "What's the call stack?"
+```
+
+### Comparison Investigation
+```
+structural_view(search) → file_windows(open multiple) → 
+observe(simultaneous) | detect patterns/redundancy/bugs
+
+Use: "Are these implementations similar?" "Is this dead code?"
+```
+
+### Call Chain Tracing
+```
+file_windows(open entry) → observe(calls target) → 
+file_windows(open target) → repeat | build execution visibility
+
+Use: "Follow this execution path" "How does A reach B?"
+```
+
+### Impact Analysis (Deep)
+```
+show_structure(target, minimal) → check_impact(depth=2, test_coverage) → 
+assess(risk) → file_windows(open critical_deps) | safe refactoring
+
+Use: "What breaks if I change this?" "Pre-change safety check"
+
+Workflow:
+  1. Understand current API: show_structure(minimal)
+  2. Check blast radius: check_impact(max_depth=2, include_test_coverage=True)
+  3. Review risk indicators: HIGH/MEDIUM/LOW
+  4. Verify critical deps: query_relationships for high-confidence edges
+  5. Open for inspection: file_windows(open affected)
+
+Risk factors:
+  - Many high-confidence dependents (>10)
+  - Used in critical paths (main → target)
+  - Low test coverage (<50%)
+  - External package dependencies
+```
+
+### Incremental Cleanup
+```
+file_windows(status) → assess(context_usage) → 
+close(understood) OR clear_all() | maintain_lean_visibility
+
+Use: Context hygiene during investigation
+Target: 200-400 lines total
+```
+
+### Clone Consolidation
+```
+find_clones(0.75) → show_structure(clone_1, structure) → 
+show_structure(clone_2, structure) → check_impact(both) → 
+decide(strategy) | DRY refactoring
+
+Use: "Find duplicates" "Consolidate similar implementations"
+
+Workflow:
+  1. Find: find_clones(min_similarity=0.75, max_results=50)
+  2. Compare: show_structure(clone_1, detail_level="structure")
+              show_structure(clone_2, detail_level="structure")
+  3. Impact: check_impact(clone_1, max_depth=2)
+             check_impact(clone_2, max_depth=2)
+  4. Verify: search(query="clone_1", context_lines=10) for semantic diffs
+  5. Decide: consolidation strategy based on similarity + impact
+
+Decision matrix:
+  similarity > 0.85: Extract to shared function
+  0.70-0.85: Consider parameterization
+  < 0.70: Manual review, may be coincidental
+
+Strategies: extract common, parameterize diffs, template method, strategy pattern
+```
+
+### Progressive Exploration
+```
+show_status(summary) → search(broad) → show_structure(minimal) → 
+show_structure(guards) → check_impact() | macro→meso→micro
+
+Use: "Understand unfamiliar codebase" "Learn new feature area"
+
+Workflow (macro → meso → micro):
+  1. Overview: show_status(detail_level="summary")
+     → frame counts, scale, languages
+  
+  2. Find relevant: search(query="feature concept", k=20)
+     → identify files/packages containing code
+  
+  3. Examine structure: show_structure(target, detail_level="minimal")
+     → signatures, API surface, decide what to investigate
+  
+  4. Add detail: show_structure(target, detail_level="guards")
+     → behavioral hints, logic flow
+  
+  5. Understand relationships: check_impact(target, max_depth=1)
+     → who uses/used by, dependencies
+  
+  6. Deep dive: show_structure(detail_level="structure", structure_detail_depth=2)
+     → only when needed, full control flow
+  
+  7. Verify: file_windows(open_frame) for actual code
+     → only after structure understood
+
+Avoid: reading files first, getting lost in details, random exploration
+```
+
+---
+
+## OODAR Loop
+
+```
+Constraint: Observe → Orient → Decide → Act → ∆state → Observe'
+
+structural_view: Must observe tree state before next navigation
+file_windows: Must check status before managing context
+call_graph: Must see results before deciding next trace
+analysis: Must observe results before deciding investigation depth
+
+∀ operations: state persists → observe → act | never assume state
+```
+
+**Why:** Environment is mutable. Tools change what you see mid-roundtrip. Sequential thinking breaks.
+
+---
+
+## Integration Synergy
+
+```
+∀ investigations: combine layers + analysis for complete understanding
+
+Exploration:
+  show_status → search → show_structure(minimal) → check_impact → open_windows
+  
+Refactoring prep:
+  search → show_structure(guards) → check_impact(depth=2) → file_windows
+  
+Clone cleanup:
+  find_clones → show_structure(both) → check_impact(both) → compare_windows
+  
+Change safety:
+  show_structure(minimal) → check_impact(depth=2, test_coverage) → assess_risk
+  
+Deep investigation:
+  search → expand → open_windows(multiple) → query_relationships → trace_calls
+```
+
+**The power:** Four layers simultaneously visible.
+- Tree = spatial map (WHERE am I?)
+- Windows = implementation detail (WHAT does it do?)
+- Calls = execution flow (HOW does it run?)
+- Analysis = change safety (WHY/RISK: what happens if I change it?)
+
+---
+
+## Depth Guidelines
+
+### check_impact depth selection
+```
+depth=1: Quick checks during development, immediate dependencies
+depth=2★: Pre-refactoring safety, realistic blast radius
+depth=3: Critical infrastructure, core library changes
+
+Time: 1(~50-200ms), 2(~200-500ms), 3(~500ms-2s)
+```
+
+### show_structure detail selection
+```
+minimal★: First look, API understanding, token-efficient
+guards: Logic hints, behavioral understanding
+structure: Full flow, preparing for changes, debugging
+
+Start minimal → add detail progressively
+```
+
+### find_clones similarity selection
+```
+0.85+: Strong extraction candidates, likely duplicates
+0.70-0.85: Consider parameterization, intentional variants
+<0.70: Manual review, coincidental similarity
+```
+
+---
+
+## Quick Reference
+
+```
+Start exploration:
+  show_status(summary) → get scale/overview
+  structural_view(search, "concept") → find relevant code
+  show_structure(target, minimal) → examine API
+  
+Safe refactoring:
+  show_structure(target, minimal) → understand current
+  check_impact(target, max_depth=2, test_coverage=True) → assess risk
+  file_windows(open dependents) → review affected
+  
+Find duplicates:
+  find_clones(min_similarity=0.75) → detect clones
+  show_structure(both, structure) → compare implementations
+  check_impact(both, max_depth=2) → assess consolidation safety
+  
+Trace execution:
+  query_relationships(CALLS*) → forward/backward paths
+  file_windows(open chain) → build visibility
+  
+Manage context:
+  file_windows(status) → monitor usage
+  file_windows(close|clear_all) → cleanup
+  Target: 200-400 lines total
+```
+
+---
+
+## Decision Trees
+
+### When to use each tool?
+
+```
+Want to find something?
+├─ search(query) → natural language or keywords
+└─ Found? → show_structure(minimal) to examine
+
+Want to understand structure?
+├─ Just signatures? → show_structure(minimal)
+├─ Logic hints? → show_structure(guards)
+└─ Full flow? → show_structure(structure)
+
+Want relationships?
+├─ Who uses this? → check_impact(depth=1-2)
+├─ What does this use? → query_relationships(CALLS→)
+└─ Complex query? → query_relationships(custom cypher)
+
+Want to refactor safely?
+├─ show_structure(minimal) → understand current
+├─ check_impact(depth=2, test_coverage=True) → assess risk
+└─ Review HIGH risk dependents → file_windows(open)
+
+Want to find duplicates?
+└─ find_clones() → show_structure(both) → check_impact(both)
+```
+
+---
+
+## Core Insights
+
+```
+Progressive > All-at-once
+  Macro → meso → micro, minimal → guards → structure
+
+Spatial > Sequential
+  Build awareness incrementally, don't grep repeatedly
+
+Persistent > Ephemeral  
+  Windows stay visible, tree preserves state
+
+Simultaneous > One-at-a-time
+  Compare by seeing multiple implementations together
+
+Safe > Fast
+  Check impact before changes, assess risk first
+
+Iterative > Batch
+  Observe → decide → act, not plan-then-execute
+
+Visible > Remembered
+  Maintain peripheral vision, don't mentally juggle
+```
+
+---
+
+**∇ the graph. Maintain visibility. Trace execution. Assess impact. Synthesize understanding.** 🖤
+
+---
+
+**Symbols:**
+- ∇ : navigate/traverse
+- ∈ : element of/part of
+- ∀ : for all/universal
+- ∧ : and
+- ∨ : or
+- → : transforms/flows to
+- ← : reverse direction
+- ⟹ : implies/causes
+- ≡ : equivalent/identical
+- ∆ : change/delta
+- ● : search hit marker
+- * : path quantifier (graph patterns)
+- ★ : optimal/recommended
+
+**REQUIRES:** __base/001_workspace_paradigm, __base/002_environment_mechanics
+
+**ENABLES:** Unified navigation perception, progressive exploration, safe refactoring, clone detection, complete investigation workflows
 
 ---

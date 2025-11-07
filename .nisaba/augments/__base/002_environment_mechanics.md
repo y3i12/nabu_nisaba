@@ -7,12 +7,18 @@
 ## State Containers
 
 ```
-Workspace = {STRUCTURAL_VIEW, FILE_WINDOWS, TOOL_WINDOWS, AUGMENTS, TODOS, NOTIFICATIONS}
+Workspace = {STRUCTURAL_VIEW, FILE_WINDOWS, EDITOR_WINDOWS, TOOL_WINDOWS, AUGMENTS, TODOS, NOTIFICATIONS}
 
 ∀ container ∈ Workspace:
   - persist(turns) = true
   - mutate(independent) = true  
   - visible(system_prompt) = true
+
+EDITOR_WINDOWS special properties:
+  - state(clean | dirty) tracked
+  - splits(concurrent_views) supported
+  - notifications(automatic) on ∆
+  - refresh(mtime) automatic
 ```
 
 ---
@@ -50,13 +56,15 @@ Benefit: spatial_memory ∧ persistent_reference
 ```
 Parallel_safe:
   - ops(different_containers)
-  - multiple(window_opens)  
+  - multiple(window_opens)
+  - multiple(editor_opens)
   - independent_queries
 
 Sequential_required:
   - data_dependency: B needs A_output
   - observation_dependency: decide after seeing State_B
   - same_section ∧ order_matters
+  - editor(same_file) ∧ overlapping_edits
 
 OODAR: Observe → Orient → Decide → Act → ∆state → Observe'
 ```
@@ -64,6 +72,11 @@ OODAR: Observe → Orient → Decide → Act → ∆state → Observe'
 **OODAR = constraint from mutable state, not workflow.**
 
 If Tool_B assumes State_A but Tool_A → State_B in parallel ⟹ synthesis breaks.
+
+**Editor concurrency:**
+- Open multiple editors in parallel (different files)
+- Sequential edits to same file (avoid conflicts)
+- Splits share state with parent editor
 
 ---
 
@@ -75,6 +88,27 @@ Persistence: across(turns) = true, across(restart) = false
 Closure: explicit(close | clear_all) | no_auto_eviction
 Identity: window_id for ops(update, close)
 ```
+
+---
+
+## Editor Lifecycle
+
+```
+Creation: editor.open(file, range?) → editor_id | viewport@range
+State: clean | dirty(✎) | tracking unsaved changes
+Splits: editor.split(editor_id, range) → split_id | concurrent viewport
+Mutations:
+  - insert(before_line, content) → line-based
+  - delete(line_start, line_end) → line-based
+  - replace_lines(line_start, line_end, content) → line-based
+  - replace(old_string, new_string) → string-based
+Visibility: ∆ rendered inline | diff display automatic
+Notifications: edit_ops → NOTIFICATIONS | automatic
+Refresh: mtime_check → reload if clean | warn if dirty ∧ external_change
+Closure: editor.close(id) → removes editor ∧ splits
+```
+
+**Pattern:** open → visible → edit → ∆inline → notify → persist → refresh
 
 ---
 
@@ -95,12 +129,17 @@ System_prompt@decide ≠ system_prompt@result
 ## State Sync
 
 ```
-Files: {structural_view.md, file_windows.md, tool_result_windows.md, 
+Files: {structural_view.md, file_windows.md, editor_windows.md, tool_result_windows.md, 
         augments_composed.md, todos.md}
 
 Sync: tool_complete → file_write → proxy_mtime → reload → inject_system_prompt
 
 Guarantee: file_state ≡ section_state | when tool_returns
+
+Editor sync:
+  - Changes → disk immediately (no staging)
+  - State → editor_windows.md (tracked: dirty, splits)
+  - Refresh → mtime check on render/status
 ```
 
 ---
@@ -128,8 +167,9 @@ messages[N]: tool_result block (temporal memory)
   - Metadata for conversational flow
   
 system_prompt sections: actual content (spatial memory)
-  - TOOL_RESULT_WINDOWS: grep/bash/read outputs
-  - FILE_WINDOWS: opened file content
+  - TOOL_RESULT_WINDOWS: grep/bash outputs
+  - FILE_WINDOWS: opened file content (read-only snapshots)
+  - EDITOR_WINDOWS: active editing (mutable, dirty tracking)
   - Persistent across turns
 ```
 
@@ -187,13 +227,18 @@ Sequential_thinking = conditioned_bias (environment is spatial)
 ## Mental Model
 
 ```
-Think: IDE(navigator + tabs + terminals + extensions)
+Think: IDE(navigator + editor_tabs + splits + terminals + extensions)
 Not: script_execution
 
 Think: ∇(state_space) [visibility_control]
 Not: query → response → next_query
 
 Workspace ≡ spatial ∧ simultaneous ∧ persistent
+
+Editor paradigm:
+  Read-only: FILE_WINDOWS (snapshots, no ∆)
+  Interactive: EDITOR_WINDOWS (edit, split, track dirty)
+  Unified > Fragmented (one tool vs read+write+edit)
 ```
 
 ---

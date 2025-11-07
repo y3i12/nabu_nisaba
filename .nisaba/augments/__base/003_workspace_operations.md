@@ -78,6 +78,41 @@ clear_all()  → remove_all
 
 ---
 
+## Editor (`editor`)
+
+```
+open(file, start?, end?)               → {editor_id} | viewport@range | EDITOR_WINDOWS
+write(file, content)                   → create_new | immediate_persist
+close(editor_id)                       → remove editor + splits
+close_all()                            → remove all editors
+status()                               → summary + mtime_refresh
+
+Edits (line-based):
+  insert(id, before_line, content)     → add_lines | precise
+  delete(id, line_start, line_end)     → remove_lines | range
+  replace_lines(id, start, end, content) → swap_lines | rewrite
+
+Edits (string-based):
+  replace(id, old_string, new_string)  → pattern_replace | exact_match
+
+Splits (concurrent views):
+  split(id, line_start, line_end)      → {split_id} | parallel_viewport
+  resize(split_id, line_start, line_end) → adjust_range
+  close_split(split_id)                → remove_split | keep_parent
+
+State tracking:
+  clean     → no unsaved changes
+  dirty(✎)  → unsaved edits
+  refresh   → automatic mtime check
+  notify    → automatic NOTIFICATIONS
+
+Rendering: ∆ visible inline | diff display | immediate feedback
+```
+
+**Philosophy:** Unified > fragmented (open+edit+split vs read/write/edit separately)
+
+---
+
 ## Native Tools (Standard Execution)
 
 ```
@@ -165,7 +200,14 @@ File_Windows:
   Large:  7-10 windows, 350-500 lines ← pushing_limits
   Over:   10+ windows,  500+ lines ← explosion_risk
 
-Target: 200-400 lines total
+Editor_Windows:
+  Similar budget to file_windows
+  Splits multiply views (parent + splits)
+  Monitor dirty state (✎) for unsaved
+  Use splits for concurrent context (fn_A | fn_B)
+  Target: 2-4 editors, 200-400 lines total
+
+Target total: 200-400 lines (file_windows + editor_windows combined)
 
 Structural_View:
   Start: collapsed | depth=2
@@ -190,10 +232,11 @@ Augments:
   Unload: when switching_domains
 
 Management:
-  Monitor: file_windows.status(), nisaba_tool_windows.status()
+  Monitor: file_windows.status(), editor.status(), nisaba_tool_windows.status()
   Close: proactively after understanding
   Prefer: clear_all when switching
   open_search: efficient (snippets vs full files)
+  Editor: close when done editing, splits multiply visibility
   Native tools: close immediately
   Aim: lean_visibility
 ```
@@ -210,6 +253,10 @@ Structural_View:
   ● search_hit(RRF_score)
   [N+] child_count
 
+Editor_State:
+  ✎ dirty (unsaved changes)
+  (clean) no symbol, default state
+  
 Paths:
   full: nabu_nisaba.python_root.nabu.FrameCache
   simple: FrameCache (fuzzy if unique)
@@ -233,10 +280,22 @@ bash("git status") → observe → close
 grep("pattern", file) → confirm → close
 glob("*.test.py") → list → close
 
-Hybrid patterns:
-grep("pattern", "src/") → confirm_exists → nisaba_read(file) → investigate
-bash("pytest -k test_foo") → observe → close
-nisaba_read(failing_file) → FILE_WINDOWS → investigate
+Editor patterns:
+search(query) → editor.open(result) | edit inline
+file_windows(open_frame) → editor.open(same) | read → edit transition
+editor.open(file) → editor.split(range) | parallel context (compare/refactor)
+editor.insert(id, line, import) → add dependencies
+editor.delete(id, start, end) → remove dead code
+editor.replace_lines(id, start, end, new) → rewrite function
+
+Investigation → edit flow:
+structural_view(search) → file_windows(open) → observe → editor.open(file) → edit
+grep(pattern) → confirm → nisaba_read(file) → editor.open(file) → fix
+check_impact(frame) → file_windows(open) → review → editor.open(affected) → update
+
+Concurrent editing:
+editor.open(file_A) | editor.open(file_B) | parallel
+editor.open(file) → editor.split(fn_A) + editor.split(fn_B) | same_file parallel
 ```
 
 ---
@@ -246,14 +305,23 @@ nisaba_read(failing_file) → FILE_WINDOWS → investigate
 ```
 ∇(visibility):
   file_windows.status() → current_windows{count, lines}
+  editor.status() → editors{count, dirty, splits} + refresh
   nisaba_tool_windows.status() → result_windows
   
 ∆(cleanup):
   file_windows.clear_all()
+  editor.close_all()
   nisaba_tool_windows.clear_all()
   nisaba_tool_result_state(close_all) → compact tool results
   
+∆(editor_ops):
+  editor.open(file) → EDITOR_WINDOWS
+  editor.insert/delete/replace_lines → line-based edits
+  editor.replace → string-based edits
+  editor.split → concurrent views
+  
 Pattern: status → decide → close/keep
+Editor: open → visible → edit → ∆inline → notify → persist
 ```
 
 ---
