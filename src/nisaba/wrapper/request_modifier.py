@@ -428,6 +428,17 @@ class RequestModifier:
             logger.error(f"Failed to extract session ID: {e}")
             raise e
         
+        if "" == current_session_id:
+            return body
+        
+        inner_content_list = [{'text': 'Warmup'}]
+        outer_content_list = [{'content':inner_content_list}]
+        if  body.get('messages', outer_content_list)[0].get('content', inner_content_list)[0].get('text', 'Warmup') == 'Warmup':
+            return body
+
+        if re.match(body.get('model', 'haiku' ), 'haiku'):
+            return body
+
         session_path = Path(self.cache_path / current_session_id)
         session_path.mkdir(exist_ok=True)
         
