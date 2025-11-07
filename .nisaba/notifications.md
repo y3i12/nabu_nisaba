@@ -1,2 +1,2 @@
 Recent activity:
-✓ mcp__nisaba__nisaba_tool_result_state() → ok
+✓ mcp__nisaba__activate_augments() → ok

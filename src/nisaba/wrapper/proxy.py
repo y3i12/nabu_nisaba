@@ -640,6 +640,7 @@ class AugmentInjector:
         base_tokens += self._estimate_tokens(self.notifications_cache.load())
 
         tool_ref_tokens = self._estimate_tokens(json.dumps(body.get('tools', [])))
+        editor_tokens = self._estimate_tokens(self.editor_windows_cache.load())
         augment_tokens = self._estimate_tokens(self.augments_cache.load())
         structural_view_tokens = self._estimate_tokens(self.structural_view_cache.load())
         file_windows_tokens = self._estimate_tokens(self.file_windows_cache.load())

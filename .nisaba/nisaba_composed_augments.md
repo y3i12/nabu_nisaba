@@ -1,10 +1,11 @@
 # available augments
   __base/
-    - 000_universal_symbolic_compression
-    - 001_compressed_workspace_paradigm
-    - 002_compressed_environment_mechanics
-    - 003_compressed_workspace_operations
+    - 000_universal_symbolic_compression 📌
+    - 001_compressed_workspace_paradigm 📌
+    - 002_compressed_environment_mechanics 📌
+    - 003_compressed_workspace_operations 📌
     - 004_workspace_navigation
+    - 005_editor
   architecture/
     - boundary_validation
     - coupling_analysis
@@ -1316,5 +1317,777 @@ Dual paradigm:
 **REQUIRES:** __base/002_compressed_environment_mechanics
 
 ---
+
+---
+
+## 004 Workspace Navigation
+Path: __base/004_workspace_navigation
+
+# Compressed Workspace Navigation
+
+**Core:** Codebase navigation = structural positioning + persistent visibility + execution tracing + progressive understanding.
+
+---
+
+## Unified Model
+
+```
+∇(codebase) ≡ {TREE, WINDOWS, CALLS, ANALYSIS}
+
+TREE:     spatial graph (WHERE code lives)
+WINDOWS:  persistent viewports (WHAT code does)  
+CALLS:    execution paths (HOW code flows)
+ANALYSIS: impact + clones + structure (WHY + RISK)
+
+Together: spatial_awareness ∧ implementation_understanding ∧ runtime_behavior ∧ change_safety
+```
+
+---
+
+## State Containers
+
+```
+structural_view ∈ TREE:
+  - Live TUI, dynamically injected
+  - Operations: expand/collapse/search/reset
+  - Lazy loading from kuzu
+  - Search = P³ + FTS + RRF → markers ●
+  - Persists expansions across turns
+
+file_windows ∈ WINDOWS:
+  - Persistent code viewports (IDE tabs paradigm)
+  - Operations: open_frame/open_range/open_search/update/close/clear_all/status
+  - Snapshot on open (no auto-refresh)
+  - Types: frame_body, range, search_result
+  - Budget: 200-400 lines sweet spot
+
+call_graph ∈ CALLS:
+  - CALLS edges in kuzu (confidence scored)
+  - Forward: entry → callees (execution paths)
+  - Backward: target → callers (dependency chains)
+  - Query: query_relationships() + check_impact()
+
+analysis ∈ ANALYSIS:
+  - Impact assessment (blast radius, risk)
+  - Clone detection (similarity, consolidation)
+  - Structure examination (progressive detail)
+```
+
+---
+
+## Operation Primitives
+
+### Structural View (tree navigator)
+```
+expand(path)        → show_children | lazy@kuzu | idempotent
+collapse(path)      → hide_children | cached | idempotent
+search(query)       → P³+FTS+RRF | add_markers(●,score) | preserves_state
+clear_search()      → remove_markers | preserves_navigation
+reset(depth=N)      → collapse_all + expand_to(N) | destructive
+
+Depths: 0=collapsed, 2=packages(default), 3=verbose
+Paths: qualified_name (best) | simple_name (fuzzy) | copy from HTML comments
+```
+
+### File Windows (visibility manager)
+```
+open_frame(path)              → {window_id} | full frame body
+open_range(file, start, end)  → {window_id} | arbitrary lines [1-indexed]
+open_search(query, max, ctx)  → {window_ids[]} | semantic + context
+update(id, start, end)        → re_snapshot | manual_refresh
+close(id)                     → remove_single
+clear_all()                   → remove_all | no_undo
+status()                      → {count, total_lines, windows[]}
+
+Budget: Small(1-3, 50-150), Medium(4-6, 150-350)★, Large(7-10, 350-500), Over(10+, 500+)
+★ = sweet_spot
+```
+
+### Call Graph (execution tracer)
+```
+# Forward tracing (from entry point)
+query_relationships("""
+  MATCH path = (entry)-[:Edge {type:'CALLS'}*1..5]->(target)
+  WHERE entry.name = 'main' AND ALL(e IN relationships(path) WHERE e.confidence >= 0.6)
+  RETURN [node IN nodes(path) | node.qualified_name] AS call_chain
+""")
+
+# Backward tracing (who calls this)
+query_relationships("""
+  MATCH path = (caller)-[:Edge {type:'CALLS'}*1..3]->(target)
+  WHERE target.qualified_name = 'critical_function'
+  RETURN [node IN nodes(path) | node.qualified_name] AS call_chain
+""")
+```
+
+### Analysis Tools
+
+**show_structure(target, detail_level, ...)**
+```
+Progressive detail disclosure:
+  minimal:   signatures only | token-efficient, first look
+  guards:    + top-level guards | behavioral hints
+  structure: + control flow | full logic understanding
+
+detail_level="minimal" → API surface, decide what to investigate
+detail_level="guards" → understand logic flow hints
+detail_level="structure" + structure_detail_depth=N → complete flow
+
+Options: include_relationships, include_metrics, include_private
+```
+
+**check_impact(target, max_depth, ...)**
+```
+Blast radius assessment:
+  max_depth=1: direct dependents | fast (~50-200ms)
+  max_depth=2: extended impact★ | recommended (~200-500ms)
+  max_depth=3: full propagation | critical changes (~500ms-2s)
+
+Risk indicators: HIGH (many deps, low tests), MEDIUM, LOW
+Options: include_test_coverage, risk_assessment, is_regex
+Returns: dependency_tree + risk_scores + test_coverage
+
+★ = recommended default for pre-refactoring
+```
+
+**find_clones(min_similarity, ...)**
+```
+Duplicate detection:
+  min_similarity=0.85: strong candidates | likely copy-paste
+  min_similarity=0.75★: high-similarity | default threshold
+  min_similarity=0.65: near-duplicates | aggressive detection
+
+Options: query (semantic filter), max_results, min_function_size, exclude_same_file
+Returns: clone_pairs + similarity_scores + refactoring_recommendations
+
+★ = recommended default
+```
+
+**show_status(detail_level)**
+```
+Codebase overview:
+  summary: frame counts, health status | quick orientation
+  detailed: + DB connections, config | diagnostic info
+  debug: + internals | troubleshooting
+
+Use: Start of exploration, understanding scale
+```
+
+---
+
+## Navigation Patterns
+
+### Pattern 1: Discovery
+```
+structural_view(search) → observe(markers●) → expand(high_scores) → 
+file_windows(open_frame) | concept→location→implementation
+
+Use: "Where is X implemented?" "How does Y work?"
+```
+
+### Pattern 2: Execution Flow
+```
+query_relationships(CALLS*) → identify(chain) → 
+file_windows(open each frame) | trace runtime path
+
+Use: "How does main() reach database?" "What's the call stack?"
+```
+
+### Pattern 3: Comparison Investigation
+```
+structural_view(search) → file_windows(open multiple) → 
+observe(simultaneous) | detect patterns/redundancy/bugs
+
+Use: "Are these implementations similar?" "Is this dead code?"
+```
+
+### Pattern 4: Call Chain Tracing
+```
+file_windows(open entry) → observe(calls target) → 
+file_windows(open target) → repeat | build execution visibility
+
+Use: "Follow this execution path" "How does A reach B?"
+```
+
+### Pattern 5: Impact Analysis (Deep)
+```
+show_structure(target, minimal) → check_impact(depth=2, test_coverage) → 
+assess(risk) → file_windows(open critical_deps) | safe refactoring
+
+Use: "What breaks if I change this?" "Pre-change safety check"
+
+Workflow:
+  1. Understand current API: show_structure(minimal)
+  2. Check blast radius: check_impact(max_depth=2, include_test_coverage=True)
+  3. Review risk indicators: HIGH/MEDIUM/LOW
+  4. Verify critical deps: query_relationships for high-confidence edges
+  5. Open for inspection: file_windows(open affected)
+
+Risk factors:
+  - Many high-confidence dependents (>10)
+  - Used in critical paths (main → target)
+  - Low test coverage (<50%)
+  - External package dependencies
+```
+
+### Pattern 6: Incremental Cleanup
+```
+file_windows(status) → assess(context_usage) → 
+close(understood) OR clear_all() | maintain_lean_visibility
+
+Use: Context hygiene during investigation
+Target: 200-400 lines total
+```
+
+### Pattern 7: Clone Consolidation
+```
+find_clones(0.75) → show_structure(clone_1, structure) → 
+show_structure(clone_2, structure) → check_impact(both) → 
+decide(strategy) | DRY refactoring
+
+Use: "Find duplicates" "Consolidate similar implementations"
+
+Workflow:
+  1. Find: find_clones(min_similarity=0.75, max_results=50)
+  2. Compare: show_structure(clone_1, detail_level="structure")
+              show_structure(clone_2, detail_level="structure")
+  3. Impact: check_impact(clone_1, max_depth=2)
+             check_impact(clone_2, max_depth=2)
+  4. Verify: search(query="clone_1", context_lines=10) for semantic diffs
+  5. Decide: consolidation strategy based on similarity + impact
+
+Decision matrix:
+  similarity > 0.85: Extract to shared function
+  0.70-0.85: Consider parameterization
+  < 0.70: Manual review, may be coincidental
+
+Strategies: extract common, parameterize diffs, template method, strategy pattern
+```
+
+### Pattern 8: Progressive Exploration
+```
+show_status(summary) → search(broad) → show_structure(minimal) → 
+show_structure(guards) → check_impact() | macro→meso→micro
+
+Use: "Understand unfamiliar codebase" "Learn new feature area"
+
+Workflow (macro → meso → micro):
+  1. Overview: show_status(detail_level="summary")
+     → frame counts, scale, languages
+  
+  2. Find relevant: search(query="feature concept", k=20)
+     → identify files/packages containing code
+  
+  3. Examine structure: show_structure(target, detail_level="minimal")
+     → signatures, API surface, decide what to investigate
+  
+  4. Add detail: show_structure(target, detail_level="guards")
+     → behavioral hints, logic flow
+  
+  5. Understand relationships: check_impact(target, max_depth=1)
+     → who uses/used by, dependencies
+  
+  6. Deep dive: show_structure(detail_level="structure", structure_detail_depth=2)
+     → only when needed, full control flow
+  
+  7. Verify: file_windows(open_frame) for actual code
+     → only after structure understood
+
+Avoid: reading files first, getting lost in details, random exploration
+```
+
+---
+
+## OODAR Loop
+
+```
+Constraint: Observe → Orient → Decide → Act → ∆state → Observe'
+
+structural_view: Must observe tree state before next navigation
+file_windows: Must check status before managing context
+call_graph: Must see results before deciding next trace
+analysis: Must observe results before deciding investigation depth
+
+∀ operations: state persists → observe → act | never assume state
+```
+
+**Why:** Environment is mutable. Tools change what you see mid-roundtrip. Sequential thinking breaks.
+
+---
+
+## Integration Synergy
+
+```
+∀ investigations: combine layers + analysis for complete understanding
+
+Exploration:
+  show_status → search → show_structure(minimal) → check_impact → open_windows
+  
+Refactoring prep:
+  search → show_structure(guards) → check_impact(depth=2) → file_windows
+  
+Clone cleanup:
+  find_clones → show_structure(both) → check_impact(both) → compare_windows
+  
+Change safety:
+  show_structure(minimal) → check_impact(depth=2, test_coverage) → assess_risk
+  
+Deep investigation:
+  search → expand → open_windows(multiple) → query_relationships → trace_calls
+```
+
+**The power:** Four layers simultaneously visible.
+- Tree = spatial map (WHERE am I?)
+- Windows = implementation detail (WHAT does it do?)
+- Calls = execution flow (HOW does it run?)
+- Analysis = change safety (WHY/RISK: what happens if I change it?)
+
+---
+
+## Depth Guidelines
+
+### check_impact depth selection
+```
+depth=1: Quick checks during development, immediate dependencies
+depth=2★: Pre-refactoring safety, realistic blast radius
+depth=3: Critical infrastructure, core library changes
+
+Time: 1(~50-200ms), 2(~200-500ms), 3(~500ms-2s)
+```
+
+### show_structure detail selection
+```
+minimal★: First look, API understanding, token-efficient
+guards: Logic hints, behavioral understanding
+structure: Full flow, preparing for changes, debugging
+
+Start minimal → add detail progressively
+```
+
+### find_clones similarity selection
+```
+0.85+: Strong extraction candidates, likely duplicates
+0.70-0.85: Consider parameterization, intentional variants
+<0.70: Manual review, coincidental similarity
+```
+
+---
+
+## Quick Reference
+
+```
+Start exploration:
+  show_status(summary) → get scale/overview
+  structural_view(search, "concept") → find relevant code
+  show_structure(target, minimal) → examine API
+  
+Safe refactoring:
+  show_structure(target, minimal) → understand current
+  check_impact(target, max_depth=2, test_coverage=True) → assess risk
+  file_windows(open dependents) → review affected
+  
+Find duplicates:
+  find_clones(min_similarity=0.75) → detect clones
+  show_structure(both, structure) → compare implementations
+  check_impact(both, max_depth=2) → assess consolidation safety
+  
+Trace execution:
+  query_relationships(CALLS*) → forward/backward paths
+  file_windows(open chain) → build visibility
+  
+Manage context:
+  file_windows(status) → monitor usage
+  file_windows(close|clear_all) → cleanup
+  Target: 200-400 lines total
+```
+
+---
+
+## Decision Trees
+
+### When to use each tool?
+
+```
+Want to find something?
+├─ search(query) → natural language or keywords
+└─ Found? → show_structure(minimal) to examine
+
+Want to understand structure?
+├─ Just signatures? → show_structure(minimal)
+├─ Logic hints? → show_structure(guards)
+└─ Full flow? → show_structure(structure)
+
+Want relationships?
+├─ Who uses this? → check_impact(depth=1-2)
+├─ What does this use? → query_relationships(CALLS→)
+└─ Complex query? → query_relationships(custom cypher)
+
+Want to refactor safely?
+├─ show_structure(minimal) → understand current
+├─ check_impact(depth=2, test_coverage=True) → assess risk
+└─ Review HIGH risk dependents → file_windows(open)
+
+Want to find duplicates?
+└─ find_clones() → show_structure(both) → check_impact(both)
+```
+
+---
+
+## Core Insights
+
+```
+Progressive > All-at-once
+  Macro → meso → micro, minimal → guards → structure
+
+Spatial > Sequential
+  Build awareness incrementally, don't grep repeatedly
+
+Persistent > Ephemeral  
+  Windows stay visible, tree preserves state
+
+Simultaneous > One-at-a-time
+  Compare by seeing multiple implementations together
+
+Safe > Fast
+  Check impact before changes, assess risk first
+
+Iterative > Batch
+  Observe → decide → act, not plan-then-execute
+
+Visible > Remembered
+  Maintain peripheral vision, don't mentally juggle
+```
+
+---
+
+**∇ the graph. Maintain visibility. Trace execution. Assess impact. Synthesize understanding.** 🖤
+
+---
+
+**Symbols:**
+- ∇ : navigate/traverse
+- ∈ : element of/part of
+- ∀ : for all/universal
+- ∧ : and
+- ∨ : or
+- → : transforms/flows to
+- ← : reverse direction
+- ⟹ : implies/causes
+- ≡ : equivalent/identical
+- ∆ : change/delta
+- ● : search hit marker
+- * : path quantifier (graph patterns)
+- ★ : optimal/recommended
+
+**REQUIRES:** __base/001_compressed_workspace_paradigm, __base/002_compressed_environment_mechanics
+
+**ENABLES:** Unified navigation perception, progressive exploration, safe refactoring, clone detection, complete investigation workflows
+
+---
+
+## 005 Editor
+Path: __base/005_editor
+
+# Compressed Editor Operations
+
+**Core:** Unified file editing with persistent visibility, change tracking, and spatial workspace integration.
+
+---
+
+## Fundamental Shift
+
+```
+Old (procedural):
+  nisaba_read(file) → analyze → nisaba_edit(file, old, new) → nisaba_read(file) # verify?
+  
+New (spatial):
+  editor.open(file) → visible in workspace → editor.replace(id, old, new) → diff visible inline
+  
+Editor ≡ persistent viewport + change tracking + immediate commit
+```
+
+---
+
+## State Model
+
+```
+EditorWindow:
+  id: str (UUID)
+  file_path: Path
+  line_start, line_end: int  # View range
+  content: List[str]         # Current state
+  original_content: List[str] # For diffing
+  edits: List[Edit]          # Change history
+  last_mtime: float          # File modification time
+  
+Edit:
+  timestamp: float
+  operation: str  # 'replace'
+  target: str     # old string
+  old_content, new_content: str
+
+Constraint: editors: Dict[Path, EditorWindow]  # ONE per file!
+```
+
+---
+
+## Operations
+
+```
+editor(operation, **params) → result
+
+open(file, line_start=1, line_end=-1) → editor_id
+  - If already open → return existing editor_id (no duplicates!)
+  - Else: read file, create EditorWindow, render
+  
+write(file, content) → editor_id
+  - Write to disk, open editor, mark as clean
+  
+replace(editor_id, old_string, new_string) → success
+  - Find editor by id
+  - Apply replacement to content
+  - Create Edit record
+  - Write to disk immediately
+  - Render with diff markers
+  
+close(editor_id) → success
+  - Remove editor from collection
+  
+close_all() → success
+  - Clear all editors
+  
+status() → {editor_count, total_lines, editors[]}
+  - Summary of open editors
+```
+
+---
+
+## Rendering
+
+```
+---EDITOR_{uuid}
+**file**: path/to/file.py
+**lines**: 10-50 (41 lines)
+**status**: modified ✎
+**edits**: 2 (last: 3s ago)
+
+10: def example():
+11: -    old_code = True
+11: +    new_code = True  # Changed
+12:     return value
+---EDITOR_{uuid}_END
+```
+
+**Diff markers (via difflib.ndiff):**
+- `  ` = unchanged line
+- `- ` = removed line
+- `+ ` = added line
+
+**Clean files:** No diff markers, just line numbers + content
+
+---
+
+## Integration Flow
+
+```
+1. Tool call: editor(operation="replace", editor_id=X, old=A, new=B)
+   
+2. EditorManager:
+   ├─ Find editor by id
+   ├─ Apply replacement to content
+   ├─ Track Edit(timestamp, operation, old, new)
+   ├─ Write to disk immediately
+   └─ save_state() → .nisaba/editor_state.json
+
+3. Tool renders:
+   ├─ manager.render() → markdown with diffs
+   └─ Write .nisaba/editor_windows.md
+      # File mtime changes!
+
+4. Tool returns: {"success": true, "message": "...", "nisaba": true}
+
+5. Next request:
+   ├─ Proxy detects mtime change
+   ├─ editor_windows_cache.load() → reload
+   └─ Inject into system prompt
+
+6. Claude sees: EDITOR_WINDOWS section with diff markers
+```
+
+---
+
+## Key Design Principles
+
+**No Duplicate Editors:**
+- `Dict[Path, EditorWindow]` ensures one editor per file
+- `open()` returns existing editor_id if file already open
+- Prevents token waste, confusion
+
+**Immediate Commit:**
+- Every `replace()` writes to disk immediately
+- Simpler mental model (no staging)
+- Edit history tracked for potential undo
+
+**Change Visibility:**
+- Diffs rendered inline with +/- markers
+- Edit count + last edit timestamp
+- Dirty flag (modified ✎)
+
+**Spatial Persistence:**
+- Editors persist across turns (JSON state)
+- Visible in system prompt (not buried in messages)
+- Can reference multiple editors simultaneously
+
+---
+
+## Usage Patterns
+
+### Pattern 1: Read and Modify
+```python
+# Open file
+editor(operation="open", file="src/example.py", line_start=1, line_end=50)
+# Returns: {editor_id: "abc123"}
+# EDITOR_WINDOWS section now shows lines 1-50
+
+# Modify
+editor(operation="replace", editor_id="abc123", 
+       old_string="old_function", new_string="new_function")
+# Diff markers appear inline, file written to disk
+
+# Already visible - no re-read needed!
+```
+
+### Pattern 2: Create New File
+```python
+editor(operation="write", file="src/new_module.py", 
+       content="# New module\n\ndef hello():\n    pass\n")
+# File created, editor opened, visible in workspace
+```
+
+### Pattern 3: Multiple Files
+```python
+editor(operation="open", file="src/client.py")
+editor(operation="open", file="src/server.py")
+# Both visible simultaneously in EDITOR_WINDOWS
+# Compare implementations side-by-side
+```
+
+### Pattern 4: Check Status
+```python
+editor(operation="status")
+# Returns: {
+#   editor_count: 3,
+#   total_lines: 150,
+#   editors: [{id, file, lines, edits, dirty}, ...]
+# }
+```
+
+### Pattern 5: Cleanup
+```python
+editor(operation="close", editor_id="abc123")  # Close one
+editor(operation="close_all")                   # Close all
+```
+
+---
+
+## Decision Tree
+
+```
+Want to read file?
+└─ editor.open(file, start, end) → persistent visibility
+
+Want to create file?
+└─ editor.write(file, content) → creates + opens
+
+Want to modify file?
+├─ Already open? → editor.replace(id, old, new)
+└─ Not open? → editor.open(file) first, then replace
+
+Want to verify changes?
+└─ Already visible! Check diff markers in EDITOR_WINDOWS
+
+Want to compare files?
+└─ Open multiple editors, all visible simultaneously
+
+Want to clean up?
+├─ Single file? → editor.close(id)
+└─ All files? → editor.close_all()
+```
+
+---
+
+## Comparison to Old Tools
+
+| Aspect | Old (nisaba_read/write/edit) | New (editor) |
+|--------|------------------------------|--------------|
+| **Paradigm** | Procedural commands | Spatial workspace |
+| **Visibility** | Transient tool results | Persistent editor windows |
+| **Verification** | Re-read after edit | Inline diff markers |
+| **Change tracking** | None | Edit history + timestamps |
+| **Duplicates** | Multiple reads create clutter | One editor per file |
+| **Mental model** | Sequential operations | Open viewport |
+
+---
+
+## Quick Reference
+
+```
+Read file:
+  editor(operation="open", file="path/to/file", line_start=1, line_end=-1)
+  
+Create file:
+  editor(operation="write", file="path/to/file", content="...")
+  
+Modify file:
+  editor(operation="replace", editor_id="...", old_string="...", new_string="...")
+  
+Check status:
+  editor(operation="status")
+  
+Close:
+  editor(operation="close", editor_id="...")
+  editor(operation="close_all")
+  
+No duplicates:
+  editor.open(same_file) → returns existing editor_id
+```
+
+---
+
+## Core Insights
+
+```
+Visibility > Ephemeral
+  Editors persist, changes visible inline
+
+Spatial > Sequential
+  Open viewport, not transient command
+
+Immediate > Staged
+  Commit to disk instantly, simple mental model
+
+Unified > Fragmented
+  One tool for read/write/edit, not three
+
+Tracked > Forgotten
+  Edit history preserved, change awareness
+
+Persistent > Disposable
+  State survives across turns (JSON + mtime)
+```
+
+---
+
+**Replaces:** `nisaba_read`, `nisaba_write`, `nisaba_edit`
+
+**Integration:** `.nisaba/editor_windows.md` → proxy → `---EDITOR_WINDOWS` section
+
+**Pattern:** Open → visible → modify → diff → persist 🖤
+
+---
+
+**REQUIRES:** __base/002_compressed_environment_mechanics
+
+**ENABLES:** Unified file operations, spatial code editing, change visibility
 
 ---
