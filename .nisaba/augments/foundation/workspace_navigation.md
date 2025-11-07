@@ -206,8 +206,8 @@ Hybrid workflow:
 ### Result Management
 ```
 Native tool results:
-  nisaba_tool_result_state(close, [tool_ids]) → compact after observation
-  nisaba_tool_result_state(close_all) → clean sweep
+  nisaba_nisaba_tool_result_state(close, [tool_ids]) → compact after observation
+  nisaba_nisaba_tool_result_state(close_all) → clean sweep
 
 Nisaba workspace:
   file_windows(close, id) → remove specific window
@@ -448,7 +448,7 @@ Quick checks:
 Manage context:
   file_windows(status) → monitor usage
   file_windows(close|clear_all) → cleanup
-  nisaba_tool_result_state(close_all) → compact tool results
+  nisaba_nisaba_tool_result_state(close_all) → compact tool results
   Target: 200-400 lines total
 ```
 

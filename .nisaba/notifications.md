@@ -1,2 +1,2 @@
 Recent activity:
-✓ mcp__nisaba__pin_augment() → ok
+✓ mcp__nisaba__unpin_augment() → ok

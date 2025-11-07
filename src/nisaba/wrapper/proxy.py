@@ -161,11 +161,11 @@ class AugmentInjector:
             "editor windows",
             "EDITOR_WINDOWS"
         )
-        self.tool_result_windows_cache = FileCache(
-            Path("./.nisaba/tool_result_windows.md"),
-            "tool result windows",
-            "TOOL_RESULT_WINDOWS"
-        )
+        # self.tool_result_windows_cache = FileCache(
+        #     Path("./.nisaba/tool_result_windows.md"),
+        #     "tool result windows",
+        #     "TOOL_RESULT_WINDOWS"
+        # )
         self.todos_cache = FileCache(
             Path("./.nisaba/todos.md"),
             "todos",
@@ -204,7 +204,7 @@ class AugmentInjector:
         self.structural_view_cache.load()
         self.file_windows_cache.load()
         self.editor_windows_cache.load()
-        self.tool_result_windows_cache.load()
+        # self.tool_result_windows_cache.load()
         self.todos_cache.load()
         self.notifications_cache.load()
 
@@ -373,7 +373,7 @@ class AugmentInjector:
                             f"\n{self.structural_view_cache.load()}"
                             f"\n{self.file_windows_cache.load()}"
                             f"\n{self.editor_windows_cache.load()}"
-                            f"\n{self.tool_result_windows_cache.load()}"
+                            # f"\n{self.tool_result_windows_cache.load()}"
                             f"\n{self.notifications_cache.load()}"
                             f"\n{self.todos_cache.load()}"
                             f"\n{self.transcript_cache.load()}"
@@ -396,7 +396,7 @@ class AugmentInjector:
                     f"\n{self.structural_view_cache.load()}"
                     f"\n{self.file_windows_cache.load()}"
                     f"\n{self.editor_windows_cache.load()}"
-                    f"\n{self.tool_result_windows_cache.load()}"
+                    # f"\n{self.tool_result_windows_cache.load()}"
                     f"\n{self.notifications_cache.load()}"
                     f"\n{self.todos_cache.load()}"
                     f"\n{self.transcript_cache.load()}"
@@ -644,15 +644,15 @@ class AugmentInjector:
         augment_tokens = self._estimate_tokens(self.augments_cache.load())
         structural_view_tokens = self._estimate_tokens(self.structural_view_cache.load())
         file_windows_tokens = self._estimate_tokens(self.file_windows_cache.load())
-        tool_result_tokens = self._estimate_tokens(self.tool_result_windows_cache.load())
+        # tool_result_tokens = self._estimate_tokens(self.tool_result_windows_cache.load())
         transcript_tokens = self._estimate_tokens(self.transcript_cache.load())
 
-        workspace_tokens = base_tokens + tool_ref_tokens + augment_tokens + structural_view_tokens + file_windows_tokens + tool_result_tokens + transcript_tokens
+        workspace_tokens = base_tokens + tool_ref_tokens + augment_tokens + structural_view_tokens + file_windows_tokens + transcript_tokens # + tool_result_tokens
         
         # Count windows by parsing markers
         editor_count = int(self.editor_windows_cache.content.count('---EDITOR_') / 2 - 1) # remove main tag
         file_count = int(self.file_windows_cache.content.count('---FILE_WINDOW_') / 2)
-        tool_count = int(self.tool_result_windows_cache.content.count('---TOOL_RESULT_WINDOW_') / 2)
+        # tool_count = int(self.tool_result_windows_cache.content.count('---TOOL_RESULT_WINDOW_') / 2)
         todos_count = self.todos_cache.load().count("\n") - 1 # no endl at the end
         notifications_count = self.notifications_cache.load().count("\n") - 1 # header + endl compensation
 
@@ -714,10 +714,10 @@ class AugmentInjector:
                     "count": file_count,
                     "tokens": file_windows_tokens
                 },
-                "tools": {
-                    "count": tool_count,
-                    "tokens": tool_result_tokens
-                },
+                # "tools": {
+                #     "count": tool_count,
+                #     "tokens": tool_result_tokens
+                # },
                 "notifications": notifications_count,
                 "todos": todos_count
             },
@@ -732,12 +732,14 @@ class AugmentInjector:
         parts = [
             f"MODEL({model_name})",
             f"WS({ws['total']//1000}k)",
-            f"SYSTEM(PROMPT:{ws['system']['prompt']//1000}k, TOOL_REF:{ws['system']['tools']//1000}k, TSCPT:({ws['system']['transcript']//1000}k))",
+            f"SYSTEM(PROMPT:{ws['system']['prompt']//1000}k, "
+                   f"TOOLREF:{ws['system']['tools']//1000}k, "
+                   f"COMPTRANS:({ws['system']['transcript']//1000}k))",
             f"AUG({ws['augments']//1000}k)",
-            f"VIEW({ws['view']//1000}k)",
+            f"STVIEW({ws['view']//1000}k)",
             f"EDITOR({ws['editor']['count']}, {ws['editor']['tokens']//1000}k)",
             f"FILES({ws['files']['count']}, {ws['files']['tokens']//1000}k)",
-            f"TOOLS({ws['tools']['count']}, {ws['tools']['tokens']//1000}k)",
+            # f"TOOLS({ws['tools']['count']}, {ws['tools']['tokens']//1000}k)",
             f"MSG:{status_data['messages']//1000}k",
             f"{status_data['total']//1000}k/{status_data['budget']//1000}k"
         ]

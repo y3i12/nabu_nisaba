@@ -91,12 +91,9 @@ your open files <- **you can change this**
 ---FILE_WINDOWS_END
 ---EDITOR_WINDOWS
 file interaction area, like your text code  <- **you can operate this**
-we are working on this and it will replace FILE_WINDOWS and TOOL_RESULTS
+we are working on this and it will replace FILE_WINDOWS
 files are represented within `---EDITOR_{id}(_END)?`
 ---EDITOR_WINDOWS_END
----TOOL_RESULTS
-results of your tool calls <- **you can change this**
----TOOL_RESULTS_END
 ---NOTIFICATIONS
 tool usage notifications, so you know what happened
 ---NOTIFICATIONS_END

@@ -95,7 +95,7 @@
 89: Use when: one-shot confirmation, quick validation, transient info
 90: 
 91: Pattern: execute → observe → close
-92:   bash("git status") → observe → nisaba_tool_result_state(close, [id])
+92:   bash("git status") → observe → nisaba_nisaba_tool_result_state(close, [id])
 93:   grep("pattern", "file") → observe → close
 94:   glob("*.py", "src/") → observe → close
 95: ```
@@ -132,7 +132,7 @@
 126: 
 127: ---
 128: 
-129: ## Tool Result State Management (`nisaba_tool_result_state`)
+129: ## Tool Result State Management (`nisaba_nisaba_tool_result_state`)
 130: 
 131: ```
 132: close(tool_ids[])    → compact tool results | save tokens
@@ -206,7 +206,7 @@
 200: 
 201: Native_Results:
 202:   Close immediately after observation
-203:   Use nisaba_tool_result_state(close_all) for cleanup
+203:   Use nisaba_nisaba_tool_result_state(close_all) for cleanup
 204:   Don't let transient results bloat context
 205: 
 206: Augments:
@@ -277,7 +277,7 @@
 271: ∆(cleanup):
 272:   file_windows.clear_all()
 273:   nisaba_tool_windows.clear_all()
-274:   nisaba_tool_result_state(close_all) → compact native results
+274:   nisaba_nisaba_tool_result_state(close_all) → compact native results
 275:   
 276: Pattern: status → decide → close/keep
 277: 
@@ -624,7 +624,7 @@
 154: ## Retroactive Tool State Mutation
 155: 
 156: ```
-157: nisaba_tool_result_state(operation, tool_ids[])
+157: nisaba_nisaba_tool_result_state(operation, tool_ids[])
 158: 
 159: Operations:
 160:   close(ids)     → compact future appearances

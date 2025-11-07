@@ -52,8 +52,10 @@ git submodule update --init test/test_github_projects
     - [-] finish implementation
         - [x] diff bug
         - [x] integrate status bar
+        - [-] remove read/write/edit
+        - [ ] nabu search -> nisaba files
+        - [ ] edit to open the file
     - [ ]
-    - [ ] remove read/write/edit
     - [ ] remove TOOL_WINDOWS
     - [ ] remove FILE_WINDOWS
 - [ ] precalc tokens in file cache
