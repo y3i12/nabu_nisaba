@@ -26,7 +26,7 @@ class RequestModifierPrrocessingState(Enum):
 RMPState = RequestModifierPrrocessingState
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 # Setup file logging to .nisaba/logs/proxy.log
 log_dir = Path(".nisaba/logs")
@@ -53,10 +53,9 @@ class RequestModifierState:
         self.tool_result_state:dict[str,dict] = {
         #   "toolu_{hash}": {
         #       'block_offset': tuple[int, int],
-        #       'tool_result_status': f"{(success|error)}",
         #       'tool_output': (from tool_u.parent.text),
         #       'window_state': (open|closed),
-        #       'tool_result_content': f"status:{tool_result_status}, window_state:{window_state}, window_id: {toolu_{hash}}"
+        #       'tool_result_content': f"window_state:{window_state}, tool_use_id: {toolu_{hash}}"
         #   }
         }
     
@@ -168,7 +167,6 @@ class RequestModifier:
         
         toolu_obj = {
             'block_offset': list(self.state.last_block_offset),  # Copy the offset, don't reference it
-            'tool_result_status': "success",
             'tool_output': tool_output if tool_output else "",
             'window_state': "open",
             'is_nisaba': is_nisaba,  # Cache nisaba detection result

@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 # Setup logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 # Ensure log directory exists
 log_dir = Path(".nisaba/logs")
@@ -156,6 +156,11 @@ class AugmentInjector:
             "file windows",
             "FILE_WINDOWS"
         )
+        self.editor_windows_cache = FileCache(
+            Path("./.nisaba/editor_windows.md"),
+            "editor windows",
+            "EDITOR_WINDOWS"
+        )
         self.tool_result_windows_cache = FileCache(
             Path("./.nisaba/tool_result_windows.md"),
             "tool result windows",
@@ -198,6 +203,7 @@ class AugmentInjector:
         self.transcript_cache.load()
         self.structural_view_cache.load()
         self.file_windows_cache.load()
+        self.editor_windows_cache.load()
         self.tool_result_windows_cache.load()
         self.todos_cache.load()
         self.notifications_cache.load()
@@ -360,7 +366,18 @@ class AugmentInjector:
                 body["system"].append(
                     {
                         "type": "text",
-                        "text": f"\n{self.system_prompt_cache.load()}\n{status_bar}\n{self.augments_cache.load()}\n{self.structural_view_cache.load()}\n{self.file_windows_cache.load()}\n{self.todos_cache.load()}\n{self.tool_result_windows_cache.load()}\n{self.notifications_cache.load()}\n{self.transcript_cache.load()}",
+                        "text": (
+                            f"\n{self.system_prompt_cache.load()}"
+                            f"\n{status_bar}"
+                            f"\n{self.augments_cache.load()}"
+                            f"\n{self.structural_view_cache.load()}"
+                            f"\n{self.file_windows_cache.load()}"
+                            f"\n{self.editor_windows_cache.load()}"
+                            f"\n{self.tool_result_windows_cache.load()}"
+                            f"\n{self.notifications_cache.load()}"
+                            f"\n{self.todos_cache.load()}"
+                            f"\n{self.transcript_cache.load()}"
+                        ),
                         "cache_control": {
                             "type": "ephemeral"
                         }
@@ -371,16 +388,19 @@ class AugmentInjector:
                 status_bar = f"\n---STATUS_BAR\n{self._generate_status_bar(body)}\n---STATUS_BAR_END"
                 core_system_prompt = f"---CORE_SYSTEM_PROMPT\n{body["system"][1]["text"]}\n---CORE_SYSTEM_PROMPT_END"
 
-                body["system"][1]["text"] = f"\n{self.system_prompt_cache.load()}" + \
-                                            f"\n{core_system_prompt}" + \
-                                            f"\n{status_bar}" + \
-                                            f"\n{self.augments_cache.load()}" + \
-                                            f"\n{self.structural_view_cache.load()}" + \
-                                            f"\n{self.file_windows_cache.load()}" + \
-                                            f"\n{self.tool_result_windows_cache.load()}" + \
-                                            f"\n{self.notifications_cache.load()}" + \
-                                            f"\n{self.todos_cache.load()}" + \
-                                            f"\n{self.transcript_cache.load()}"
+                body["system"][1]["text"] = (
+                    f"\n{self.system_prompt_cache.load()}"
+                    f"\n{core_system_prompt}"
+                    f"\n{status_bar}"
+                    f"\n{self.augments_cache.load()}"
+                    f"\n{self.structural_view_cache.load()}"
+                    f"\n{self.file_windows_cache.load()}"
+                    f"\n{self.editor_windows_cache.load()}"
+                    f"\n{self.tool_result_windows_cache.load()}"
+                    f"\n{self.notifications_cache.load()}"
+                    f"\n{self.todos_cache.load()}"
+                    f"\n{self.transcript_cache.load()}"
+                )
 
         return "tools" in body or "system" in body
 
