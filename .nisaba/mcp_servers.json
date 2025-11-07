@@ -1,18 +1,4 @@
 {
   "version": "1.0",
-  "servers": {
-    "nabu_mcp_793906": {
-      "name": "nabu_mcp",
-      "pid": 793906,
-      "stdio_active": true,
-      "http": {
-        "enabled": true,
-        "host": "0.0.0.0",
-        "port": 1338,
-        "url": "http://localhost:1338"
-      },
-      "started_at": "2025-11-07T17:23:14.664494Z",
-      "cwd": "/home/y3i12/nabu_nisaba"
-    }
-  }
+  "servers": {}
 }
