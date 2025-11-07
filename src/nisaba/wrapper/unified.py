@@ -200,8 +200,13 @@ class UnifiedNisabaServer:
         # Give it a moment to start
         await asyncio.sleep(1)
 
-        # self register for discovery
-        self.mcp_factory._register_to_discovery()
+        # Self-register for discovery (temporarily enable flag to bypass check)
+        original_flag = self.mcp_factory.config.enable_http_transport
+        try:
+            self.mcp_factory.config.enable_http_transport = True
+            self.mcp_factory._register_to_discovery()
+        finally:
+            self.mcp_factory.config.enable_http_transport = original_flag
 
         logger.info(f"✓ MCP server running on port {self.mcp_port}")
 
