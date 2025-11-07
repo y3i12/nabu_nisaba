@@ -110,7 +110,9 @@ class EditorManager:
             logger.info(f"Wrote file: {file_path}")
             
             # Open editor (will create new or return existing)
-            return self.open(str(file_path))
+            editor_id = self.open(str(file_path))
+            self._add_notification(f"✓ editor.write() → created {file_path.name}")
+            return editor_id
             
         except Exception as e:
             logger.error(f"Failed to write {file_path}: {e}", exc_info=True)
@@ -157,6 +159,7 @@ class EditorManager:
         self._write_to_disk(editor)
         self.save_state()
         
+        self._add_notification(f"✓ editor.replace() → {editor.file_path.name} (string replaced)")
         logger.info(f"Replaced in {editor.file_path}: {old_string[:30]}... → {new_string[:30]}...")
         return True
     
@@ -207,6 +210,7 @@ class EditorManager:
         self._write_to_disk(editor)
         self.save_state()
         
+        self._add_notification(f"✓ editor.insert() → {editor.file_path.name} ({len(insert_lines)} lines inserted)")
         logger.info(f"Inserted {len(insert_lines)} lines before line {before_line} in {editor.file_path}")
         return True
     
@@ -260,6 +264,7 @@ class EditorManager:
         self._write_to_disk(editor)
         self.save_state()
         
+        self._add_notification(f"✓ editor.delete() → {editor.file_path.name} ({lines_deleted} lines deleted)")
         logger.info(f"Deleted lines {line_start}-{line_end} from {editor.file_path}")
         return True
     
@@ -315,8 +320,180 @@ class EditorManager:
         self._write_to_disk(editor)
         self.save_state()
         
+        self._add_notification(f"✓ editor.replace_lines() → {editor.file_path.name} ({len(new_lines)} lines replaced)")
         logger.info(f"Replaced lines {line_start}-{line_end} in {editor.file_path}")
         return True
+    
+    def split(self, editor_id: str, line_start: int, line_end: int) -> str:
+        """
+        Create split view of editor.
+        
+        Args:
+            editor_id: Parent editor window ID
+            line_start: Start line for split (1-indexed, relative to editor view)
+            line_end: End line for split (inclusive)
+        
+        Returns:
+            split_id
+        """
+        editor = self._get_editor_by_id(editor_id)
+        if not editor:
+            raise ValueError(f"Editor not found: {editor_id}")
+        
+        # Validate line numbers
+        if line_start < editor.line_start or line_end > editor.line_end:
+            raise ValueError(f"Lines {line_start}-{line_end} out of range ({editor.line_start}-{editor.line_end})")
+        if line_start > line_end:
+            raise ValueError(f"Invalid range: {line_start} > {line_end}")
+        
+        # Import Split from editor_window
+        from nisaba.tui.editor_window import Split
+        
+        # Create split
+        split = Split(
+            parent_id=editor.id,
+            line_start=line_start,
+            line_end=line_end
+        )
+        
+        editor.splits[split.id] = split
+        self.save_state()
+        
+        logger.info(f"Created split {split.id} for {editor.file_path} lines {line_start}-{line_end}")
+        return split.id
+    
+    def resize(self, window_id: str, line_start: int, line_end: int) -> bool:
+        """
+        Resize editor or split window.
+        
+        Args:
+            window_id: Editor ID or split ID
+            line_start: New start line
+            line_end: New end line
+        
+        Returns:
+            True if successful
+        """
+        # Try editor first
+        editor = self._get_editor_by_id(window_id)
+        if editor:
+            # Resizing editor
+            if line_start < 1:
+                raise ValueError(f"Invalid line_start: {line_start}")
+            
+            editor.line_start = line_start
+            editor.line_end = line_end
+            self.save_state()
+            logger.info(f"Resized editor {window_id} to lines {line_start}-{line_end}")
+            return True
+        
+        # Try split
+        for editor in self.editors.values():
+            if window_id in editor.splits:
+                split = editor.splits[window_id]
+                
+                # Validate against editor bounds
+                if line_start < editor.line_start or line_end > editor.line_end:
+                    raise ValueError(f"Lines {line_start}-{line_end} out of range ({editor.line_start}-{editor.line_end})")
+                
+                split.line_start = line_start
+                split.line_end = line_end
+                self.save_state()
+                logger.info(f"Resized split {window_id} to lines {line_start}-{line_end}")
+                return True
+        
+        raise ValueError(f"Window not found: {window_id}")
+    
+    def close_split(self, split_id: str) -> bool:
+        """
+        Close split view.
+        
+        Args:
+            split_id: Split ID
+        
+        Returns:
+            True if successful
+        """
+        for editor in self.editors.values():
+            if split_id in editor.splits:
+                del editor.splits[split_id]
+                self.save_state()
+                logger.info(f"Closed split {split_id}")
+                return True
+        
+        return False
+    
+    def refresh_all(self) -> List[str]:
+        """
+        Check for external file changes and reload if needed.
+        
+        Returns:
+            List of notification messages
+        """
+        notifications = []
+        
+        for editor in self.editors.values():
+            if not editor.file_path.exists():
+                notifications.append(f"⚠ File deleted: {editor.file_path}")
+                continue
+            
+            current_mtime = editor.file_path.stat().st_mtime
+            
+            if current_mtime != editor.last_mtime:
+                # File changed externally
+                if editor.is_dirty:
+                    # Conflict: dirty editor + external change
+                    notifications.append(f"⚠ Conflict: {editor.file_path} modified externally with unsaved edits")
+                else:
+                    # Clean reload
+                    try:
+                        content = editor.file_path.read_text().splitlines()
+                        # Adjust to current view range
+                        if editor.line_end == -1 or editor.line_end > len(content):
+                            editor.line_end = len(content)
+                        
+                        editor.content = content[editor.line_start-1:editor.line_end]
+                        editor.original_content = editor.content.copy()
+                        editor.last_mtime = current_mtime
+                        self.save_state()
+                        
+                        notifications.append(f"🔄 Reloaded: {editor.file_path}")
+                    except Exception as e:
+                        notifications.append(f"✗ Failed to reload {editor.file_path}: {e}")
+        
+        return notifications
+    
+    def _add_notification(self, message: str) -> None:
+        """
+        Add notification to notifications file.
+        
+        Args:
+            message: Notification message
+        """
+        notifications_file = Path(".nisaba/notifications.md")
+        
+        # Read existing notifications
+        if notifications_file.exists():
+            content = notifications_file.read_text()
+            lines = content.splitlines()
+            
+            # Keep only "Recent activity:" header and existing notifications
+            if lines and lines[0] == "Recent activity:":
+                existing = lines[1:]
+            else:
+                existing = []
+        else:
+            existing = []
+        
+        # Add new notification at top
+        new_notifications = [message] + existing
+        
+        # Keep last 10 notifications
+        new_notifications = new_notifications[:10]
+        
+        # Write back
+        content = "Recent activity:\\n" + "\\n".join(new_notifications) + "\\n"
+        notifications_file.write_text(content)
     
     def close(self, editor_id: str) -> bool:
         """
@@ -371,20 +548,29 @@ class EditorManager:
     
     def render(self) -> str:
         """
-        Render all editors to markdown with diff markers.
+        Render all editors and splits to markdown with diff markers.
         
         Returns:
             Markdown string
         """
+        # Check for external changes first
+        refresh_notifications = self.refresh_all()
+        for notif in refresh_notifications:
+            self._add_notification(notif)
+        
         if not self.editors:
             return ""
         
         lines = []
         
         for editor in self.editors.values():
+            # Render main editor
             lines.append(f"---EDITOR_{editor.id}")
             lines.append(f"**file**: {editor.file_path}")
             lines.append(f"**lines**: {editor.line_start}-{editor.line_end} ({len(editor.content)} lines)")
+            
+            if editor.splits:
+                lines.append(f"**splits**: {len(editor.splits)}")
             
             if editor.is_dirty:
                 lines.append(f"**status**: modified ✎")
@@ -403,6 +589,26 @@ class EditorManager:
             
             lines.append(f"---EDITOR_{editor.id}_END")
             lines.append("")
+            
+            # Render splits
+            for split in editor.splits.values():
+                lines.append(f"---EDITOR_SPLIT_{split.id}")
+                lines.append(f"**parent**: {split.parent_id}")
+                lines.append(f"**file**: {editor.file_path}")
+                lines.append(f"**lines**: {split.line_start}-{split.line_end}")
+                lines.append("")
+                
+                # Get content slice from editor
+                start_idx = split.line_start - editor.line_start
+                end_idx = split.line_end - editor.line_start + 1
+                split_content = editor.content[start_idx:end_idx]
+                
+                for i, line in enumerate(split_content):
+                    line_num = split.line_start + i
+                    lines.append(f"{line_num}: {line}")
+                
+                lines.append(f"---EDITOR_SPLIT_{split.id}_END")
+                lines.append("")
         
         return '\n'.join(lines)
     

@@ -650,10 +650,10 @@ class AugmentInjector:
         workspace_tokens = base_tokens + tool_ref_tokens + augment_tokens + structural_view_tokens + file_windows_tokens + tool_result_tokens + transcript_tokens
         
         # Count windows by parsing markers
-        editor_count = int((self.file_windows_cache.content.count('---EDITOR_') - 1) / 2) # -2 main tags, divided by 2 for begin/end
+        editor_count = int(self.file_windows_cache.content.count('---EDITOR_') / 2)
         file_count = int(self.file_windows_cache.content.count('---FILE_WINDOW_') / 2)
         tool_count = int(self.tool_result_windows_cache.content.count('---TOOL_RESULT_WINDOW_') / 2)
-        todos_count = self.todos_cache.load().count("\n") - 1 # no endl at the end - tags
+        todos_count = self.todos_cache.load().count("\n") - 1 # no endl at the end
         notifications_count = self.notifications_cache.load().count("\n") - 1 # header + endl compensation
 
         # Count message tokens (properly, without JSON overhead)
