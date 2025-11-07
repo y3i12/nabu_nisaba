@@ -10,7 +10,7 @@ from ..tool_base import BaseToolMarkdownFormatter
 class SearchToolMarkdownFormatter(BaseToolMarkdownFormatter):
     """Compact markdown formatter for unified search results."""
 
-    def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+    def format(self, data: Dict[str, Any],) -> str:
         """Format search results in compact, scannable markdown."""
         results = data.get("results", [])
         metadata = data.get("metadata", {})
@@ -27,7 +27,6 @@ class SearchToolMarkdownFormatter(BaseToolMarkdownFormatter):
             lines.append("*No results found*")
             lines.append("")
             lines.append(f"*{metadata.get('returned', 0)} items returned of {metadata.get('total_candidates_before_filter', 0)} total matches*")
-            lines.append(f"*execution_time {execution_time_ms:.2f}ms*")
             return "\n".join(lines)
 
         # Render each result

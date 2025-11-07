@@ -36,15 +36,11 @@ class MarkdownOutputFormatter(BaseOutputFormatter):
         Returns:
             Markdown-formatted string
         """
-        # Extract execution time if present (for tool-specific formatters)
-        execution_time_ms = 0.0
-        if isinstance(data, dict):
-            execution_time_ms = data.get("execution_time_ms", 0.0)
-
+        
         # Check for tool-specific formatter
         if tool_name and self.tool_formatter_registry.has_formatter(tool_name):
             formatter = self.tool_formatter_registry.get_formatter(tool_name)
-            return formatter.format(data, execution_time_ms)
+            return formatter.format(data)
 
         # Fall back to generic formatting
         return self._generic_format(data, tool_name)

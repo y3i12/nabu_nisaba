@@ -41,7 +41,6 @@ class ResponseBuilder:
     @staticmethod
     def success(
         data: Any,
-        execution_time_ms: float = 0.0,
         warnings: Optional[List[str]] = None,
         metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
@@ -50,7 +49,6 @@ class ResponseBuilder:
 
         Args:
             data: Response payload
-            execution_time_ms: Execution time in milliseconds
             warnings: Optional warning messages
             metadata: Optional metadata
 
@@ -59,8 +57,7 @@ class ResponseBuilder:
         """
         response = {
             "success": True,
-            "data": data,
-            #"execution_time_ms": execution_time_ms
+            "data": data
         }
 
         if warnings:
@@ -74,7 +71,6 @@ class ResponseBuilder:
     @staticmethod
     def error(
         error: Exception,
-        execution_time_ms: float = 0.0,
         severity: ErrorSeverity = ErrorSeverity.ERROR,
         recovery_hint: Optional[str] = None,
         context: Optional[Dict[str, Any]] = None
@@ -84,7 +80,6 @@ class ResponseBuilder:
 
         Args:
             error: Exception that occurred
-            execution_time_ms: Execution time in milliseconds
             severity: Error severity level
             recovery_hint: Suggested recovery action
             context: Error context information
@@ -96,8 +91,7 @@ class ResponseBuilder:
             "success": False,
             "error": str(error),
             "error_type": type(error).__name__,
-            "severity": severity.value,
-            "execution_time_ms": execution_time_ms
+            "severity": severity.value
         }
 
         if recovery_hint:
@@ -112,7 +106,6 @@ class ResponseBuilder:
     def partial_success(
         data: Any,
         errors: List[str],
-        execution_time_ms: float,
         metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
@@ -134,8 +127,7 @@ class ResponseBuilder:
             "success": True,
             "partial": True,
             "data": data,
-            "errors": errors,
-            "execution_time_ms": execution_time_ms
+            "errors": errors
         }
 
         if metadata:

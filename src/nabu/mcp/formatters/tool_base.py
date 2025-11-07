@@ -17,13 +17,12 @@ class BaseToolMarkdownFormatter(ABC):
     """
 
     @abstractmethod
-    def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+    def format(self, data: Dict[str, Any]) -> str:
         """
         Format tool response data as compact markdown.
 
         Args:
             data: Tool response data dictionary
-            execution_time_ms: Execution time in milliseconds
 
         Returns:
             Compact markdown-formatted string

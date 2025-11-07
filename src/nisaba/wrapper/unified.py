@@ -198,7 +198,10 @@ class UnifiedNisabaServer:
         self.mcp_task = asyncio.create_task(self._run_mcp_server())
 
         # Give it a moment to start
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1)
+
+        # self register for discovery
+        self.mcp_factory._register_to_discovery()
 
         logger.info(f"✓ MCP server running on port {self.mcp_port}")
 

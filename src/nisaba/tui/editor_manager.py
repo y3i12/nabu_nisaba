@@ -118,14 +118,14 @@ class EditorManager:
             logger.error(f"Failed to write {file_path}: {e}", exc_info=True)
             raise
     
-    def replace(self, editor_id: str, old_string: str, new_string: str) -> bool:
+    def replace(self, editor_id: str, old: str, new: str) -> bool:
         """
         Replace string in editor content and write to disk.
         
         Args:
             editor_id: Editor window ID
-            old_string: String to replace
-            new_string: Replacement string
+            old: String to replace
+            new: Replacement string
         
         Returns:
             True if successful
@@ -136,18 +136,18 @@ class EditorManager:
         
         # Check if string exists
         full_content = '\n'.join(editor.content)
-        if old_string not in full_content:
-            raise ValueError(f"String not found in editor: {old_string[:50]}...")
+        if old not in full_content:
+            raise ValueError(f"String not found in editor: {old[:50]}...")
         
         # Apply replacement
         old_content_lines = editor.content.copy()
-        new_content_lines = [line.replace(old_string, new_string) for line in editor.content]
+        new_content_lines = [line.replace(old, new) for line in editor.content]
         
         # Track edit
         edit = Edit(
             timestamp=time.time(),
             operation='replace',
-            target=old_string,
+            target=old,
             old_content='\n'.join(old_content_lines),
             new_content='\n'.join(new_content_lines)
         )
@@ -160,7 +160,7 @@ class EditorManager:
         self.save_state()
         
         self._add_notification(f"✓ editor.replace() → {editor.file_path.name} (string replaced)")
-        logger.info(f"Replaced in {editor.file_path}: {old_string[:30]}... → {new_string[:30]}...")
+        logger.info(f"Replaced in {editor.file_path}: {old[:30]}... → {new[:30]}...")
         return True
     
     def insert(self, editor_id: str, before_line: int, content: str) -> bool:

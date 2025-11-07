@@ -15,7 +15,7 @@ class ReindexMarkdownFormatter(BaseToolMarkdownFormatter):
     Reindex is infrequent operation so brevity is prioritized.
     """
 
-    def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+    def format(self, data: Dict[str, Any],) -> str:
         """Format reindex output in compact style."""
         lines = []
         
@@ -47,14 +47,6 @@ class ReindexMarkdownFormatter(BaseToolMarkdownFormatter):
             for frame_type, count in sorted_stats:
                 lines.append(f"{frame_type} ({count})")
             lines.append("")
-        
-        # Execution time footer (reindex is slow, show actual time)
-        execution_sec = execution_time_ms / 1000.0
-        if execution_sec > 60:
-            execution_min = execution_sec / 60.0
-            lines.append(f"*execution_time {execution_min:.2f}min ({execution_time_ms:.0f}ms)*")
-        else:
-            lines.append(f"*execution_time {execution_sec:.2f}s ({execution_time_ms:.0f}ms)*")
         
         return "\n".join(lines)
 

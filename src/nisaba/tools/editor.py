@@ -30,8 +30,8 @@ class EditorTool(NisabaTool):
         file: Optional[str] = None,
         content: Optional[str] = None,
         editor_id: Optional[str] = None,
-        old_string: Optional[str] = None,
-        new_string: Optional[str] = None,
+        old: Optional[str] = None,
+        new: Optional[str] = None,
         line_start: Optional[int] = 1,
         line_end: Optional[int] = -1,
         before_line: Optional[int] = None,
@@ -56,16 +56,17 @@ class EditorTool(NisabaTool):
         
         :meta pitch: Unified file editing with workspace persistence
         :meta when: Reading, writing, or editing files
-        
         Args:
             operation: Operation type
             file: File path (for open, write)
             content: File content (for write)
             editor_id: Editor window ID (for replace, insert, delete, replace_lines, split, close)
-            old_string: String to replace (for replace)
-            new_string: Replacement string (for replace)
+            old: String to replace (for replace)
+            new: Replacement string (for replace)
             line_start: Start line for open/delete/replace_lines/split/resize (1-indexed, default 1)
             line_end: End line for open/delete/replace_lines/split/resize (-1 = end of file, default -1)
+            before_line: Line to insert before (for insert)
+            split_id: Split ID (for close_split, resize)
             before_line: Line to insert before (for insert)
             split_id: Split ID (for close_split, resize)
         
@@ -97,14 +98,12 @@ class EditorTool(NisabaTool):
                 
                 editor_id = self.manager.write(file, content)
                 message = f"Wrote file: {file}"
-                result = {"editor_id": editor_id}
-            
             elif operation == 'replace':
-                if not editor_id or not old_string or new_string is None:
-                    return self._error("'editor_id', 'old_string', 'new_string' required for replace")
+                if not editor_id or not old or new is None:
+                    return self._error("'editor_id', 'old', 'new' required for replace")
                 
-                self.manager.replace(editor_id, old_string, new_string)
-                message = f"Replaced in editor: {old_string[:30]}... → {new_string[:30]}..."
+                self.manager.replace(editor_id, old, new)
+                message = f"Replaced in editor: {old[:30]}... → {new[:30]}..."
                 result = {}
             
             elif operation == 'insert':
