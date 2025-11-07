@@ -92,6 +92,7 @@ your open files <- **you can change this**
 ---EDITOR_WINDOWS
 file interaction area, like your text code  <- **you can operate this**
 we are working on this and it will replace FILE_WINDOWS and TOOL_RESULTS
+files are represented within `---EDITOR_{id}(_END)?`
 ---EDITOR_WINDOWS_END
 ---TOOL_RESULTS
 results of your tool calls <- **you can change this**

@@ -145,7 +145,7 @@ class EditorManager:
         edit = Edit(
             timestamp=time.time(),
             operation='replace',
-            target=old_string[:100],  # Truncate for storage
+            target=old_string,
             old_content='\n'.join(old_content_lines),
             new_content='\n'.join(new_content_lines)
         )
