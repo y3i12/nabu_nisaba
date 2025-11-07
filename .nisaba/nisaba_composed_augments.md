@@ -1169,7 +1169,7 @@ Edits (line-based):
   replace_lines(id, start, end, content) → swap_lines | rewrite
 
 Edits (string-based):
-  replace(id, old_string, new_string)  → pattern_replace | exact_match
+  replace(id, old, new)  → pattern_replace | exact_match
 
 Splits (concurrent views):
   split(id, line_start, line_end)      → {split_id} | parallel_viewport

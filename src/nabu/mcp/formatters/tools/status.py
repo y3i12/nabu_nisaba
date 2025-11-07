@@ -16,7 +16,7 @@ class ShowStatusMarkdownFormatter(BaseToolMarkdownFormatter):
     based on detail_level (summary/detailed/debug).
     """
     
-    def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+    def format(self, data: Dict[str, Any],) -> str:
         """Format show_status output with progressive detail levels."""
         lines = []
         
@@ -98,9 +98,6 @@ class ShowStatusMarkdownFormatter(BaseToolMarkdownFormatter):
                 lines.append(f"- Database path: {Path(db_info.get('database_path', '?')).name}")
                 lines.append(f"- Codebase: {db_info.get('codebase_name', '?')}")
             lines.append("")
-        
-        # Execution time footer
-        lines.append(f"*execution_time {execution_time_ms:.2f}ms*")
         
         return "\n".join(lines)
 

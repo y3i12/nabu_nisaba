@@ -142,10 +142,6 @@ class MCPTool(ABC):
         try:
             result = await self.execute(**kwargs)
 
-            # Add execution time if not already present
-            if "execution_time_ms" not in result:
-                result["execution_time_ms"] = (time.time() - start_time) * 1000
-
             # Record in guidance system (subclasses can also call this)
             self._record_guidance(self.get_name(), kwargs, result)
 
@@ -153,12 +149,10 @@ class MCPTool(ABC):
 
         except Exception as e:
             self.logger.error(f"Tool execution failed: {e}", exc_info=True)
-            execution_time_ms = (time.time() - start_time) * 1000
             return {
                 "success": False,
                 "error": str(e),
-                "error_type": type(e).__name__,
-                "execution_time_ms": execution_time_ms
+                "error_type": type(e).__name__
             }
 
     @classmethod

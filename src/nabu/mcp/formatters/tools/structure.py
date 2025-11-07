@@ -14,7 +14,7 @@ class ShowStructureMarkdownFormatter(BaseToolMarkdownFormatter):
     Optimized for code skeleton display with minimal wrapper overhead.
     """
 
-    def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+    def format(self, data: Dict[str, Any],) -> str:
         """Format show_structure output in compact style (skeleton + optional relationships)."""
         lines = []
         
@@ -135,9 +135,6 @@ class ShowStructureMarkdownFormatter(BaseToolMarkdownFormatter):
         estimated_tokens = data.get("estimated_tokens", 0)
         lines.append(f"**Estimated tokens**: ~{estimated_tokens}")
         lines.append("")
-
-        # Execution time footer
-        lines.append(f"*execution_time {execution_time_ms:.2f}ms*")
         
         return "\n".join(lines)
 

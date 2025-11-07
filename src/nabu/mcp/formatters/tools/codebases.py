@@ -15,7 +15,7 @@ class ListCodebasesMarkdownFormatter(BaseToolMarkdownFormatter):
     Emphasizes codebase configuration in scannable format.
     """
     
-    def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+    def format(self, data: Dict[str, Any],) -> str:
         """Format list_codebases output in compact style."""
         lines = []
         
@@ -54,10 +54,7 @@ class ListCodebasesMarkdownFormatter(BaseToolMarkdownFormatter):
         else:
             lines.append("*(No codebases registered)*")
             lines.append("")
-        
-        # Execution time footer
-        lines.append(f"*execution_time {execution_time_ms:.2f}ms*")
-        
+
         return "\n".join(lines)
 
 
@@ -69,7 +66,7 @@ class ActivateCodebaseMarkdownFormatter(BaseToolMarkdownFormatter):
     Designed for quick verification of codebase switching.
     """
     
-    def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+    def format(self, data: Dict[str, Any],) -> str:
         """Format activate_codebase output in compact style."""
         lines = []
         
@@ -97,9 +94,6 @@ class ActivateCodebaseMarkdownFormatter(BaseToolMarkdownFormatter):
         lines.append(f"**Repo**: {repo_path}")
         lines.append(f"**DB**: {db_path}")
         lines.append("")
-        
-        # Execution time footer
-        lines.append(f"*execution_time {execution_time_ms:.2f}ms*")
         
         return "\n".join(lines)
 

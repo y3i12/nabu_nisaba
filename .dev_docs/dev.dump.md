@@ -61,8 +61,9 @@ git submodule update --init test/test_github_projects
         - [ ] edit to open the file
         - [ ] review tool return
         - [ ] ... TBD
-- [ ] precalc tokens in file cache
 - [ ] File Watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
+- [ ] precalc tokens in file cache
+- [ ] standardize responses
 
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 #################################################################################################
@@ -148,3 +149,58 @@ can you think on what's the best way for you to proceed with this, which are the
 #      #    #    #    #      #    #    #    #      #    #    #    # #    #    #    #    #    ##
 ##     ##   ##        ##          ##   ##   ##          ##   ##     ##        ##   ##        #
  #       ###         #              ###    #              ###      #            ###           #
+
+
+
+```
+ 10 results - 9 files
+
+src/nabu/mcp/formatters/tools/clones.py:
+  17      
+  18:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+  19          """Format find_clones output in compact style."""
+
+src/nabu/mcp/formatters/tools/codebases.py:
+  17      
+  18:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+  19          """Format list_codebases output in compact style."""
+
+  71      
+  72:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+  73          """Format activate_codebase output in compact style."""
+
+src/nabu/mcp/formatters/tools/exploration.py:
+  40  
+  41:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+  42          """Format explore_project output with stratified sampling."""
+
+src/nabu/mcp/formatters/tools/impact.py:
+  16  
+  17:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+  18          """Format impact_analysis_workflow output in compact style."""
+
+src/nabu/mcp/formatters/tools/query.py:
+  23  
+  24:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+  25          """Format query output in adaptive compact style."""
+
+src/nabu/mcp/formatters/tools/reindex.py:
+  17  
+  18:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+  19          """Format reindex output in compact style."""
+
+src/nabu/mcp/formatters/tools/search.py:
+  12  
+  13:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+  14          """Format search results in compact, scannable markdown."""
+
+src/nabu/mcp/formatters/tools/status.py:
+  18      
+  19:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+  20          """Format show_status output with progressive detail levels."""
+
+src/nabu/mcp/formatters/tools/structure.py:
+  16  
+  17:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+  18          """Format show_structure output in compact style (skeleton + optional relationships)."""
+```

@@ -937,14 +937,7 @@ class NabuTool(MCPTool):
         try:
             # Execute tool (tools transparently use correct db_manager via property)
             result = await self.execute(**kwargs)
-            
-            # Add execution time if not already present
-            # if "execution_time_ms" not in result:
-            #     result["execution_time_ms"] = (time.time() - start_time) * 1000
-            # TODO: clean up time tracking
-            if "execution_time_ms" in result:
-                result.pop("execution_time_ms")
-
+    
             # Record in guidance system using parent class method
             self._record_guidance(self.get_name(), kwargs, result)
 
@@ -961,7 +954,6 @@ class NabuTool(MCPTool):
     def _success_response(
         self, 
         data: Any, 
-        start_time: float = None,
         warnings: Optional[List[str]] = None,
         metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
@@ -992,10 +984,8 @@ class NabuTool(MCPTool):
             self.logger.warning(f"Output format error: {e}. Falling back to JSON.")
             formatted_data = data
 
-        execution_time_ms = (time.time() - start_time) * 1000 if start_time else 0.0
         return ResponseBuilder.success(
             data=formatted_data,
-            execution_time_ms=execution_time_ms,
             warnings=warnings,
             metadata=metadata
         )
@@ -1021,10 +1011,8 @@ class NabuTool(MCPTool):
         Returns:
             Standardized error response
         """
-        execution_time_ms = (time.time() - start_time) * 1000 if start_time else 0.0
         return ResponseBuilder.error(
             error=error,
-            execution_time_ms=execution_time_ms,
             severity=severity,
             recovery_hint=recovery_hint,
             context=context

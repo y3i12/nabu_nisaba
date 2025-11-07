@@ -14,7 +14,7 @@ class ImpactAnalysisWorkflowMarkdownFormatter(BaseToolMarkdownFormatter):
     Emphasizes risk assessment and actionable recommendations.
     """
 
-    def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+    def format(self, data: Dict[str, Any],) -> str:
         """Format impact_analysis_workflow output in compact style."""
         lines = []
         
@@ -114,9 +114,6 @@ class ImpactAnalysisWorkflowMarkdownFormatter(BaseToolMarkdownFormatter):
             lines.append(visualization.get("diagram", ""))
             lines.append("```")
             lines.append("")
-
-        # Execution time footer
-        lines.append(f"*execution_time {execution_time_ms:.2f}ms*")
         
         return "\n".join(lines)
 

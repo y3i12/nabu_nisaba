@@ -47,6 +47,8 @@ class MCPServerRegistry:
         Atomically updates registry file with new server information.
         Cleans up stale entries before writing.
 
+        Uses proper transaction locking (read-modify-write under single lock).
+
         Args:
             server_id: Unique server identifier (e.g., "nabu_12345")
             server_info: Server metadata dict with keys:
@@ -61,17 +63,50 @@ class MCPServerRegistry:
             # Ensure parent directory exists
             self.registry_path.parent.mkdir(parents=True, exist_ok=True)
 
-            # Read current registry (or create new)
-            data = self._read_registry()
+            # Create registry file if doesn't exist
+            if not self.registry_path.exists():
+                self.registry_path.write_text(json.dumps({
+                    "version": self.REGISTRY_VERSION,
+                    "servers": {}
+                }, indent=2))
 
-            # Cleanup stale entries
-            data["servers"] = self._cleanup_stale_entries(data.get("servers", {}))
+            # CRITICAL: Hold EXCLUSIVE lock for entire read-modify-write transaction
+            # This prevents lost updates when multiple servers register simultaneously
+            with open(self.registry_path, 'r+', encoding='utf-8') as f:
+                # Acquire exclusive lock (blocks all other readers/writers)
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
 
-            # Add/update this server
-            data["servers"][server_id] = server_info
+                try:
+                    # Read current state
+                    f.seek(0)
+                    try:
+                        data = json.load(f)
+                    except json.JSONDecodeError:
+                        logger.warning("Registry corrupted, resetting")
+                        data = {"version": self.REGISTRY_VERSION, "servers": {}}
 
-            # Write atomically
-            self._write_registry(data)
+                    # Ensure structure
+                    if "servers" not in data:
+                        data["servers"] = {}
+                    if "version" not in data:
+                        data["version"] = self.REGISTRY_VERSION
+
+                    # Cleanup stale entries
+                    data["servers"] = self._cleanup_stale_entries(data["servers"])
+
+                    # Add/update this server
+                    data["servers"][server_id] = server_info
+
+                    # Write back atomically (in-place under lock)
+                    f.seek(0)
+                    f.truncate()
+                    json.dump(data, f, indent=2)
+                    f.flush()
+                    os.fsync(f.fileno())
+
+                finally:
+                    # Unlock (also auto-released on close)
+                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
             logger.info(f"Registered server: {server_id}")
 
@@ -79,9 +114,12 @@ class MCPServerRegistry:
             logger.error(f"Failed to register server {server_id}: {e}", exc_info=True)
             raise
 
+
     def unregister_server(self, server_id: str) -> None:
         """
         Remove a server entry from registry.
+
+        Uses proper transaction locking to prevent races.
 
         Args:
             server_id: Server identifier to remove
@@ -91,16 +129,38 @@ class MCPServerRegistry:
                 logger.debug(f"Registry does not exist, nothing to unregister: {server_id}")
                 return
 
-            # Read current registry
-            data = self._read_registry()
+            # CRITICAL: Hold EXCLUSIVE lock for entire read-modify-write transaction
+            with open(self.registry_path, 'r+', encoding='utf-8') as f:
+                # Acquire exclusive lock
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
 
-            # Remove server if exists
-            if server_id in data.get("servers", {}):
-                del data["servers"][server_id]
-                self._write_registry(data)
-                logger.info(f"Unregistered server: {server_id}")
-            else:
-                logger.debug(f"Server not in registry: {server_id}")
+                try:
+                    # Read current state
+                    f.seek(0)
+                    try:
+                        data = json.load(f)
+                    except json.JSONDecodeError:
+                        logger.warning("Registry corrupted during unregister")
+                        return
+
+                    # Remove server if exists
+                    if server_id in data.get("servers", {}):
+                        del data["servers"][server_id]
+                        
+                        # Write back atomically (in-place under lock)
+                        f.seek(0)
+                        f.truncate()
+                        json.dump(data, f, indent=2)
+                        f.flush()
+                        os.fsync(f.fileno())
+                        
+                        logger.info(f"Unregistered server: {server_id}")
+                    else:
+                        logger.debug(f"Server not in registry: {server_id}")
+
+                finally:
+                    # Unlock
+                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
         except Exception as e:
             logger.error(f"Failed to unregister server {server_id}: {e}", exc_info=True)

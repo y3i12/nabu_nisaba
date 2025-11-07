@@ -15,7 +15,7 @@ class FindClonesMarkdownFormatter(BaseToolMarkdownFormatter):
     Optimized for code quality audits and duplicate detection.
     """
     
-    def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+    def format(self, data: Dict[str, Any],) -> str:
         """Format find_clones output in compact style."""
         lines = []
         
@@ -24,7 +24,6 @@ class FindClonesMarkdownFormatter(BaseToolMarkdownFormatter):
         summary = data.get("summary", {})
         metadata = data.get("metadata", {})
         clone_clusters = data.get("clone_clusters", [])
-        cluster_summary = summary.get("cluster_summary", {})
         
         # Header
         lines.append("# Clone Detection")
@@ -123,9 +122,6 @@ class FindClonesMarkdownFormatter(BaseToolMarkdownFormatter):
         min_function_size = metadata.get("min_function_size", 0)
         
         lines.append(f"Settings: min_similarity={min_similarity}, same_file_excluded={excluded_same_file}, min_function_size={min_function_size}")
-        
-        # Execution time footer
-        lines.append(f"*execution_time {execution_time_ms:.2f}ms*")
-        
+           
         return "\n".join(lines)
 

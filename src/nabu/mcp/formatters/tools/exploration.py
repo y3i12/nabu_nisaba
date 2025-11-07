@@ -38,7 +38,7 @@ class ExploreProjectMarkdownFormatter(BaseToolMarkdownFormatter):
 
         return qualified_name
 
-    def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+    def format(self, data: Dict[str, Any],) -> str:
         """Format explore_project output with stratified sampling."""
         project_stats = data.get("project_stats", {})
         languages = project_stats.get("languages", {})
@@ -209,8 +209,5 @@ class ExploreProjectMarkdownFormatter(BaseToolMarkdownFormatter):
             lines.append(f"**Inheritance**: {inheritance} INHERITS edges (class inheritance)")
             lines.append(f"**Usage**: {usage} USES edges (field/variable usage)")
             lines.append("")
-
-        # Execution time footer
-        lines.append(f"*execution_time {execution_time_ms:.2f}ms*")
 
         return "\n".join(lines)

@@ -21,7 +21,7 @@ class QueryMarkdownFormatter(BaseToolMarkdownFormatter):
     Achieves ~60% token reduction for typical queries.
     """
 
-    def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+    def format(self, data: Dict[str, Any],) -> str:
         """Format query output in adaptive compact style."""
         rows = data.get("rows", [])
         row_count = data.get("row_count", 0)
@@ -35,8 +35,6 @@ class QueryMarkdownFormatter(BaseToolMarkdownFormatter):
         if row_count == 0:
             lines.append("*No results returned*")
             lines.append("*Tip: CALLS edges come from CALLABLE frames (methods), not CLASS frames.*")
-            lines.append("")
-            lines.append(f"*execution_time {execution_time_ms:.2f}ms*")
             return "\n".join(lines)
 
         # Detect pattern and format accordingly
@@ -102,9 +100,6 @@ class QueryMarkdownFormatter(BaseToolMarkdownFormatter):
                     value = row.get(col, "")
                     lines.append(f"- **{col}:** {value}")
                 lines.append("")
-
-        # Execution time footer
-        lines.append(f"*execution_time {execution_time_ms:.2f}ms*")
 
         return "\n".join(lines)
 
