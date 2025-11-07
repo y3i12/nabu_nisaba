@@ -33,7 +33,8 @@ class EditorTool(NisabaTool):
         old_string: Optional[str] = None,
         new_string: Optional[str] = None,
         line_start: Optional[int] = 1,
-        line_end: Optional[int] = -1
+        line_end: Optional[int] = -1,
+        before_line: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Execute editor operation.
@@ -42,6 +43,9 @@ class EditorTool(NisabaTool):
         - open: Open file in editor (returns existing if already open)
         - write: Write content to file and open editor
         - replace: Replace string in editor content
+        - insert: Insert content before specified line
+        - delete: Delete line range
+        - replace_lines: Replace line range with new content
         - close: Close editor window
         - close_all: Close all editor windows
         - status: Get editor status summary
@@ -53,16 +57,17 @@ class EditorTool(NisabaTool):
             operation: Operation type
             file: File path (for open, write)
             content: File content (for write)
-            editor_id: Editor window ID (for replace, close)
+            editor_id: Editor window ID (for replace, insert, delete, replace_lines, close)
             old_string: String to replace (for replace)
             new_string: Replacement string (for replace)
-            line_start: Start line for open (1-indexed, default 1)
-            line_end: End line for open (-1 = end of file, default -1)
+            line_start: Start line for open/delete/replace_lines (1-indexed, default 1)
+            line_end: End line for open/delete/replace_lines (-1 = end of file, default -1)
+            before_line: Line to insert before (for insert)
         
         Returns:
             Dict with success status and operation result
         """
-        valid_ops = ['open', 'write', 'replace', 'close', 'close_all', 'status']
+        valid_ops = ['open', 'write', 'replace', 'insert', 'delete', 'replace_lines', 'close', 'close_all', 'status']
         
         if operation not in valid_ops:
             return {
@@ -95,6 +100,32 @@ class EditorTool(NisabaTool):
                 
                 self.manager.replace(editor_id, old_string, new_string)
                 message = f"Replaced in editor: {old_string[:30]}... → {new_string[:30]}..."
+                result = {}
+            
+            elif operation == 'insert':
+                if not editor_id or before_line is None or content is None:
+                    return self._error("'editor_id', 'before_line', 'content' required for insert")
+                
+                self.manager.insert(editor_id, before_line, content)
+                num_lines = len(content.split('\n'))
+                message = f"Inserted {num_lines} line(s) before line {before_line}"
+                result = {}
+            
+            elif operation == 'delete':
+                if not editor_id or line_start is None or line_end is None:
+                    return self._error("'editor_id', 'line_start', 'line_end' required for delete")
+                
+                self.manager.delete(editor_id, line_start, line_end)
+                message = f"Deleted lines {line_start}-{line_end}"
+                result = {}
+            
+            elif operation == 'replace_lines':
+                if not editor_id or line_start is None or line_end is None or content is None:
+                    return self._error("'editor_id', 'line_start', 'line_end', 'content' required for replace_lines")
+                
+                self.manager.replace_lines(editor_id, line_start, line_end, content)
+                num_lines = len(content.split('\n'))
+                message = f"Replaced lines {line_start}-{line_end} with {num_lines} line(s)"
                 result = {}
             
             elif operation == 'close':

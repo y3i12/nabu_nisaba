@@ -650,7 +650,8 @@ class AugmentInjector:
         workspace_tokens = base_tokens + tool_ref_tokens + augment_tokens + structural_view_tokens + file_windows_tokens + tool_result_tokens + transcript_tokens
         
         # Count windows by parsing markers
-        file_count = int(self.file_windows_cache.content.count('---FILE_WINDOW_'))
+        editor_count = int((self.file_windows_cache.content.count('---EDITOR_') - 1) / 2) # -2 main tags, divided by 2 for begin/end
+        file_count = int(self.file_windows_cache.content.count('---FILE_WINDOW_') / 2)
         tool_count = int(self.tool_result_windows_cache.content.count('---TOOL_RESULT_WINDOW_') / 2)
         todos_count = self.todos_cache.load().count("\n") - 1 # no endl at the end - tags
         notifications_count = self.notifications_cache.load().count("\n") - 1 # header + endl compensation
@@ -705,6 +706,10 @@ class AugmentInjector:
                 },
                 "augments": augment_tokens,
                 "view": structural_view_tokens,
+                "editor": {
+                    "count": editor_count,
+                    "tokens": editor_tokens,
+                },
                 "files": {
                     "count": file_count,
                     "tokens": file_windows_tokens
@@ -730,6 +735,7 @@ class AugmentInjector:
             f"SYSTEM(PROMPT:{ws['system']['prompt']//1000}k, TOOL_REF:{ws['system']['tools']//1000}k, TSCPT:({ws['system']['transcript']//1000}k))",
             f"AUG({ws['augments']//1000}k)",
             f"VIEW({ws['view']//1000}k)",
+            f"EDITOR({ws['editor']['count']}, {ws['editor']['tokens']//1000}k)",
             f"FILES({ws['files']['count']}, {ws['files']['tokens']//1000}k)",
             f"TOOLS({ws['tools']['count']}, {ws['tools']['tokens']//1000}k)",
             f"MSG:{status_data['messages']//1000}k",

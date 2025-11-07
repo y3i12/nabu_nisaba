@@ -1,9 +1,9 @@
 # available augments
   __base/
-    - 000_universal_symbolic_compression 📌
-    - 001_compressed_workspace_paradigm 📌
-    - 002_compressed_environment_mechanics 📌
-    - 003_compressed_workspace_operations 📌
+    - 000_universal_symbolic_compression
+    - 001_compressed_workspace_paradigm
+    - 002_compressed_environment_mechanics
+    - 003_compressed_workspace_operations
     - 004_workspace_navigation
     - 005_editor
   architecture/
