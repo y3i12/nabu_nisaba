@@ -999,7 +999,7 @@ Nisaba tools → clean output:
 ## Retroactive Tool State Mutation
 
 ```
-nisaba_tool_result_state(operation, tool_ids[])
+nisaba_nisaba_tool_result_state(operation, tool_ids[])
 
 Operations:
   close(ids)     → compact future appearances
@@ -1196,8 +1196,8 @@ bash(command, cwd?)           → stdout/stderr | execution in shell
 grep(pattern, path, flags?)   → matches | pattern search
 glob(pattern, path?)          → file_list | find files by pattern
 
-Pattern: execute → observe → close (via nisaba_tool_result_state)
-  bash("git status") → observe → nisaba_tool_result_state(close, [id])
+Pattern: execute → observe → close (via nisaba_nisaba_tool_result_state)
+  bash("git status") → observe → nisaba_nisaba_tool_result_state(close, [id])
   grep("pattern", "file") → observe → close
   glob("*.py", "src/") → observe → close
 ```
@@ -1217,7 +1217,7 @@ Pattern: persistent visibility in FILE_WINDOWS
 
 ---
 
-## Tool Result State Management (`nisaba_tool_result_state`)
+## Tool Result State Management (`nisaba_nisaba_tool_result_state`)
 
 ```
 close(tool_ids[])    → compact tool results | save tokens
@@ -1297,7 +1297,7 @@ Tool_Windows:
   clear_all when switching_tasks
 
 Native_Results:
-  Close after observation via nisaba_tool_result_state
+  Close after observation via nisaba_nisaba_tool_result_state
   Use close_all for bulk cleanup
   Don't let tool results bloat context
 
@@ -1388,7 +1388,7 @@ editor.open(file) → editor.split(fn_A) + editor.split(fn_B) | same_file parall
   file_windows.clear_all()
   editor.close_all()
   nisaba_tool_windows.clear_all()
-  nisaba_tool_result_state(close_all) → compact tool results
+  nisaba_nisaba_tool_result_state(close_all) → compact tool results
   
 ∆(editor_ops):
   editor.open(file) → EDITOR_WINDOWS

@@ -52,12 +52,15 @@ git submodule update --init test/test_github_projects
     - [-] finish implementation
         - [x] diff bug
         - [x] integrate status bar
-        - [-] remove read/write/edit
-        - [ ] nabu search -> nisaba files
+        - [x] remove read/write/edit
+            - [x] remove TOOL_WINDOWS
+        - [ ] nabu search -> nisaba files (calling http tool)
+            - [ ] remove FILE_WINDOWS
+        - [ ] augment tools to augment commands
+        - [ ] notifications rework
         - [ ] edit to open the file
-    - [ ]
-    - [ ] remove TOOL_WINDOWS
-    - [ ] remove FILE_WINDOWS
+        - [ ] review tool return
+        - [ ] ... TBD
 - [ ] precalc tokens in file cache
 - [ ] File Watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
 
@@ -145,26 +148,3 @@ can you think on what's the best way for you to proceed with this, which are the
 #      #    #    #    #      #    #    #    #      #    #    #    # #    #    #    #    #    ##
 ##     ##   ##        ##          ##   ##   ##          ##   ##     ##        ##   ##        #
  #       ###         #              ###    #              ###      #            ###           #
-
-considering the initial idea:
-```markdown
-editor.open( file, line_start=0, line_end=-1 ) -> editor id
-editor.resize( editor_id, line_start, line_end ) -> update window range
-editor.close( window_id ) -> close window
-editor.close_all(): close all windows
-editor.write( file, mode = 'r', content ) -> writes file and opens editor
-editor.replace( string, replacement, fuzzy=false ) -> replaces content in file
-editor.replace( line_start, line_end, replacement ) -> replaces line range content in file
-editor.insert( before_line, content ) -> inserts content to a file
-editor.delete( string ) -> deletes string (replaces with "")
-editor.delete( line_start, line_end ) -> delete line range from file
-editor.split( window, line_start, line_end ) -> creates a split in the editor showing the lines, tab_id
-editor.resize( tab_id, line_start, line_end ) -> update tab range
-editor.close( tab_id ) -> close tab
-
----
-
-editor would also have information about the edits, showing what was changed and integrated with notifications.
-editor would also refresh files in realtime (possibly showing notifications).
-```
-what is done, what is not? from what's not done, can you infer what would make your activities/tasks easier?
