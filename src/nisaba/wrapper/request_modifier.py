@@ -431,13 +431,18 @@ class RequestModifier:
         if "" == current_session_id:
             return body
         
-        inner_content_list = [{'text': 'Warmup'}]
-        outer_content_list = [{'content':inner_content_list}]
-        if  body.get('messages', outer_content_list)[0].get('content', inner_content_list)[0].get('text', 'Warmup') == 'Warmup':
-            return body
+        # inner_content_list = [{'text': 'Warmup'}]
+        # outer_content_list = [{'content':inner_content_list}]
 
-        if re.match(body.get('model', 'haiku' ), 'haiku'):
-            return body
+        # try:
+        #     if  body.get('messages', outer_content_list)[0].get('content', inner_content_list)[0].get('text', 'Warmup') == 'Warmup':
+        #         return body
+        # except Exception as e:
+        #     logger.warning(f"Error while detecting `Warmup` message - skipping request, error: {e}")
+        #     return body
+
+            # if re.match(body.get('model', 'haiku'), 'haiku'):
+            #     return body
 
         session_path = Path(self.cache_path / current_session_id)
         session_path.mkdir(exist_ok=True)

@@ -3,9 +3,7 @@
     "__base/000_universal_symbolic_compression",
     "__base/001_workspace_paradigm",
     "__base/002_environment_mechanics",
-    "__base/003_workspace_operations",
-    "__base/004_workspace_navigation",
-    "__base/005_editor"
+    "__base/003_workspace_operations"
   ],
   "pinned_augments": [
     "__base/000_universal_symbolic_compression",
