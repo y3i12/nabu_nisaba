@@ -34,7 +34,8 @@ class EditorTool(NisabaTool):
         new_string: Optional[str] = None,
         line_start: Optional[int] = 1,
         line_end: Optional[int] = -1,
-        before_line: Optional[int] = None
+        before_line: Optional[int] = None,
+        split_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Execute editor operation.
@@ -46,7 +47,10 @@ class EditorTool(NisabaTool):
         - insert: Insert content before specified line
         - delete: Delete line range
         - replace_lines: Replace line range with new content
-        - close: Close editor window
+        - split: Create split view of editor
+        - resize: Resize editor or split window
+        - close_split: Close split view
+        - close: Close editor window (and all splits)
         - close_all: Close all editor windows
         - status: Get editor status summary
         
@@ -57,17 +61,18 @@ class EditorTool(NisabaTool):
             operation: Operation type
             file: File path (for open, write)
             content: File content (for write)
-            editor_id: Editor window ID (for replace, insert, delete, replace_lines, close)
+            editor_id: Editor window ID (for replace, insert, delete, replace_lines, split, close)
             old_string: String to replace (for replace)
             new_string: Replacement string (for replace)
-            line_start: Start line for open/delete/replace_lines (1-indexed, default 1)
-            line_end: End line for open/delete/replace_lines (-1 = end of file, default -1)
+            line_start: Start line for open/delete/replace_lines/split/resize (1-indexed, default 1)
+            line_end: End line for open/delete/replace_lines/split/resize (-1 = end of file, default -1)
             before_line: Line to insert before (for insert)
+            split_id: Split ID (for close_split, resize)
         
         Returns:
             Dict with success status and operation result
         """
-        valid_ops = ['open', 'write', 'replace', 'insert', 'delete', 'replace_lines', 'close', 'close_all', 'status']
+        valid_ops = ['open', 'write', 'replace', 'insert', 'delete', 'replace_lines', 'split', 'resize', 'close_split', 'close', 'close_all', 'status']
         
         if operation not in valid_ops:
             return {
@@ -126,6 +131,34 @@ class EditorTool(NisabaTool):
                 self.manager.replace_lines(editor_id, line_start, line_end, content)
                 num_lines = len(content.split('\n'))
                 message = f"Replaced lines {line_start}-{line_end} with {num_lines} line(s)"
+                result = {}
+            
+            elif operation == 'split':
+                if not editor_id or line_start is None or line_end is None:
+                    return self._error("'editor_id', 'line_start', 'line_end' required for split")
+                
+                split_id = self.manager.split(editor_id, line_start, line_end)
+                message = f"Created split view: lines {line_start}-{line_end}"
+                result = {"split_id": split_id}
+            
+            elif operation == 'resize':
+                window_id = split_id or editor_id
+                if not window_id or line_start is None or line_end is None:
+                    return self._error("'editor_id' or 'split_id', 'line_start', 'line_end' required for resize")
+                
+                self.manager.resize(window_id, line_start, line_end)
+                message = f"Resized window to lines {line_start}-{line_end}"
+                result = {}
+            
+            elif operation == 'close_split':
+                if not split_id:
+                    return self._error("'split_id' parameter required for close_split")
+                
+                success = self.manager.close_split(split_id)
+                if not success:
+                    return self._error(f"Split not found: {split_id}")
+                
+                message = "Closed split"
                 result = {}
             
             elif operation == 'close':
