@@ -1,2 +1,2 @@
 Recent activity:
-✓ mcp__nisaba__unpin_augment() → ok
+✓ mcp__nisaba__editor() → Closed all editors
