@@ -215,6 +215,6 @@ Workspace ≡ spatial ∧ simultaneous ∧ persistent
 - ↑ : upward (in context)
 - @t : at time t
 
-**REQUIRES:** __base/001_compressed_workspace_paradigm
+**REQUIRES:** __base/001_workspace_paradigm
 
 ---

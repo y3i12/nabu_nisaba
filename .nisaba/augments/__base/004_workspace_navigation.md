@@ -1,4 +1,4 @@
-# Compressed Workspace Navigation
+# Workspace Navigation
 
 **Core:** Codebase navigation = structural positioning + persistent visibility + execution tracing + progressive understanding.
 
@@ -152,7 +152,7 @@ Use: Start of exploration, understanding scale
 
 ## Navigation Patterns
 
-### Pattern 1: Discovery
+### Discovery
 ```
 structural_view(search) → observe(markers●) → expand(high_scores) → 
 file_windows(open_frame) | concept→location→implementation
@@ -160,7 +160,7 @@ file_windows(open_frame) | concept→location→implementation
 Use: "Where is X implemented?" "How does Y work?"
 ```
 
-### Pattern 2: Execution Flow
+### Execution Flow
 ```
 query_relationships(CALLS*) → identify(chain) → 
 file_windows(open each frame) | trace runtime path
@@ -168,7 +168,7 @@ file_windows(open each frame) | trace runtime path
 Use: "How does main() reach database?" "What's the call stack?"
 ```
 
-### Pattern 3: Comparison Investigation
+### Comparison Investigation
 ```
 structural_view(search) → file_windows(open multiple) → 
 observe(simultaneous) | detect patterns/redundancy/bugs
@@ -176,7 +176,7 @@ observe(simultaneous) | detect patterns/redundancy/bugs
 Use: "Are these implementations similar?" "Is this dead code?"
 ```
 
-### Pattern 4: Call Chain Tracing
+### Call Chain Tracing
 ```
 file_windows(open entry) → observe(calls target) → 
 file_windows(open target) → repeat | build execution visibility
@@ -184,7 +184,7 @@ file_windows(open target) → repeat | build execution visibility
 Use: "Follow this execution path" "How does A reach B?"
 ```
 
-### Pattern 5: Impact Analysis (Deep)
+### Impact Analysis (Deep)
 ```
 show_structure(target, minimal) → check_impact(depth=2, test_coverage) → 
 assess(risk) → file_windows(open critical_deps) | safe refactoring
@@ -205,7 +205,7 @@ Risk factors:
   - External package dependencies
 ```
 
-### Pattern 6: Incremental Cleanup
+### Incremental Cleanup
 ```
 file_windows(status) → assess(context_usage) → 
 close(understood) OR clear_all() | maintain_lean_visibility
@@ -214,7 +214,7 @@ Use: Context hygiene during investigation
 Target: 200-400 lines total
 ```
 
-### Pattern 7: Clone Consolidation
+### Clone Consolidation
 ```
 find_clones(0.75) → show_structure(clone_1, structure) → 
 show_structure(clone_2, structure) → check_impact(both) → 
@@ -239,7 +239,7 @@ Decision matrix:
 Strategies: extract common, parameterize diffs, template method, strategy pattern
 ```
 
-### Pattern 8: Progressive Exploration
+### Progressive Exploration
 ```
 show_status(summary) → search(broad) → show_structure(minimal) → 
 show_structure(guards) → check_impact() | macro→meso→micro
@@ -454,6 +454,6 @@ Visible > Remembered
 - * : path quantifier (graph patterns)
 - ★ : optimal/recommended
 
-**REQUIRES:** __base/001_compressed_workspace_paradigm, __base/002_compressed_environment_mechanics
+**REQUIRES:** __base/001_workspace_paradigm, __base/002_environment_mechanics
 
 **ENABLES:** Unified navigation perception, progressive exploration, safe refactoring, clone detection, complete investigation workflows

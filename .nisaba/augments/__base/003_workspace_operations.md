@@ -299,6 +299,6 @@ Dual paradigm:
 - < : less than
 - ? : optional parameter
 
-**REQUIRES:** __base/002_compressed_environment_mechanics
+**REQUIRES:** __base/002_environment_mechanics
 
 ---
