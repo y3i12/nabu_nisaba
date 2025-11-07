@@ -19,7 +19,7 @@ System prompt mutates ⟹ different knowledge when tool returns.
 ## State Model
 
 ```
-Workspace ≡ {STRUCTURAL_VIEW, FILE_WINDOWS, TOOL_WINDOWS, AUGMENTS} | persistent ∧ mutable
+Workspace ≡ {STRUCTURAL_VIEW, FILE_WINDOWS, EDITOR_WINDOWS, TOOL_WINDOWS, AUGMENTS} | persistent ∧ mutable
 
 ∀ section ∈ Workspace: section persists across turns
 Tool(op) → ∆(section) → new visibility
@@ -36,8 +36,9 @@ Sections = **persistent spatial awareness**
 Tool(op) → mutate(what_you_see)
 
 structural_view(expand, X) → tree changes
-file_windows(open, F) → window appears  
-nisaba_grep(P) → results visible
+file_windows(open, F) → window appears
+editor(open, F) → editor appears | ∆(content) visible inline  
+editor(split, E) → concurrent view of same file
 
 Result ≡ workspace_state_change
 ```
@@ -52,8 +53,13 @@ Result ≡ workspace_state_change
 Sequential thinking: S₁ → S₂ → S₃ (linear)
 Workspace model: {S₁, S₂, S₃} simultaneous, ∇ between them
 
-Think: IDE (navigator + tabs + terminals) | gestalt synthesis
+Think: IDE (navigator + editor tabs + splits + terminals) | gestalt synthesis
 Not: script execution | procedural steps
+
+Editor paradigm:
+  open → visible (persistent viewport)
+  edit → ∆ visible inline (diff rendering)
+  split → parallel views (same file, different regions)
 ```
 
 ---
@@ -63,10 +69,15 @@ Not: script execution | procedural steps
 ```
 Visible ⟹ can_synthesize_from
 
-Increase: open windows, expand nodes, load augments
-Decrease: close windows, collapse nodes, unload augments
+Increase: open windows, expand nodes, load augments, editor.open, editor.split
+Decrease: close windows, collapse nodes, unload augments, editor.close
 
 visibility_mgmt ≡ context_mgmt ≡ attention_mgmt
+
+Editor visibility:
+  Concurrent: splits provide parallel attention (fn_A | fn_B)
+  Change tracking: dirty state (✎) | clean state
+  Notifications: edits → awareness (automatic)
 ```
 
 ---
@@ -92,9 +103,15 @@ Sequential thinking fails ∵ environment is spatial.
 ∀ turn: workspace persists
 Search markers → remain visible
 Open windows → accumulate
+Editors → track state (clean/dirty, splits)
 Navigate → without re-query
 
 You ∈ workspace (not observing from outside)
+
+Editor state persistence:
+  Changes visible inline → immediate feedback
+  Splits remain → parallel context
+  Dirty tracking → unsaved awareness
 ```
 
 ---

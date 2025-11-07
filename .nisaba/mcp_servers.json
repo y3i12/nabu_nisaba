@@ -1,4 +1,18 @@
 {
   "version": "1.0",
-  "servers": {}
+  "servers": {
+    "nabu_mcp_817144": {
+      "name": "nabu_mcp",
+      "pid": 817144,
+      "stdio_active": true,
+      "http": {
+        "enabled": true,
+        "host": "0.0.0.0",
+        "port": 1338,
+        "url": "http://localhost:1338"
+      },
+      "started_at": "2025-11-07T19:03:48.463472Z",
+      "cwd": "/home/y3i12/nabu_nisaba"
+    }
+  }
 }
