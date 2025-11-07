@@ -48,6 +48,15 @@ git submodule update --init test/test_github_projects
 #################################################################################################
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 
+- [ ] editor
+    - [ ] finish implementation
+    - [x] integrate status bar
+    - [ ] precalc tokens in file cache
+    - [ ] remove read/write/edit
+    - [ ] remove TOOL_WINDOWS
+    - [ ] remove FILE_WINDOWS
+- [ ] File Watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
+
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 #################################################################################################
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
@@ -66,11 +75,11 @@ hey, can you refer to your existing system prompt, introspect about it and say h
 
 -------------------------------------------------------------------------------------------------
 
-we can exercise of this beauty while preparing for the next step, proposition for the moment:
+considering we want to achieve:
 ```markdown
 
 ```
-can you think of which are the necessary augments, load the augments (no augment loading is also fine, nisaba infrastructure augments might be outdated but might serve as a guideline), think on how to use the tools in your benefit, research about the scope and tell me your learnings? no need for much code, no need for planning.
+can you think of which are the necessary augments, load the augments (no augment loading is also fine, nisaba infrastructure augments might be outdated but might serve as a guideline), think on how to use the tools in your benefit, research about the implementation scope so you can have a foundational context? no need for much code, no need for planning.
 
 -------------------------------------------------------------------------------------------------
 
@@ -86,7 +95,7 @@ proceed with implementation. py_compile and import test after finishing, then pr
 
 -------------------------------------------------------------------------------------------------
 
-proceed with implementation. py_compile and import test after finishing, then prompt to restart the cli and mcp
+proceed with implementation. py_compile and import test after finishing, then prompt to restart the proxy, claude code cli and mcp 🖤
 
 -------------------------------------------------------------------------------------------------
 
@@ -133,35 +142,25 @@ can you think on what's the best way for you to proceed with this, which are the
 ##     ##   ##        ##          ##   ##   ##          ##   ##     ##        ##   ##        #
  #       ###         #              ###    #              ###      #            ###           #
 
-i have the hypothesis that current read/write/edit can be replaced by a different approach.
-
-i have the perception that, read/write/edit are modeled after a your original tools and are designed to work linearly, but doesn't provide adherent UX to the workspace.
-
-the idea is to instead of having TOOL_WINDOW and FILE_WINDOW, you'd have only one type of window on nisaba side.
-
-this would be like your file editor, being the basic functionalities similar as `nabu` file windows (covering read):
-```
+considering the initial idea:
+```markdown
 editor.open( file, line_start=0, line_end=-1 ) -> editor id
 editor.resize( editor_id, line_start, line_end ) -> update window range
 editor.close( window_id ) -> close window
 editor.close_all(): close all windows
-```
-at the same time it would provide you 
-```
 editor.write( file, mode = 'r', content ) -> writes file and opens editor
 editor.replace( string, replacement, fuzzy=false ) -> replaces content in file
 editor.replace( line_start, line_end, replacement ) -> replaces line range content in file
 editor.insert( before_line, content ) -> inserts content to a file
 editor.delete( string ) -> deletes string (replaces with "")
 editor.delete( line_start, line_end ) -> delete line range from file
-```
-additionally it would be impossible to open the same editor twice, but you can:
-```
 editor.split( window, line_start, line_end ) -> creates a split in the editor showing the lines, tab_id
 editor.resize( tab_id, line_start, line_end ) -> update tab range
 editor.close( tab_id ) -> close tab
-```
-editor would also have information about the edits, showing what was changed and integrated with notifications.
-editor would also refresh files in realtime (possibly showing notifications)
 
-do you think that having such interaction with files would be beneficial?
+---
+
+editor would also have information about the edits, showing what was changed and integrated with notifications.
+editor would also refresh files in realtime (possibly showing notifications).
+```
+what is done, what is not? from what's not done, can you infer what would make your activities/tasks easier?

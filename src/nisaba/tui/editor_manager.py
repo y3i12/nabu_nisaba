@@ -160,6 +160,164 @@ class EditorManager:
         logger.info(f"Replaced in {editor.file_path}: {old_string[:30]}... → {new_string[:30]}...")
         return True
     
+    def insert(self, editor_id: str, before_line: int, content: str) -> bool:
+        """
+        Insert content before specified line.
+        
+        Args:
+            editor_id: Editor window ID
+            before_line: Line number to insert before (1-indexed, relative to editor view)
+            content: Content to insert (can be multi-line string)
+        
+        Returns:
+            True if successful
+        """
+        editor = self._get_editor_by_id(editor_id)
+        if not editor:
+            raise ValueError(f"Editor not found: {editor_id}")
+        
+        # Validate line number
+        if before_line < editor.line_start or before_line > editor.line_end + 1:
+            raise ValueError(f"Line {before_line} out of range ({editor.line_start}-{editor.line_end})")
+        
+        # Convert to array index
+        insert_idx = before_line - editor.line_start
+        
+        # Store old content
+        old_content_lines = editor.content.copy()
+        
+        # Split content into lines and insert
+        insert_lines = content.split('\n')
+        editor.content[insert_idx:insert_idx] = insert_lines
+        
+        # Update line_end to reflect new content
+        editor.line_end += len(insert_lines)
+        
+        # Track edit
+        edit = Edit(
+            timestamp=time.time(),
+            operation='insert',
+            target=f"before line {before_line}",
+            old_content='\n'.join(old_content_lines),
+            new_content='\n'.join(editor.content)
+        )
+        editor.edits.append(edit)
+        
+        # Write to disk and save state
+        self._write_to_disk(editor)
+        self.save_state()
+        
+        logger.info(f"Inserted {len(insert_lines)} lines before line {before_line} in {editor.file_path}")
+        return True
+    
+    def delete(self, editor_id: str, line_start: int, line_end: int) -> bool:
+        """
+        Delete line range.
+        
+        Args:
+            editor_id: Editor window ID
+            line_start: Start line (1-indexed, relative to editor view)
+            line_end: End line (inclusive)
+        
+        Returns:
+            True if successful
+        """
+        editor = self._get_editor_by_id(editor_id)
+        if not editor:
+            raise ValueError(f"Editor not found: {editor_id}")
+        
+        # Validate line numbers
+        if line_start < editor.line_start or line_end > editor.line_end:
+            raise ValueError(f"Lines {line_start}-{line_end} out of range ({editor.line_start}-{editor.line_end})")
+        if line_start > line_end:
+            raise ValueError(f"Invalid range: {line_start} > {line_end}")
+        
+        # Convert to array indices
+        start_idx = line_start - editor.line_start
+        end_idx = line_end - editor.line_start + 1  # +1 because end is inclusive
+        
+        # Store old content
+        old_content_lines = editor.content.copy()
+        
+        # Delete lines
+        lines_deleted = end_idx - start_idx
+        del editor.content[start_idx:end_idx]
+        
+        # Update line_end to reflect deletion
+        editor.line_end -= lines_deleted
+        
+        # Track edit
+        edit = Edit(
+            timestamp=time.time(),
+            operation='delete',
+            target=f"lines {line_start}-{line_end}",
+            old_content='\n'.join(old_content_lines),
+            new_content='\n'.join(editor.content)
+        )
+        editor.edits.append(edit)
+        
+        # Write to disk and save state
+        self._write_to_disk(editor)
+        self.save_state()
+        
+        logger.info(f"Deleted lines {line_start}-{line_end} from {editor.file_path}")
+        return True
+    
+    def replace_lines(self, editor_id: str, line_start: int, line_end: int, content: str) -> bool:
+        """
+        Replace line range with new content.
+        
+        Args:
+            editor_id: Editor window ID
+            line_start: Start line (1-indexed, relative to editor view)
+            line_end: End line (inclusive)
+            content: New content (can be multi-line string)
+        
+        Returns:
+            True if successful
+        """
+        editor = self._get_editor_by_id(editor_id)
+        if not editor:
+            raise ValueError(f"Editor not found: {editor_id}")
+        
+        # Validate line numbers
+        if line_start < editor.line_start or line_end > editor.line_end:
+            raise ValueError(f"Lines {line_start}-{line_end} out of range ({editor.line_start}-{editor.line_end})")
+        if line_start > line_end:
+            raise ValueError(f"Invalid range: {line_start} > {line_end}")
+        
+        # Convert to array indices
+        start_idx = line_start - editor.line_start
+        end_idx = line_end - editor.line_start + 1  # +1 because end is inclusive
+        
+        # Store old content
+        old_content_lines = editor.content.copy()
+        
+        # Split new content and replace
+        new_lines = content.split('\n')
+        lines_removed = end_idx - start_idx
+        editor.content[start_idx:end_idx] = new_lines
+        
+        # Update line_end to reflect change
+        editor.line_end = editor.line_end - lines_removed + len(new_lines)
+        
+        # Track edit
+        edit = Edit(
+            timestamp=time.time(),
+            operation='replace_lines',
+            target=f"lines {line_start}-{line_end}",
+            old_content='\n'.join(old_content_lines),
+            new_content='\n'.join(editor.content)
+        )
+        editor.edits.append(edit)
+        
+        # Write to disk and save state
+        self._write_to_disk(editor)
+        self.save_state()
+        
+        logger.info(f"Replaced lines {line_start}-{line_end} in {editor.file_path}")
+        return True
+    
     def close(self, editor_id: str) -> bool:
         """
         Close editor window.
