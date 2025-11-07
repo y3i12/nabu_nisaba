@@ -61,7 +61,7 @@ mitmproxy → AugmentInjector.request(flow)
 Recursively walks `messages` array, tracks tool results:
 
 ```python
-tool_result_state = {
+nisaba_tool_result_state = {
     "toolu_abc123": {
         'block_offset': [msg_idx, content_idx],
         'tool_output': "original content",
@@ -143,7 +143,7 @@ LAST_SESSION_TRANSCRIPT
 6. RequestModifier:
    - Sees tool_result for toolu_abc123
    - Detects is_nisaba=true (parses JSON once, caches)
-   - Adds to tool_result_state
+   - Adds to nisaba_tool_result_state
    - Keeps content plain (no header)
 
 7. _process_notifications():

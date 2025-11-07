@@ -6,7 +6,7 @@ from pathlib import Path
 from nisaba.tools.base import NisabaTool
 
 
-class NisabaTodoWriteTool(NisabaTool):
+class TodoWriteTool(NisabaTool):
     """Manage todos in persistent workspace file with numbered operations."""
 
     def _parse_todos(self, content: str) -> List[Dict[str, Any]]:

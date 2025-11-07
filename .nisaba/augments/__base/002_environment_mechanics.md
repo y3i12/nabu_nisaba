@@ -194,7 +194,7 @@ Nisaba tools → clean output:
 ## Retroactive Tool State Mutation
 
 ```
-nisaba_tool_result_state(operation, tool_ids[])
+nisaba_nisaba_tool_result_state(operation, tool_ids[])
 
 Operations:
   close(ids)     → compact future appearances
