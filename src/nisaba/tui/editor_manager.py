@@ -574,22 +574,22 @@ class EditorManager:
             
             if editor.is_dirty:
                 lines.append(f"**status**: modified ✎")
-                lines.append(f"**edits**: {len(editor.edits)} (last: {self._format_time_ago(editor.edits[-1].timestamp)})")
+                lines.append(f"**edits**: {len(editor.edits)}")
             
             lines.append("")
             
-            # Render content with diff markers if modified
+            # Always render clean content with line numbers
+            for i, line in enumerate(editor.content):
+                line_num = editor.line_start + i
+                lines.append(f"{line_num}: {line}")
+            
+            # If dirty, add change history section at bottom
             if editor.is_dirty:
-                diff_lines = self._generate_inline_diff(editor)
-                lines.extend(diff_lines)
-            else:
-                for i, line in enumerate(editor.content):
-                    line_num = editor.line_start + i
-                    lines.append(f"{line_num}: {line}")
-            
-            lines.append(f"---EDITOR_{editor.id}_END")
-            lines.append("")
-            
+                lines.append("")
+                lines.append("---")
+                lines.append("**recent changes:**")
+                history_lines = self._format_edit_history(editor)
+                lines.extend(history_lines)
             # Render splits
             for split in editor.splits.values():
                 lines.append(f"---EDITOR_SPLIT_{split.id}")
@@ -723,15 +723,38 @@ class EditorManager:
         
         return lines
     
-    def _format_time_ago(self, timestamp: float) -> str:
-        """Format timestamp as relative time."""
-        seconds = time.time() - timestamp
+    def _format_edit_history(self, editor: EditorWindow) -> List[str]:
+        """
+        Format edit history as readable change summary.
         
-        if seconds < 60:
-            return f"{int(seconds)}s ago"
-        elif seconds < 3600:
-            return f"{int(seconds / 60)}m ago"
-        elif seconds < 86400:
-            return f"{int(seconds / 3600)}h ago"
-        else:
-            return f"{int(seconds / 86400)}d ago"
+        Returns list of formatted lines showing recent edits with mini-diffs.
+        """
+        lines = []
+        
+        # Show last N edits (e.g., last 5)
+        recent_edits = editor.edits[-3:] if len(editor.edits) > 3 else editor.edits
+        
+        for edit in recent_edits:
+            # Format: "  Line 2: replaced"
+            lines.append(f"  {edit.target}: {edit.operation}")
+            
+            # Show mini-diff for the change
+            old_lines = edit.old_content.split('\n')
+            new_lines = edit.new_content.split('\n')
+            
+            # Limit diff to first few lines if large
+            max_diff_lines = 10
+            if len(old_lines) > max_diff_lines or len(new_lines) > max_diff_lines:
+                lines.append(f"    (Large change: {len(old_lines)} → {len(new_lines)} lines)")
+            else:
+                # Generate compact diff
+                diff = difflib.ndiff(old_lines, new_lines)
+                diff_lines = [d.rstrip() for d in diff]
+                
+                # Indent and add to output
+                for d in diff_lines[:max_diff_lines]:
+                    lines.append(f"    {d}")
+            
+            lines.append("")  # Blank line between edits
+        
+        return lines

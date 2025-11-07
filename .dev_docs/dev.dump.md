@@ -49,12 +49,14 @@ git submodule update --init test/test_github_projects
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 
 - [ ] editor
-    - [ ] finish implementation
-    - [x] integrate status bar
-    - [ ] precalc tokens in file cache
+    - [-] finish implementation
+        - [x] diff bug
+        - [x] integrate status bar
+    - [ ]
     - [ ] remove read/write/edit
     - [ ] remove TOOL_WINDOWS
     - [ ] remove FILE_WINDOWS
+- [ ] precalc tokens in file cache
 - [ ] File Watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
 
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
