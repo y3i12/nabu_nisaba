@@ -16,15 +16,6 @@
 
 ---
 
-## Key Features
-
-**Phase 1 (MVP):** Basic operations + string replace
-**Phase 2A:** Line-based editing (insert/delete/replace_lines)  
-**Phase 2B:** Split views (multiple views of same file)
-**Phase 2C:** Notifications + real-time refresh
-
----
-
 ## Split Views
 
 ```python
@@ -32,12 +23,6 @@ editor.split(editor_id, line_start, line_end) → split_id
 editor.resize(split_id, line_start, line_end)
 editor.close_split(split_id)
 ```
-
-**Benefits:**
-- Multiple views of same file simultaneously
-- Compare implementations side-by-side
-- Parent-child relationship (close parent → closes splits)
-- Edits in any view affect parent content
 
 **Rendering:**
 ```markdown
@@ -138,5 +123,5 @@ Automatic > Manual (notifications + refresh built-in)
 
 **Pattern:** Open → visible → modify → diff → split → persist → notify → refresh 🖤
 
-**REQUIRES:** __base/002_compressed_environment_mechanics
+**REQUIRES:** __base/002_environment_mechanics
 **ENABLES:** Unified file operations, spatial code editing, change visibility, split views, notifications, real-time refresh
