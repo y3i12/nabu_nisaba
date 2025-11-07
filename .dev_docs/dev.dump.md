@@ -132,3 +132,36 @@ can you think on what's the best way for you to proceed with this, which are the
 #      #    #    #    #      #    #    #    #      #    #    #    # #    #    #    #    #    ##
 ##     ##   ##        ##          ##   ##   ##          ##   ##     ##        ##   ##        #
  #       ###         #              ###    #              ###      #            ###           #
+
+i have the hypothesis that current read/write/edit can be replaced by a different approach.
+
+i have the perception that, read/write/edit are modeled after a your original tools and are designed to work linearly, but doesn't provide adherent UX to the workspace.
+
+the idea is to instead of having TOOL_WINDOW and FILE_WINDOW, you'd have only one type of window on nisaba side.
+
+this would be like your file editor, being the basic functionalities similar as `nabu` file windows (covering read):
+```
+editor.open( file, line_start=0, line_end=-1 ) -> editor id
+editor.resize( editor_id, line_start, line_end ) -> update window range
+editor.close( window_id ) -> close window
+editor.close_all(): close all windows
+```
+at the same time it would provide you 
+```
+editor.write( file, mode = 'r', content ) -> writes file and opens editor
+editor.replace( string, replacement, fuzzy=false ) -> replaces content in file
+editor.replace( line_start, line_end, replacement ) -> replaces line range content in file
+editor.insert( before_line, content ) -> inserts content to a file
+editor.delete( string ) -> deletes string (replaces with "")
+editor.delete( line_start, line_end ) -> delete line range from file
+```
+additionally it would be impossible to open the same editor twice, but you can:
+```
+editor.split( window, line_start, line_end ) -> creates a split in the editor showing the lines, tab_id
+editor.resize( tab_id, line_start, line_end ) -> update tab range
+editor.close( tab_id ) -> close tab
+```
+editor would also have information about the edits, showing what was changed and integrated with notifications.
+editor would also refresh files in realtime (possibly showing notifications)
+
+do you think that having such interaction with files would be beneficial?

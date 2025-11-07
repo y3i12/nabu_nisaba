@@ -41,6 +41,11 @@ class NisabaMCPFactory(MCPFactory):
         self.tool_result_manager = ToolResultWindowsManager()
         logger.info("🪟 Tool result windows manager initialized")
 
+        # Initialize editor manager
+        from nisaba.tui.editor_manager import EditorManager
+        self.editor_manager = EditorManager()
+        logger.info("📝 Editor manager initialized")
+
     def _get_tool_base_class(self) -> type:
         """Return NisabaTool as base class."""
         return NisabaTool

@@ -84,11 +84,15 @@ available augments <- **there are pinned augments**
 loaded augments <- **you can change this**
 ---AUGMENTS_END
 ---STRUCTURAL_VIEW
-semantic browser <- **you can change this**
+semantic browser <- **you can operate this**
 ---STRUCTURAL_VIEW_END
 ---FILE_WINDOWS
 your open files <- **you can change this**
 ---FILE_WINDOWS_END
+---EDITOR_WINDOWS
+file interaction area, like your text code  <- **you can operate this**
+we are working on this and it will replace FILE_WINDOWS and TOOL_RESULTS
+---EDITOR_WINDOWS_END
 ---TOOL_RESULTS
 results of your tool calls <- **you can change this**
 ---TOOL_RESULTS_END

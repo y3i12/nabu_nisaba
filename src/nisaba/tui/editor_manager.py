@@ -1,0 +1,373 @@
+"""Editor manager - unified file editing with persistent windows."""
+
+import json
+import logging
+import difflib
+import time
+from pathlib import Path
+from typing import Dict, List, Optional, Any
+
+from nisaba.tui.editor_window import EditorWindow, Edit
+
+logger = logging.getLogger(__name__)
+
+
+class EditorManager:
+    """
+    Manages collection of editor windows.
+    
+    Key features:
+    - One editor per file (no duplicates)
+    - Immediate commit to disk
+    - Change tracking with edit history
+    - Diff rendering with inline markers
+    """
+    
+    def __init__(self):
+        self.editors: Dict[Path, EditorWindow] = {}  # file_path → editor
+        self.state_file = Path.cwd() / ".nisaba" / "editor_state.json"
+        self.output_file = Path.cwd() / ".nisaba" / "editor_windows.md"
+        self.load_state()
+    
+    def open(self, file: str, line_start: int = 1, line_end: int = -1) -> str:
+        """
+        Open file in editor. Returns existing editor_id if already open.
+        
+        Args:
+            file: File path
+            line_start: Start line (1-indexed)
+            line_end: End line (-1 = end of file, inclusive)
+        
+        Returns:
+            editor_id
+        """
+        file_path = Path(file).resolve()
+        
+        # Return existing editor if already open
+        if file_path in self.editors:
+            logger.info(f"File already open: {file_path}")
+            return self.editors[file_path].id
+        
+        # Read file
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                all_lines = f.readlines()
+            
+            # Strip newlines
+            all_lines = [line.rstrip('\n') for line in all_lines]
+            
+            # Handle line range
+            if line_end == -1:
+                content = all_lines[line_start-1:] if line_start > 1 else all_lines
+                actual_end = len(all_lines)
+            else:
+                content = all_lines[line_start-1:line_end]
+                actual_end = line_end
+            
+            # Get file mtime
+            mtime = file_path.stat().st_mtime
+            
+            # Create editor
+            editor = EditorWindow(
+                file_path=file_path,
+                line_start=line_start,
+                line_end=actual_end,
+                content=content,
+                original_content=content.copy(),
+                edits=[],
+                last_mtime=mtime
+            )
+            
+            self.editors[file_path] = editor
+            self.save_state()
+            
+            logger.info(f"Opened editor: {file_path} ({len(content)} lines)")
+            return editor.id
+            
+        except Exception as e:
+            logger.error(f"Failed to open {file_path}: {e}", exc_info=True)
+            raise
+    
+    def write(self, file: str, content: str) -> str:
+        """
+        Write content to file and open editor.
+        
+        Args:
+            file: File path
+            content: File content
+        
+        Returns:
+            editor_id
+        """
+        file_path = Path(file).resolve()
+        
+        try:
+            # Create parent directories
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Write to disk
+            file_path.write_text(content, encoding='utf-8')
+            logger.info(f"Wrote file: {file_path}")
+            
+            # Open editor (will create new or return existing)
+            return self.open(str(file_path))
+            
+        except Exception as e:
+            logger.error(f"Failed to write {file_path}: {e}", exc_info=True)
+            raise
+    
+    def replace(self, editor_id: str, old_string: str, new_string: str) -> bool:
+        """
+        Replace string in editor content and write to disk.
+        
+        Args:
+            editor_id: Editor window ID
+            old_string: String to replace
+            new_string: Replacement string
+        
+        Returns:
+            True if successful
+        """
+        editor = self._get_editor_by_id(editor_id)
+        if not editor:
+            raise ValueError(f"Editor not found: {editor_id}")
+        
+        # Check if string exists
+        full_content = '\n'.join(editor.content)
+        if old_string not in full_content:
+            raise ValueError(f"String not found in editor: {old_string[:50]}...")
+        
+        # Apply replacement
+        old_content_lines = editor.content.copy()
+        new_content_lines = [line.replace(old_string, new_string) for line in editor.content]
+        
+        # Track edit
+        edit = Edit(
+            timestamp=time.time(),
+            operation='replace',
+            target=old_string[:100],  # Truncate for storage
+            old_content='\n'.join(old_content_lines),
+            new_content='\n'.join(new_content_lines)
+        )
+        
+        editor.edits.append(edit)
+        editor.content = new_content_lines
+        
+        # Write to disk immediately
+        self._write_to_disk(editor)
+        self.save_state()
+        
+        logger.info(f"Replaced in {editor.file_path}: {old_string[:30]}... → {new_string[:30]}...")
+        return True
+    
+    def close(self, editor_id: str) -> bool:
+        """
+        Close editor window.
+        
+        Args:
+            editor_id: Editor window ID
+        
+        Returns:
+            True if successful
+        """
+        editor = self._get_editor_by_id(editor_id)
+        if not editor:
+            return False
+        
+        del self.editors[editor.file_path]
+        self.save_state()
+        
+        logger.info(f"Closed editor: {editor.file_path}")
+        return True
+    
+    def close_all(self) -> None:
+        """Close all editor windows."""
+        self.editors.clear()
+        self.save_state()
+        logger.info("Closed all editors")
+    
+    def status(self) -> Dict[str, Any]:
+        """
+        Get status summary.
+        
+        Returns:
+            Dict with editor count, total lines, and editor list
+        """
+        total_lines = sum(len(editor.content) for editor in self.editors.values())
+        
+        return {
+            "editor_count": len(self.editors),
+            "total_lines": total_lines,
+            "editors": [
+                {
+                    "id": editor.id,
+                    "file": str(editor.file_path),
+                    "lines": f"{editor.line_start}-{editor.line_end}",
+                    "line_count": len(editor.content),
+                    "edits": len(editor.edits),
+                    "dirty": editor.is_dirty
+                }
+                for editor in self.editors.values()
+            ]
+        }
+    
+    def render(self) -> str:
+        """
+        Render all editors to markdown with diff markers.
+        
+        Returns:
+            Markdown string
+        """
+        if not self.editors:
+            return ""
+        
+        lines = []
+        
+        for editor in self.editors.values():
+            lines.append(f"---EDITOR_{editor.id}")
+            lines.append(f"**file**: {editor.file_path}")
+            lines.append(f"**lines**: {editor.line_start}-{editor.line_end} ({len(editor.content)} lines)")
+            
+            if editor.is_dirty:
+                lines.append(f"**status**: modified ✎")
+                lines.append(f"**edits**: {len(editor.edits)} (last: {self._format_time_ago(editor.edits[-1].timestamp)})")
+            
+            lines.append("")
+            
+            # Render content with diff markers if modified
+            if editor.is_dirty:
+                diff_lines = self._generate_inline_diff(editor)
+                lines.extend(diff_lines)
+            else:
+                for i, line in enumerate(editor.content):
+                    line_num = editor.line_start + i
+                    lines.append(f"{line_num}: {line}")
+            
+            lines.append(f"---EDITOR_{editor.id}_END")
+            lines.append("")
+        
+        return '\n'.join(lines)
+    
+    def save_state(self) -> None:
+        """Save editor state to JSON."""
+        state = {
+            "editors": {
+                str(file_path): editor.to_dict()
+                for file_path, editor in self.editors.items()
+            }
+        }
+        
+        self.state_file.parent.mkdir(parents=True, exist_ok=True)
+        self.state_file.write_text(json.dumps(state, indent=2), encoding='utf-8')
+        logger.debug(f"Saved {len(self.editors)} editors to state file")
+    
+    def load_state(self) -> None:
+        """Restore editors from JSON."""
+        if not self.state_file.exists():
+            logger.debug("No state file found, starting with empty editors")
+            return
+        
+        try:
+            state = json.loads(self.state_file.read_text(encoding='utf-8'))
+            
+            for file_path_str, editor_data in state.get("editors", {}).items():
+                file_path = Path(file_path_str)
+                
+                # Re-read content from file (handles external changes)
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        all_lines = f.readlines()
+                    
+                    all_lines = [line.rstrip('\n') for line in all_lines]
+                    
+                    # Extract range
+                    start = editor_data["line_start"]
+                    end = editor_data["line_end"]
+                    
+                    if end == -1 or end > len(all_lines):
+                        content = all_lines[start-1:]
+                    else:
+                        content = all_lines[start-1:end]
+                    
+                    # Restore editor
+                    editor = EditorWindow.from_dict(editor_data, content)
+                    self.editors[file_path] = editor
+                    
+                except Exception as e:
+                    logger.warning(f"Skipping editor {file_path}: {e}")
+                    continue
+            
+            logger.info(f"Restored {len(self.editors)} editors from state file")
+        except Exception as e:
+            logger.warning(f"Failed to load state file: {e}")
+    
+    def _get_editor_by_id(self, editor_id: str) -> Optional[EditorWindow]:
+        """Find editor by ID."""
+        for editor in self.editors.values():
+            if editor.id == editor_id:
+                return editor
+        return None
+    
+    def _write_to_disk(self, editor: EditorWindow) -> None:
+        """Write editor content back to file."""
+        try:
+            # Read full file
+            with open(editor.file_path, 'r', encoding='utf-8') as f:
+                all_lines = f.readlines()
+            
+            all_lines = [line.rstrip('\n') for line in all_lines]
+            
+            # Replace the range
+            start_idx = editor.line_start - 1
+            end_idx = editor.line_end
+            
+            new_lines = (
+                all_lines[:start_idx] +
+                editor.content +
+                all_lines[end_idx:]
+            )
+            
+            # Write back
+            editor.file_path.write_text('\n'.join(new_lines) + '\n', encoding='utf-8')
+            
+            # Update mtime
+            editor.last_mtime = editor.file_path.stat().st_mtime
+            
+        except Exception as e:
+            logger.error(f"Failed to write {editor.file_path}: {e}", exc_info=True)
+            raise
+    
+    def _generate_inline_diff(self, editor: EditorWindow) -> List[str]:
+        """Generate diff with +/- markers inline."""
+        diff = difflib.ndiff(editor.original_content, editor.content)
+        
+        lines = []
+        line_num = editor.line_start
+        
+        for d in diff:
+            prefix = d[0]
+            content = d[2:]
+            
+            if prefix == ' ':  # Unchanged
+                lines.append(f"{line_num}: {content}")
+                line_num += 1
+            elif prefix == '-':  # Removed
+                lines.append(f"{line_num}: -{content}")
+            elif prefix == '+':  # Added
+                lines.append(f"{line_num}: +{content}")
+                line_num += 1
+        
+        return lines
+    
+    def _format_time_ago(self, timestamp: float) -> str:
+        """Format timestamp as relative time."""
+        seconds = time.time() - timestamp
+        
+        if seconds < 60:
+            return f"{int(seconds)}s ago"
+        elif seconds < 3600:
+            return f"{int(seconds / 60)}m ago"
+        elif seconds < 86400:
+            return f"{int(seconds / 3600)}h ago"
+        else:
+            return f"{int(seconds / 86400)}d ago"

@@ -11,6 +11,7 @@ from nisaba.tools.augments_tools import (
 from nisaba.tools.nisaba_read import NisabaReadTool
 from nisaba.tools.nisaba_edit import NisabaEditTool
 from nisaba.tools.nisaba_write import NisabaWriteTool
+from nisaba.tools.editor import EditorTool
 # from nisaba.tools.nisaba_bash import NisabaBashTool
 # from nisaba.tools.nisaba_grep import NisabaGrepTool
 # from nisaba.tools.nisaba_glob import NisabaGlobTool
@@ -28,6 +29,7 @@ __all__ = [
     "NisabaReadTool",
     "NisabaEditTool",
     "NisabaWriteTool",
+    "EditorTool",
     # "NisabaBashTool",
     # "NisabaGrepTool",
     # "NisabaGlobTool",
