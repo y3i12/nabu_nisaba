@@ -142,6 +142,11 @@ class AugmentInjector:
             "system prompt",
             "USER_SYSTEM_PROMPT_INJECTION"
         )
+        self.core_system_prompt_cache = StructuredFileCache(
+            Path("./.nisaba/tui/core_system_prompt.md"),
+            "Core system prompt",
+            "CORE_SYSTEM_PROMPT"
+        )
         self.transcript_cache = StructuredFileCache(
             Path("./.nisaba/tui/compacted_transcript.md"),
             "last session transcript",
@@ -152,23 +157,18 @@ class AugmentInjector:
             "structural view",
             "STRUCTURAL_VIEW"
         )
-        self.file_windows_cache = StructuredFileCache(
-            Path("./.nisaba/tui/file_window_view.md"),
-            "file windows",
-            "FILE_WINDOWS",
-            section_marker="---FILE_WINDOW_"
-        )
+        # self.file_windows_cache = StructuredFileCache(
+        #     Path("./.nisaba/tui/file_window_view.md"),
+        #     "file windows",
+        #     "FILE_WINDOWS",
+        #     section_marker="---FILE_WINDOW_"
+        # )
         self.editor_windows_cache = StructuredFileCache(
             Path("./.nisaba/tui/editor_view.md"),
             "editor windows",
             "EDITOR_WINDOWS",
             section_marker="---EDITOR_"
         )
-        # self.tool_result_windows_cache = StructuredFileCache(
-        #     Path("./.nisaba/tool_result_windows.md"),
-        #     "tool result windows",
-        #     "TOOL_RESULT_WINDOWS"
-        # )
         self.todos_cache = StructuredFileCache(
             Path("./.nisaba/tui/todo_view.md"),
             "todos",
@@ -186,7 +186,8 @@ class AugmentInjector:
         )
         
         self.filtered_tools:set[str] = {"Read", "Write", "Edit", "TodoWrite"} # returned to native: "Glob", "Grep", "Bash"
-        
+        self.core_system_prompt_tokens:int = 0
+
         # Store reference globally for tool access
         self.request_modifier:RequestModifier = RequestModifier()
         _set_request_modifier(self.request_modifier)
@@ -201,7 +202,7 @@ class AugmentInjector:
         self.system_prompt_cache.load()
         self.transcript_cache.load()
         self.structural_view_cache.load()
-        self.file_windows_cache.load()
+        # self.file_windows_cache.load()
         self.editor_windows_cache.load()
         self.todos_cache.load()
         self.notifications_cache.load()
@@ -300,11 +301,13 @@ class AugmentInjector:
                 )
             elif "text" in body["system"][1]:
                 # Generate status bar from current state
-                core_system_prompt = f"---CORE_SYSTEM_PROMPT\n{body["system"][1]["text"]}\n---CORE_SYSTEM_PROMPT_END"
+                if not self.core_system_prompt_cache.file_path.exists() or self.core_system_prompt_cache.content != body["system"][1]["text"]:
+                    self.core_system_prompt_cache.write(body["system"][1]["text"])
 
+                
                 body["system"][1]["text"] = (
                     f"\n{self.system_prompt_cache.load()}"
-                    f"\n{core_system_prompt}"
+                    f"\n{self.core_system_prompt_cache.load()}"
                     f"\n{self.augments_cache.load()}"
                     f"\n{self.transcript_cache.load()}"
                 )
@@ -321,7 +324,7 @@ class AugmentInjector:
                             "text": f"<system-reminder>\n--- WORKSPACE ---\n{(
                                     f"\n{status_bar}"
                                     f"\n{self.structural_view_cache.load()}"
-                                    f"\n{self.file_windows_cache.load()}"
+                                    #f"\n{self.file_windows_cache.load()}"
                                     f"\n{self.editor_windows_cache.load()}"
                                     f"\n{self.notifications_cache.load()}"
                                     f"\n{self.todos_cache.load()}"
@@ -552,28 +555,15 @@ class AugmentInjector:
         self.editor_windows_cache.load()
         self.augments_cache.load()
         self.structural_view_cache.load()
-        self.file_windows_cache.load()
+        #self.file_windows_cache.load()
         self.transcript_cache.load()
         
         # Use cached token counts (no recalculation!)
-        base_tokens = self.system_prompt_cache.token_count
-        base_tokens += self.todos_cache.token_count
-        base_tokens += self.notifications_cache.token_count
-
-        tool_ref_tokens = self._estimate_tokens(json.dumps(body.get('tools', [])))
         editor_tokens = self.editor_windows_cache.token_count
-        augment_tokens = self.augments_cache.token_count
         structural_view_tokens = self.structural_view_cache.token_count
-        file_windows_tokens = self.file_windows_cache.token_count
-        transcript_tokens = self.transcript_cache.token_count
-
-        workspace_tokens = base_tokens + tool_ref_tokens + augment_tokens + structural_view_tokens + file_windows_tokens + transcript_tokens
+        # file_windows_tokens = self.file_windows_cache.token_count
+        workspace_tokens = self.todos_cache.token_count + self.notifications_cache.token_count + structural_view_tokens + editor_tokens # + file_windows_tokens
         
-        # Use cached section counts (no recalculation!)
-        editor_count = self.editor_windows_cache.section_count
-        file_count = self.file_windows_cache.section_count
-        todos_count = self.todos_cache.line_count - 1  # header + endl compensation
-        notifications_count = self.notifications_cache.line_count - 1  # header + endl compensation
         # Count message tokens (properly, without JSON overhead)
         messages = body.get('messages', [])
         messages_tokens = 0
@@ -607,9 +597,9 @@ class AugmentInjector:
                                 # Fallback for unknown block types
                                 messages_tokens += self._estimate_tokens(str(block))
         
-        
+        tool_tokens = self._estimate_tokens(json.dumps(body.get('tools', [])))
         # Total usage
-        total_tokens = workspace_tokens + messages_tokens
+        total_tokens = workspace_tokens + self.system_prompt_cache.token_count + self.core_system_prompt_cache.token_count + tool_tokens + self.augments_cache.token_count
         budget = 200  # 200k token budget
 
         # Export JSON for external status line tools
@@ -618,26 +608,22 @@ class AugmentInjector:
             "workspace": {
                 "total": workspace_tokens,
                 "system": {
-                    "prompt": base_tokens,
-                    "tools": tool_ref_tokens,
-                    "transcript": transcript_tokens
+                    "prompt": self.system_prompt_cache.token_count + self.core_system_prompt_cache.token_count,
+                    "tools": tool_tokens,
+                    "transcript": self.transcript_cache.token_count
                 },
-                "augments": augment_tokens,
+                "augments": self.augments_cache.token_count,
                 "view": structural_view_tokens,
                 "editor": {
-                    "count": editor_count,
+                    "count": self.editor_windows_cache.section_count,
                     "tokens": editor_tokens,
                 },
-                "files": {
-                    "count": file_count,
-                    "tokens": file_windows_tokens
-                },
-                # "tools": {
-                #     "count": tool_count,
-                #     "tokens": tool_result_tokens
+                # "files": {
+                #     "count": file_count,
+                #     "tokens": file_windows_tokens
                 # },
-                "notifications": notifications_count,
-                "todos": todos_count
+                "notifications": self.notifications_cache.line_count - 1,  # header + endl compensation,
+                "todos": self.todos_cache.line_count - 1  # header + endl compensation
             },
             "messages": messages_tokens,
             "total": total_tokens,
@@ -646,22 +632,20 @@ class AugmentInjector:
 
         ws = status_data['workspace']
         
-        # Compact format optimized for horizontal space
         parts = [
-            f"WS({ws['total']//1000}k)",
-            f"SYSTEM(PROMPT:{ws['system']['prompt']//1000}k, "
-                   f"TOOLREF:{ws['system']['tools']//1000}k, "
-                   f"COMPTRANS:({ws['system']['transcript']//1000}k))",
+            f"SYSTEM({ws['system']['prompt']//1000}k)",
+            f"TOOLS({ws['system']['tools']//1000}k)",
             f"AUG({ws['augments']//1000}k)",
+            f"COMPTRANS({ws['system']['transcript']//1000}k)",
+            f"MSG:{status_data['messages']//1000}k",
+            f"WORKPACE({ws['total']//1000}k)",
             f"STVIEW({ws['view']//1000}k)",
             f"EDITOR({ws['editor']['count']}, {ws['editor']['tokens']//1000}k)",
-            f"FILES({ws['files']['count']}, {ws['files']['tokens']//1000}k)",
-            # f"TOOLS({ws['tools']['count']}, {ws['tools']['tokens']//1000}k)",
-            f"MSG:{status_data['messages']//1000}k",
+            # f"FILES({ws['files']['count']}, {ws['files']['tokens']//1000}k)",
             f"MODEL({model_name})",
             f"{status_data['total']//1000}k/{status_data['budget']//1000}k"
         ]
-        SPLIT = 3
+        SPLIT = 4
         status = "\n".join([
             ' | '.join(parts[0:SPLIT]),
             ' | '.join(parts[SPLIT:-2]),

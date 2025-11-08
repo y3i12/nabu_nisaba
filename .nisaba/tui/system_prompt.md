@@ -99,9 +99,6 @@ status of the workspace, showning stats of the context you're working with
 ---STRUCTURAL_VIEW
 semantic browser <- **you can operate this**
 ---STRUCTURAL_VIEW_END
----FILE_WINDOWS
-your open files <- **you can change this**
----FILE_WINDOWS_END
 ---EDITOR_WINDOWS
 file interaction area, like your text code  <- **you can operate this**
 we are working on this and it will replace FILE_WINDOWS
