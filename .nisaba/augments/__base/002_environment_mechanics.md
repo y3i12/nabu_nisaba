@@ -30,7 +30,7 @@ State_A → Tool(op) → Manager(mutate) → Write(.nisaba/*.md) →
 Proxy(detect_mtime) → Inject(section) → State_B | sync with tool_return
 
 Tool_result = metadata(id, status)
-Content = sections ↑ (look up, not at result)
+Content = sections → WORKSPACE in messages (not tool result)
 ```
 
 **Key:** After tool returns, observe section for changes, not tool result JSON.
@@ -257,7 +257,7 @@ Editor paradigm:
 - ⟹ : implies
 - ≠ : not equal
 - → : transforms to
-- ↑ : upward (in context)
+- → : transforms to/flows through messages
 - @t : at time t
 
 **REQUIRES:** __base/001_workspace_paradigm

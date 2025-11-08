@@ -4,7 +4,10 @@
     "nabu_nisaba.cpp_root",
     "nabu_nisaba.java_root",
     "nabu_nisaba.perl_root",
-    "nabu_nisaba.python_root"
+    "nabu_nisaba.python_root",
+    "nabu_nisaba.python_root.nabu",
+    "nabu_nisaba.python_root.nabu.tui",
+    "nabu_nisaba.python_root.nabu.tui.StructuralViewTUI"
   ],
   "search_query": null,
   "search_hits": {}

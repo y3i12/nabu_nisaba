@@ -18,7 +18,6 @@ class FileWindowsManager:
         self.windows: Dict[str, FileWindow] = {}
         self.db_manager = db_manager
         self.factory = factory
-        self.load_state()
         
         # Use JsonStructuredFile for atomic state persistence
         self._state_file = JsonStructuredFile(
@@ -26,6 +25,9 @@ class FileWindowsManager:
             name="file_windows_state",
             default_factory=lambda: {"windows": {}}
         )
+        
+        self.load_state()
+
 
 
     @property
@@ -58,7 +60,7 @@ class FileWindowsManager:
         """Restore windows from JSON using cached operations."""
         state = self._state_file.load_json()
         
-        for window_data in state.get("windows", {}).values():
+        for window_id, window_data in state.get("windows", {}).items():
             try:
                 # Re-read content from file (handles staleness)
                 content = self._read_lines(
@@ -78,29 +80,26 @@ class FileWindowsManager:
                     metadata=window_data.get("metadata", {}),
                     opened_at=window_data.get("opened_at", 0.0)
                 )
+                
                 self.windows[window.id] = window
             except Exception as e:
                 logger.warning(f"Skipping window {window_data.get('id')}: {e}")
                 continue
+
         
         logger.info(f"Restored {len(self.windows)} windows from state file")
 
     def open_frame_window(self, frame_path: str) -> str:
-        content = self._read_lines(
-            frame_data['file_path'],
-            frame_data['start_line'],
-            
-            logger.info(f"Restored {len(self.windows)} windows from state file")
-        except Exception as e:
-            logger.warning(f"Failed to load state file: {e}")
-
-    def open_frame_window(self, frame_path: str) -> str:
+        """Open window for frame body (class/function/package)."""
+        # Resolve frame path to location
+        frame_data = self._get_frame_location(frame_path)
+        
         content = self._read_lines(
             frame_data['file_path'],
             frame_data['start_line'],
             frame_data['end_line']
         )
-
+        
         # Create window
         window = FileWindow(
             file_path=Path(frame_data['file_path']),
@@ -111,13 +110,17 @@ class FileWindowsManager:
             metadata={'frame_qn': frame_data['qualified_name']}
         )
 
+
         self.windows[window.id] = window
         self.save_state()
         return window.id
 
+
     def open_range_window(self, file_path: str, start: int, end: int) -> str:
         """Open specific line range."""
+
         content = self._read_lines(file_path, start, end)
+
 
         window = FileWindow(
             file_path=Path(file_path),
@@ -143,9 +146,6 @@ class FileWindowsManager:
         search_tool = SearchTool(factory=self.factory)
 
         result = await search_tool.execute(
-            query=query,
-            k=max_windows,
-            frame_type_filter="CALLABLE|CLASS|PACKAGE",
             compact_metadata=False,
             context_lines=context_lines,
             max_snippets=1

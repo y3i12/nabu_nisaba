@@ -438,7 +438,6 @@ class RequestModifier:
         self._write_to_file(session_path / 'original_context.json', json.dumps(body, indent=2, ensure_ascii=False), "Original request written")
 
         body = self._process_request_recursive(body)
-        self._write_to_file(session_path / 'modified_context.json', json.dumps(body, indent=2, ensure_ascii=False), "Last request written")
         self._write_to_file(session_path / 'state.json', json.dumps(self.state.to_dict(), indent=2, ensure_ascii=False), "State written")
         return body
 

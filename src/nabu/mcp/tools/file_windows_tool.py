@@ -25,7 +25,7 @@ class FileWindowsTool(NabuTool):
 
     def __init__(self, factory):
         super().__init__(factory)
-        self.view_file = Path.cwd() / ".nisaba" / "file_window_view.md"
+        self.view_file = Path.cwd() / ".nisaba" / "tui" / "file_window_view.md"
         self._manager = None
 
     @property

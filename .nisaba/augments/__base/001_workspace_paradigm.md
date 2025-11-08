@@ -43,7 +43,7 @@ editor(split, E) → concurrent view of same file
 Result ≡ workspace_state_change
 ```
 
-**Tool responses = metadata.** Content appears in sections ↑ (look up, not at result).
+**Tool responses = metadata.** Content appears in WORKSPACE (messages, not tool result).
 
 ---
 
@@ -154,7 +154,7 @@ Clean. Dynamic. Spatial. 🖤
 - ∨ : or
 - ∵ : because
 - → : transforms to/flows to
-- ↑ : upward direction
+- → : transforms to/flows through messages
 
 **REQUIRES:** 000_universal_symbolic_compression (none - priming layer)
 

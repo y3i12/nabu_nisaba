@@ -235,6 +235,7 @@ class AugmentInjector:
             # Process system prompt blocks
             if self._inject_augments(body):
                 flow.request.content = json.dumps(body).encode('utf-8')
+                
 
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse request JSON: {e}")
@@ -289,13 +290,7 @@ class AugmentInjector:
                         "type": "text",
                         "text": (
                             f"\n{self.system_prompt_cache.load()}"
-                            f"\n{status_bar}"
                             f"\n{self.augments_cache.load()}"
-                            f"\n{self.structural_view_cache.load()}"
-                            f"\n{self.file_windows_cache.load()}"
-                            f"\n{self.editor_windows_cache.load()}"
-                            f"\n{self.notifications_cache.load()}"
-                            f"\n{self.todos_cache.load()}"
                             f"\n{self.transcript_cache.load()}"
                         ),
                         "cache_control": {
@@ -305,23 +300,55 @@ class AugmentInjector:
                 )
             elif "text" in body["system"][1]:
                 # Generate status bar from current state
-                status_bar = f"\n---STATUS_BAR\n{self._generate_status_bar(body)}\n---STATUS_BAR_END"
                 core_system_prompt = f"---CORE_SYSTEM_PROMPT\n{body["system"][1]["text"]}\n---CORE_SYSTEM_PROMPT_END"
 
                 body["system"][1]["text"] = (
                     f"\n{self.system_prompt_cache.load()}"
                     f"\n{core_system_prompt}"
-                    f"\n{status_bar}"
                     f"\n{self.augments_cache.load()}"
-                    f"\n{self.structural_view_cache.load()}"
-                    f"\n{self.file_windows_cache.load()}"
-                    f"\n{self.editor_windows_cache.load()}"
-                    f"\n{self.notifications_cache.load()}"
-                    f"\n{self.todos_cache.load()}"
                     f"\n{self.transcript_cache.load()}"
                 )
 
+        
+        if 'messages' in body and len(body["messages"]) > 2:
+            status_bar = f"\n---STATUS_BAR\n{self._generate_status_bar(body)}\n---STATUS_BAR_END"
+            body['messages'].append( 
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"<system-reminder>\n--- WORKSPACE ---\n{(
+                                    f"\n{status_bar}"
+                                    f"\n{self.structural_view_cache.load()}"
+                                    f"\n{self.file_windows_cache.load()}"
+                                    f"\n{self.editor_windows_cache.load()}"
+                                    f"\n{self.notifications_cache.load()}"
+                                    f"\n{self.todos_cache.load()}"
+                                )}\n</system-reminder>"
+                        }
+                    ]
+                }
+            )
+            self._write_to_file(Path(os.getcwd()) / '.nisaba/modified_context.json', json.dumps(body, indent=2, ensure_ascii=False), "Modified request written")
+            return True
+            
         return "tools" in body or "system" in body
+
+    def _write_to_file(self, file_path:Path, content: str, log_message: str | None  = None) -> None:
+        """
+        write to file file_path the content optionally displaying log_message
+        """
+        try:
+            # Create/truncate file (only last message)
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+            if log_message: logger.debug(log_message)
+
+        except Exception as e:
+            # Don't crash proxy if logging fails
+            logger.error(f"Failed to log context: {e}")
 
     def _process_notifications(self, body: dict) -> None:
         """
