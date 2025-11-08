@@ -11,7 +11,8 @@ import os
 from pathlib import Path
 from typing import Dict, Optional
 from datetime import datetime
-import fcntl
+
+from nisaba.structured_file import JsonStructuredFile
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,8 @@ class MCPServerRegistry:
 
     Manages .nisaba/mcp_servers.json in project root for server discovery.
     Automatically cleans up stale entries (dead processes).
+    
+    Now uses JsonStructuredFile for automatic caching, locking, and race prevention.
     """
 
     REGISTRY_VERSION = "1.0"
@@ -38,6 +41,17 @@ class MCPServerRegistry:
             registry_path = Path.cwd() / ".nisaba" / "mcp_servers.json"
 
         self.registry_path = Path(registry_path)
+        
+        # Use JsonStructuredFile for automatic caching and locking
+        self._file = JsonStructuredFile(
+            file_path=self.registry_path,
+            name="mcp_registry",
+            default_factory=lambda: {
+                "version": self.REGISTRY_VERSION,
+                "servers": {}
+            }
+        )
+        
         logger.debug(f"MCPServerRegistry initialized: {self.registry_path}")
 
     def register_server(self, server_id: str, server_info: dict) -> None:
@@ -46,8 +60,6 @@ class MCPServerRegistry:
 
         Atomically updates registry file with new server information.
         Cleans up stale entries before writing.
-
-        Uses proper transaction locking (read-modify-write under single lock).
 
         Args:
             server_id: Unique server identifier (e.g., "nabu_12345")
@@ -60,66 +72,36 @@ class MCPServerRegistry:
                 - cwd: Working directory
         """
         try:
-            # Ensure parent directory exists
-            self.registry_path.parent.mkdir(parents=True, exist_ok=True)
-
-            # Create registry file if doesn't exist
-            if not self.registry_path.exists():
-                self.registry_path.write_text(json.dumps({
-                    "version": self.REGISTRY_VERSION,
-                    "servers": {}
-                }, indent=2))
-
-            # CRITICAL: Hold EXCLUSIVE lock for entire read-modify-write transaction
-            # This prevents lost updates when multiple servers register simultaneously
-            with open(self.registry_path, 'r+', encoding='utf-8') as f:
-                # Acquire exclusive lock (blocks all other readers/writers)
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-
-                try:
-                    # Read current state
-                    f.seek(0)
-                    try:
-                        data = json.load(f)
-                    except json.JSONDecodeError:
-                        logger.warning("Registry corrupted, resetting")
-                        data = {"version": self.REGISTRY_VERSION, "servers": {}}
-
-                    # Ensure structure
-                    if "servers" not in data:
-                        data["servers"] = {}
-                    if "version" not in data:
-                        data["version"] = self.REGISTRY_VERSION
-
-                    # Cleanup stale entries
-                    data["servers"] = self._cleanup_stale_entries(data["servers"])
-
-                    # Add/update this server
-                    data["servers"][server_id] = server_info
-
-                    # Write back atomically (in-place under lock)
-                    f.seek(0)
-                    f.truncate()
-                    json.dump(data, f, indent=2)
-                    f.flush()
-                    os.fsync(f.fileno())
-
-                finally:
-                    # Unlock (also auto-released on close)
-                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-
+            def update_registry(data: dict) -> dict:
+                """Modifier function for atomic update."""
+                # Ensure structure
+                if "servers" not in data:
+                    data["servers"] = {}
+                if "version" not in data:
+                    data["version"] = self.REGISTRY_VERSION
+                
+                # Cleanup stale entries
+                data["servers"] = self._cleanup_stale_entries(data["servers"])
+                
+                # Add/update this server
+                data["servers"][server_id] = server_info
+                
+                return data
+            
+            # Atomic update using JsonStructuredFile
+            self._file.atomic_update_json(update_registry)
+            
             logger.info(f"Registered server: {server_id}")
 
         except Exception as e:
             logger.error(f"Failed to register server {server_id}: {e}", exc_info=True)
             raise
 
-
     def unregister_server(self, server_id: str) -> None:
         """
         Remove a server entry from registry.
 
-        Uses proper transaction locking to prevent races.
+        Uses atomic transaction to prevent races.
 
         Args:
             server_id: Server identifier to remove
@@ -129,38 +111,17 @@ class MCPServerRegistry:
                 logger.debug(f"Registry does not exist, nothing to unregister: {server_id}")
                 return
 
-            # CRITICAL: Hold EXCLUSIVE lock for entire read-modify-write transaction
-            with open(self.registry_path, 'r+', encoding='utf-8') as f:
-                # Acquire exclusive lock
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-
-                try:
-                    # Read current state
-                    f.seek(0)
-                    try:
-                        data = json.load(f)
-                    except json.JSONDecodeError:
-                        logger.warning("Registry corrupted during unregister")
-                        return
-
-                    # Remove server if exists
-                    if server_id in data.get("servers", {}):
-                        del data["servers"][server_id]
-                        
-                        # Write back atomically (in-place under lock)
-                        f.seek(0)
-                        f.truncate()
-                        json.dump(data, f, indent=2)
-                        f.flush()
-                        os.fsync(f.fileno())
-                        
-                        logger.info(f"Unregistered server: {server_id}")
-                    else:
-                        logger.debug(f"Server not in registry: {server_id}")
-
-                finally:
-                    # Unlock
-                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+            def remove_server(data: dict) -> dict:
+                """Modifier function for atomic removal."""
+                if "servers" in data and server_id in data["servers"]:
+                    del data["servers"][server_id]
+                    logger.info(f"Unregistered server: {server_id}")
+                else:
+                    logger.debug(f"Server not in registry: {server_id}")
+                return data
+            
+            # Atomic update using JsonStructuredFile
+            self._file.atomic_update_json(remove_server)
 
         except Exception as e:
             logger.error(f"Failed to unregister server {server_id}: {e}", exc_info=True)
@@ -179,7 +140,7 @@ class MCPServerRegistry:
             if not self.registry_path.exists():
                 return {}
 
-            data = self._read_registry()
+            data = self._file.load_json()
             servers = data.get("servers", {})
 
             # Filter to only alive processes
@@ -235,91 +196,3 @@ class MCPServerRegistry:
                 logger.debug(f"Removing stale entry for dead process: {server_id} (PID {pid})")
 
         return alive
-
-    def _read_registry(self) -> dict:
-        """
-        Read registry from file with error handling.
-
-        Returns:
-            Registry data dict with "version" and "servers" keys
-        """
-        if not self.registry_path.exists():
-            return {
-                "version": self.REGISTRY_VERSION,
-                "servers": {}
-            }
-
-        try:
-            with open(self.registry_path, 'r', encoding='utf-8') as f:
-                # Use flock for read lock
-                fcntl.flock(f.fileno(), fcntl.LOCK_SH)
-                try:
-                    data = json.load(f)
-                finally:
-                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-
-                # Validate structure
-                if not isinstance(data, dict):
-                    logger.warning("Invalid registry format, resetting")
-                    return {
-                        "version": self.REGISTRY_VERSION,
-                        "servers": {}
-                    }
-
-                # Ensure required keys
-                if "servers" not in data:
-                    data["servers"] = {}
-                if "version" not in data:
-                    data["version"] = self.REGISTRY_VERSION
-
-                return data
-
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse registry JSON: {e}")
-            return {
-                "version": self.REGISTRY_VERSION,
-                "servers": {}
-            }
-        except Exception as e:
-            logger.error(f"Failed to read registry: {e}", exc_info=True)
-            return {
-                "version": self.REGISTRY_VERSION,
-                "servers": {}
-            }
-
-    def _write_registry(self, data: dict) -> None:
-        """
-        Write registry to file atomically.
-
-        Uses atomic write pattern (write to temp, then rename).
-
-        Args:
-            data: Registry data to write
-        """
-        # Ensure parent directory exists
-        self.registry_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Atomic write: write to temp file, then rename
-        temp_path = self.registry_path.with_suffix('.tmp')
-
-        try:
-            with open(temp_path, 'w', encoding='utf-8') as f:
-                # Use flock for write lock
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-                try:
-                    json.dump(data, f, indent=2)
-                    f.flush()
-                    os.fsync(f.fileno())
-                finally:
-                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-
-            # Atomic rename
-            temp_path.replace(self.registry_path)
-
-            logger.debug(f"Registry written: {self.registry_path}")
-
-        except Exception as e:
-            # Cleanup temp file on error
-            if temp_path.exists():
-                temp_path.unlink()
-            raise

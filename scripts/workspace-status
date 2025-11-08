@@ -10,7 +10,7 @@ from pathlib import Path
 
 def format_status():
     """Read status JSON and format for display."""
-    status_file = Path(".nisaba/status_bar_live.txt")
+    status_file = Path(".nisaba/tui/status_bar_live.txt")
     
     if not status_file.exists():
         print("WS: N/A")

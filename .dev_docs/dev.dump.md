@@ -54,12 +54,14 @@ git submodule update --init test/test_github_projects
         - [x] integrate status bar
         - [x] remove read/write/edit
             - [x] remove TOOL_WINDOWS
+            - [x] remove obsolete tools
         - [ ] nabu search -> nisaba files (calling http tool)
             - [ ] remove FILE_WINDOWS
         - [ ] augment tools to augment commands
         - [ ] notifications rework
         - [ ] edit to open the file
         - [ ] review tool return
+            - [-] kill execution time
         - [ ] ... TBD
 - [ ] File Watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
 - [ ] precalc tokens in file cache

@@ -35,18 +35,6 @@ def create_claude_wrapper_command():
     )
     @click.argument("claude_args", nargs=-1, type=click.UNPROCESSED)
     @click.option(
-        "--augments-file",
-        type=click.Path(exists=True),
-        default="./.nisaba/nisaba_composed_augments.md",
-        help="Path to augments content file (default: ./.nisaba/nisaba_composed_augments.md)"
-    )
-    # @click.option(
-    #     "--system-prompt",
-    #     type=click.Path(exists=True),
-    #     default="./.nisaba/system_prompt.md",
-    #     help="Path to system prompt markdown file to append (default: ./.nisaba/system_prompt.md if exists)"
-    # )
-    @click.option(
         "--proxy-port",
         type=int,
         default=1337,
@@ -64,7 +52,6 @@ def create_claude_wrapper_command():
     )
     def claude_wrapper(
         claude_args: tuple,
-        augments_file: str,
         proxy_port: int,
         debug_proxy: bool,
         list_servers: bool
@@ -89,10 +76,6 @@ def create_claude_wrapper_command():
             # Pass arguments to claude
             nabu claude --project myproject
             nabu claude -m "analyze this code"
-
-            \b
-            # Use custom augments file
-            nabu claude --augments-file ~/.nabu/active_augments.md
 
             \b
             # Debug proxy (show intercepts)
@@ -145,12 +128,8 @@ def create_claude_wrapper_command():
             click.echo("Augments system will start with no augments loaded.\n", err=True)
 
         # 3. Verify composed augments file path
-        augments_path = Path(augments_file)
-        if not augments_path.exists():
-            click.echo(f"⚠️  Warning: Augments file not found: {augments_file}", err=True)
-            click.echo("Continuing with empty augments content...\n", err=True)
-        else:
-            click.echo(f"📄 Augments file: {augments_path.resolve()}", err=True)
+        augments_file = Path.cwd() / '.nisaba' / 'tui' / 'augment_view.md'
+        augments_file.parent.mkdir(parents=True,exist_ok=True)
 
         # Build modified claude_args with system prompt injection
         modified_claude_args = list(claude_args)

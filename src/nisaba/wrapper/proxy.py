@@ -15,6 +15,7 @@ import tiktoken
 
 from logging.handlers import RotatingFileHandler
 from mitmproxy import http
+from nisaba.structured_file import JsonStructuredFile, StructuredFileCache
 from nisaba.wrapper.request_modifier import RequestModifier
 from pathlib import Path
 from typing import Optional, List, TYPE_CHECKING
@@ -131,65 +132,63 @@ class AugmentInjector:
         self.augment_manager = augment_manager
 
         # File-based caching for augments and system prompt
-        self.augments_cache = FileCache(
-            Path("./.nisaba/nisaba_composed_augments.md"),
+        self.augments_cache = StructuredFileCache(
+            Path("./.nisaba/tui/augment_view.md"),
             "augments",
             "AUGMENTS"
         )
-        self.system_prompt_cache = FileCache(
-            Path("./.nisaba/system_prompt.md"),
+        self.system_prompt_cache = StructuredFileCache(
+            Path("./.nisaba/tui/system_prompt.md"),
             "system prompt",
             "USER_SYSTEM_PROMPT_INJECTION"
         )
-        self.transcript_cache =  FileCache(
-            Path("./.nisaba/last_session_transcript.md"),
+        self.transcript_cache = StructuredFileCache(
+            Path("./.nisaba/tui/compacted_transcript.md"),
             "last session transcript",
-            "LAST_SESSION_TRANSCRIPT"
+            "COMPACTED_TRANSCRIPT"
         )
-        self.structural_view_cache = FileCache(
-            Path("./.nisaba/structural_view.md"),
+        self.structural_view_cache = StructuredFileCache(
+            Path("./.nisaba/tui/structural_view.md"),
             "structural view",
             "STRUCTURAL_VIEW"
         )
-        self.file_windows_cache = FileCache(
-            Path("./.nisaba/file_windows.md"),
+        self.file_windows_cache = StructuredFileCache(
+            Path("./.nisaba/tui/file_window_view.md"),
             "file windows",
-            "FILE_WINDOWS"
+            "FILE_WINDOWS",
+            section_marker="---FILE_WINDOW_"
         )
-        self.editor_windows_cache = FileCache(
-            Path("./.nisaba/editor_windows.md"),
+        self.editor_windows_cache = StructuredFileCache(
+            Path("./.nisaba/tui/editor_view.md"),
             "editor windows",
-            "EDITOR_WINDOWS"
+            "EDITOR_WINDOWS",
+            section_marker="---EDITOR_"
         )
-        # self.tool_result_windows_cache = FileCache(
+        # self.tool_result_windows_cache = StructuredFileCache(
         #     Path("./.nisaba/tool_result_windows.md"),
         #     "tool result windows",
         #     "TOOL_RESULT_WINDOWS"
         # )
-        self.todos_cache = FileCache(
-            Path("./.nisaba/todos.md"),
+        self.todos_cache = StructuredFileCache(
+            Path("./.nisaba/tui/todo_view.md"),
             "todos",
             "TODOS"
         )
-        self.notifications_cache = FileCache(
-            Path("./.nisaba/notifications.md"),
+        self.notifications_cache = StructuredFileCache(
+            Path("./.nisaba/tui/notification_view.md"),
             "notifications",
             "NOTIFICATIONS"
         )
-
-        # Checkpoint file for session-aware notifications
-        self.checkpoint_file = Path("./.nisaba/notifications_checkpoint.json")
-
-        # this is for debugging purposes
-        # if enabled the proxy saves the last context that went to anthropic
-        # into ${cwd}/.dev_docs/(context.json|system_prompt.md)
-        self.log_context_enabled:bool = False#os.getenv("NISABA_LOG_CONTEXT", "false").lower() == "true"
-        self.log_context_rate:float = 1.0
-        self.log_context_counter:int = 0
+        self.checkpoint_file = JsonStructuredFile(
+            file_path=Path("./.nisaba/tui/notification_state.json"),
+            name="notification_state",
+            default_factory=lambda: { "session_id": "", "last_tool_id_seen": "" }
+        )
+        
         self.filtered_tools:set[str] = {"Read", "Write", "Edit", "TodoWrite"} # returned to native: "Glob", "Grep", "Bash"
         
-        self.request_modifier:RequestModifier = RequestModifier()
         # Store reference globally for tool access
+        self.request_modifier:RequestModifier = RequestModifier()
         _set_request_modifier(self.request_modifier)
 
         # Initial load
@@ -204,69 +203,8 @@ class AugmentInjector:
         self.structural_view_cache.load()
         self.file_windows_cache.load()
         self.editor_windows_cache.load()
-        # self.tool_result_windows_cache.load()
         self.todos_cache.load()
         self.notifications_cache.load()
-
-    def _write_to_file(self, file_path:str, content: str, log_message: str|None = None, mode:str = 'w') -> None:
-        path_obj = Path(file_path)
-        try:
-            # Create/truncate file (only last message)
-            with open(path_obj, mode, encoding="utf-8") as f:
-                f.write(content)
-
-            if log_message: logger.debug(log_message)
-
-        except Exception as e:
-            # Don't crash proxy if logging fails
-            logger.error(f"Failed to log context: {e}")
-
-    def _extract_system_prompt_pretty(self, body: dict ) -> str | None:
-        """
-        Extract the system prompt from body and replaces \\n with \n
-
-        Args:
-            body: Parsed request body
-
-        Returns:
-            system prompt string
-        """
-        system_messages = body.get("system", None)
-
-        if system_messages:
-            system_prompt = ""
-            for message in system_messages:
-                if not isinstance(message, dict) or "text" not in message:
-                    continue
-                system_prompt += message["text"]
-            system_prompt = system_prompt.replace("\\n", "\n")
-            return system_prompt
-        
-        return None
-
-
-    def _log_context(self, body: dict) -> bool:
-        """
-        Log request context to ./.dev_docs/context.json for analysis.
-        Log system_prompt to ./.dev_docs/system_prompt.md for analysis.
-
-        Args:
-            body: Parsed request body
-
-        Returns:
-            if system prompt was recorded
-        """
-
-        self._write_to_file("./.dev_docs/context.json", json.dumps(body, indent=2, ensure_ascii=False),"Logged context" )
-
-        system_prompt = self._extract_system_prompt_pretty(body)
-
-        if system_prompt:
-            self._write_to_file("./.dev_docs/system_prompt.md", system_prompt, "Logged system prompt" )
-            return True
-        
-        return False
-            
 
     def request(self, flow: http.HTTPFlow) -> None:
         """
@@ -289,17 +227,6 @@ class AugmentInjector:
             # Parse request body as JSON
             body = json.loads(flow.request.content)
 
-            # try:
-            #     logger.debug("Loading RequestModifier module...")
-            #     import nisaba.wrapper.request_modifier
-            #     importlib.reload(nisaba.wrapper.request_modifier)
-            #     logger.debug(f"Processing request with RequestModifier. Messages: {len(body.get('messages', []))}")
-            #     nisaba.wrapper.request_modifier.RequestModifier().process_request(body)
-            #     logger.debug("RequestModifier processing complete")
-            # except Exception as e:
-            #     logger.error(f"RequestModifier failed: {e}", exc_info=True)
-            #     pass
-            
             body = self.request_modifier.process_request(body)
 
             # Detect delta and generate notifications
@@ -308,12 +235,6 @@ class AugmentInjector:
             # Process system prompt blocks
             if self._inject_augments(body):
                 flow.request.content = json.dumps(body).encode('utf-8')
-
-            if self.log_context_enabled:
-                # Log every Nth request based on rate (0.5 = every 2, 0.1 = every 10, etc.)
-                if self.log_context_counter % int(1 / self.log_context_rate) == 0:
-                    self._log_context(body)
-                self.log_context_counter += 1
 
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse request JSON: {e}")
@@ -373,7 +294,6 @@ class AugmentInjector:
                             f"\n{self.structural_view_cache.load()}"
                             f"\n{self.file_windows_cache.load()}"
                             f"\n{self.editor_windows_cache.load()}"
-                            # f"\n{self.tool_result_windows_cache.load()}"
                             f"\n{self.notifications_cache.load()}"
                             f"\n{self.todos_cache.load()}"
                             f"\n{self.transcript_cache.load()}"
@@ -396,7 +316,6 @@ class AugmentInjector:
                     f"\n{self.structural_view_cache.load()}"
                     f"\n{self.file_windows_cache.load()}"
                     f"\n{self.editor_windows_cache.load()}"
-                    # f"\n{self.tool_result_windows_cache.load()}"
                     f"\n{self.notifications_cache.load()}"
                     f"\n{self.todos_cache.load()}"
                     f"\n{self.transcript_cache.load()}"
@@ -424,7 +343,7 @@ class AugmentInjector:
             current_session_id = None
         
         # Load checkpoint
-        checkpoint = self._load_checkpoint()
+        checkpoint = self.checkpoint_file.load_json()
         last_session_id = checkpoint.get('session_id')
         last_tool_id_seen = checkpoint.get('last_tool_id_seen')
         
@@ -500,7 +419,7 @@ class AugmentInjector:
         # Update checkpoint with latest tool ID (if any tools exist)
         if all_tool_calls and current_session_id:
             last_tool_id = all_tool_calls[-1]['id']
-            self._save_checkpoint(current_session_id, last_tool_id)
+            self.checkpoint_file.write_json({"session_id": current_session_id, "last_tool_id_seen": last_tool_id})
     
     def _create_summary(self, tool_name: str, call: dict, result: dict) -> str:
         """
@@ -560,46 +479,10 @@ class AugmentInjector:
         else:
             content += "(no recent activity)\n"
         
-        notifications_file = Path("./.nisaba/notifications.md")
+        notifications_file = Path("./.nisaba/tui/notification_view.md")
         notifications_file.write_text(content)
     
-    def _load_checkpoint(self) -> dict:
-        """
-        Load notification checkpoint from disk.
-        
-        Returns:
-            Dict with session_id and last_tool_id_seen
-        """
-        if not self.checkpoint_file.exists():
-            return {"session_id": None, "last_tool_id_seen": None}
-        
-        try:
-            with open(self.checkpoint_file, 'r') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError) as e:
-            logger.warning(f"Failed to load checkpoint: {e}")
-            return {"session_id": None, "last_tool_id_seen": None}
-    
-    def _save_checkpoint(self, session_id: str, last_tool_id: str) -> None:
-        """
-        Save notification checkpoint to disk.
-        
-        Args:
-            session_id: Current session identifier
-            last_tool_id: Last tool ID that was notified
-        """
-        checkpoint = {
-            "session_id": session_id,
-            "last_tool_id_seen": last_tool_id
-        }
-        
-        try:
-            self.checkpoint_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.checkpoint_file, 'w') as f:
-                json.dump(checkpoint, f, indent=2)
-        except IOError as e:
-            logger.error(f"Failed to save checkpoint: {e}")
-    
+
     def _estimate_tokens(self, text: str) -> int:
         """
         Accurate token estimate using tiktoken.
@@ -634,28 +517,36 @@ class AugmentInjector:
         """
         # Extract model name
         model_name = body.get('model', 'unknown')
-        # Count workspace tokens from loaded caches
-        base_tokens = self._estimate_tokens(self.system_prompt_cache.load())
-        base_tokens += self._estimate_tokens(self.todos_cache.load())
-        base_tokens += self._estimate_tokens(self.notifications_cache.load())
+        
+        # Load all caches (triggers mtime-based updates)
+        self.system_prompt_cache.load()
+        self.todos_cache.load()
+        self.notifications_cache.load()
+        self.editor_windows_cache.load()
+        self.augments_cache.load()
+        self.structural_view_cache.load()
+        self.file_windows_cache.load()
+        self.transcript_cache.load()
+        
+        # Use cached token counts (no recalculation!)
+        base_tokens = self.system_prompt_cache.token_count
+        base_tokens += self.todos_cache.token_count
+        base_tokens += self.notifications_cache.token_count
 
         tool_ref_tokens = self._estimate_tokens(json.dumps(body.get('tools', [])))
-        editor_tokens = self._estimate_tokens(self.editor_windows_cache.load())
-        augment_tokens = self._estimate_tokens(self.augments_cache.load())
-        structural_view_tokens = self._estimate_tokens(self.structural_view_cache.load())
-        file_windows_tokens = self._estimate_tokens(self.file_windows_cache.load())
-        # tool_result_tokens = self._estimate_tokens(self.tool_result_windows_cache.load())
-        transcript_tokens = self._estimate_tokens(self.transcript_cache.load())
+        editor_tokens = self.editor_windows_cache.token_count
+        augment_tokens = self.augments_cache.token_count
+        structural_view_tokens = self.structural_view_cache.token_count
+        file_windows_tokens = self.file_windows_cache.token_count
+        transcript_tokens = self.transcript_cache.token_count
 
-        workspace_tokens = base_tokens + tool_ref_tokens + augment_tokens + structural_view_tokens + file_windows_tokens + transcript_tokens # + tool_result_tokens
+        workspace_tokens = base_tokens + tool_ref_tokens + augment_tokens + structural_view_tokens + file_windows_tokens + transcript_tokens
         
-        # Count windows by parsing markers
-        editor_count = int(self.editor_windows_cache.content.count('---EDITOR_') / 2 - 1) # remove main tag
-        file_count = int(self.file_windows_cache.content.count('---FILE_WINDOW_') / 2)
-        # tool_count = int(self.tool_result_windows_cache.content.count('---TOOL_RESULT_WINDOW_') / 2)
-        todos_count = self.todos_cache.load().count("\n") - 1 # no endl at the end
-        notifications_count = self.notifications_cache.load().count("\n") - 1 # header + endl compensation
-
+        # Use cached section counts (no recalculation!)
+        editor_count = self.editor_windows_cache.section_count
+        file_count = self.file_windows_cache.section_count
+        todos_count = self.todos_cache.line_count - 1  # header + endl compensation
+        notifications_count = self.notifications_cache.line_count - 1  # header + endl compensation
         # Count message tokens (properly, without JSON overhead)
         messages = body.get('messages', [])
         messages_tokens = 0
@@ -751,7 +642,7 @@ class AugmentInjector:
         ])
         
         try:
-            status_file = Path("./.nisaba/status_bar_live.txt")
+            status_file = Path("./.nisaba/tui/status_bar_live.txt")
             status_file.parent.mkdir(parents=True, exist_ok=True)
             with open(status_file, 'w') as f:
                 status_file.write_text(status)
@@ -767,14 +658,13 @@ def load(loader):
     This is the mitmproxy addon interface for script-based addons.
     """
     # Augments file comes from environment variable
-    augments_file_path = "./.nisaba/nisaba_composed_augments.md"
-    addon = AugmentInjector(augments_file=Path(augments_file_path))
+    addon = AugmentInjector()
 
     # Add option for documentation
     loader.add_option(
         name="nisaba_augments_file",
         typespec=str,
-        default="./.nisaba/nisaba_composed_augments.md",
+        default="./.nisaba/tui/augment_view.md",
         help="Path to augments content file",
     )
 

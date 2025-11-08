@@ -64,13 +64,13 @@ class NabuAgent(Agent):
         # Use active codebase's repo path for augments directory
         active_cb_config = config.codebases.get(config.active_codebase)
         if active_cb_config:
-            augments_dir = active_cb_config.repo_path / ".nisaba" / "augments"
-            composed_file = active_cb_config.repo_path / ".nisaba" / "nisaba_composed_augments.md"
+            augments_dir = active_cb_config.repo_path / '.nisaba' / 'augments'
+            composed_file = active_cb_config.repo_path / '.nisaba' / 'tui' / 'augment_view.md'
         else:
             # Fallback to first codebase if no active codebase
             first_cb = next(iter(config.codebases.values()))
-            augments_dir = first_cb.repo_path / ".nisaba" / "augments"
-            composed_file = first_cb.repo_path / ".nisaba" / "nisaba_composed_augments.md"
+            augments_dir = first_cb.repo_path / '.nisaba' / 'augments'
+            composed_file = first_cb.repo_path / '.nisaba' / 'tui' / 'augment_view.md'
 
         self.augment_manager = AugmentManager(augments_dir, composed_file)
         logger.info(f"📚 Augments manager initialized: {len(self.augment_manager.available_augments)} augments available")

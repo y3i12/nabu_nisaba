@@ -12,6 +12,7 @@ from nabu.tui.frame_cache import FrameCache
 from nabu.tui.viewable_frame import ViewableFrame
 from nabu.core.frames import FrameNodeType
 from nabu.db.kuzu_manager import KuzuConnectionManager
+from nisaba.structured_file import JsonStructuredFile
 
 logger = logging.getLogger(__name__)
 
@@ -45,12 +46,24 @@ class StructuralViewTUI:
         self.search_tool = SearchTool(factory=factory)
         
         # Restore state
+        
+        # Use JsonStructuredFile for atomic state persistence
+        self._state_file = JsonStructuredFile(
+            file_path=self.state_file,
+            name="structural_view_state",
+            default_factory=lambda: {
+                "expanded_paths": [],
+                "search_query": None,
+                "search_hits": {}
+            }
+        )
+
         self.load_state()
 
     @property
     def state_file(self) -> Path:
         """Path to state persistence file."""
-        return Path.cwd() / ".nisaba" / "structural_view_state.json"
+        return Path.cwd() / '.nisaba' / 'tui' / "structural_view_state.json"
 
     def save_state(self) -> None:
         """Save structural view state to JSON."""
@@ -75,53 +88,40 @@ class StructuralViewTUI:
             "search_hits": search_hits
         }
         
-        self.state_file.parent.mkdir(parents=True, exist_ok=True)
-        self.state_file.write_text(json.dumps(state, indent=2), encoding='utf-8')
+        # Use JsonStructuredFile for atomic write with locking
+        self._state_file.write_json(state)
         logger.debug(f"Saved structural view state: {len(expanded_paths)} expanded, {len(search_hits)} hits")
 
     def load_state(self) -> None:
-        """Restore structural view state from JSON (graceful degradation)."""
-        import json
+        """Restore structural view state from JSON using cached operations."""
+        state = self._state_file.load_json()
         
-        if not self.state_file.exists():
-            logger.debug("No structural view state file found, starting fresh")
-            return
+        # Restore expanded paths
+        for qn in state.get("expanded_paths", []):
+            try:
+                frame = self.cache.get_or_load(qn)
+                if frame:
+                    frame._view_expanded = True
+                    frame.ensure_children_loaded(self.cache.db_manager, self.cache)
+            except Exception as e:
+                logger.warning(f"Skipping expansion of {qn}: {e}")
+                continue
         
-        try:
-            state = json.loads(self.state_file.read_text(encoding='utf-8'))
-            
-            # Restore expanded paths
-            for qn in state.get("expanded_paths", []):
-                try:
-                    frame = self.cache.get_or_load(qn)
-                    if frame:
-                        frame._view_expanded = True
-                        frame.ensure_children_loaded(self.cache.db_manager, self.cache)
-                except Exception as e:
-                    logger.warning(f"Skipping expansion of {qn}: {e}")
-                    continue
-            
-            # Restore search state
-            self.search_query = state.get("search_query")
-            search_hits = state.get("search_hits", {})
-            
-            for qn, score in search_hits.items():
-                try:
-                    frame = self.cache.get_or_load(qn)
-                    if frame:
-                        frame._view_is_search_hit = True
-                        frame._search_score = score
-                        self.search_hits.add(qn)
-                        self._load_ancestry_path(frame)
-                except Exception as e:
-                    logger.warning(f"Skipping search hit {qn}: {e}")
-                    continue
-            
-            logger.info(f"Restored structural view state: {len(state.get('expanded_paths', []))} expanded, {len(search_hits)} search hits")
-        except Exception as e:
-            logger.warning(f"Failed to load structural view state: {e}")
-
-    # === Operations (mutate frame metadata) ===
+        # Restore search state
+        self.search_query = state.get("search_query")
+        search_hits = state.get("search_hits", {})
+        
+        for qn, score in search_hits.items():
+            try:
+                frame = self.cache.get_or_load(qn)
+                if frame:
+                    frame._view_is_search_hit = True
+                    frame._search_score = score
+                    self.search_hits.add(qn)
+                    self._load_ancestry_path(frame)
+            except Exception as e:
+                logger.warning(f"Skipping search hit {qn}: {e}")
+                continue
 
     def expand(self, qualified_name: str) -> bool:
         """
