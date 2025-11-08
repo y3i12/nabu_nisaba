@@ -20,12 +20,12 @@ class StructuralViewTool(NabuTool):
     - clear_search(): Remove search markers
     - reset(): Collapse all to root view
 
-    State persisted in-memory (TUI) and rendered to .nisaba/structural_view.md
+    State persisted in-memory (TUI) and rendered to .nisaba/tui/structural_view.md
     """
 
     def __init__(self, factory):
         super().__init__(factory)
-        self.view_file = Path.cwd() / ".nisaba" / "structural_view.md"
+        self.view_file = Path.cwd() / ".nisaba" / "tui" / "structural_view.md"
         self._tui = None
 
     @property

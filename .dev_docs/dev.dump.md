@@ -206,3 +206,7 @@ src/nabu/mcp/formatters/tools/structure.py:
   17:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
   18          """Format show_structure output in compact style (skeleton + optional relationships)."""
 ```
+
+we are slowly migrating away from a few concepts in this ecosystem. the next one will be FILE_WINDOW. can you understand how editor tool works, how server discovery works and how nabu is integrating with nisaba? tell me what you learned afterwards.
+
+my idea for this:
