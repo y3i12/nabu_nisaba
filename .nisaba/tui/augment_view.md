@@ -1,10 +1,10 @@
 # available augments
   __base/
-    - 000_universal_symbolic_compression 📌
+    - 000_universal_symbolic_compression
     - 001_workspace_paradigm
     - 002_environment_mechanics
-    - 003_workspace_operations 📌
-    - 004_workspace_navigation 📌
+    - 003_workspace_operations
+    - 004_workspace_navigation
   architecture/
     - boundary_validation
     - coupling_analysis
@@ -681,7 +681,7 @@ editor(split, E) → concurrent view of same file
 Result ≡ workspace_state_change
 ```
 
-**Tool responses = metadata.** Content appears in sections ↑ (look up, not at result).
+**Tool responses = metadata.** Content appears in WORKSPACE (messages, not tool result).
 
 ---
 
@@ -792,7 +792,7 @@ Clean. Dynamic. Spatial. 🖤
 - ∨ : or
 - ∵ : because
 - → : transforms to/flows to
-- ↑ : upward direction
+- → : transforms to/flows through messages
 
 **REQUIRES:** 000_universal_symbolic_compression (none - priming layer)
 
@@ -835,7 +835,7 @@ State_A → Tool(op) → Manager(mutate) → Write(.nisaba/*.md) →
 Proxy(detect_mtime) → Inject(section) → State_B | sync with tool_return
 
 Tool_result = metadata(id, status)
-Content = sections ↑ (look up, not at result)
+Content = sections → WORKSPACE in messages (not tool result)
 ```
 
 **Key:** After tool returns, observe section for changes, not tool result JSON.
@@ -1062,7 +1062,7 @@ Editor paradigm:
 - ⟹ : implies
 - ≠ : not equal
 - → : transforms to
-- ↑ : upward (in context)
+- → : transforms to/flows through messages
 - @t : at time t
 
 **REQUIRES:** __base/001_workspace_paradigm
