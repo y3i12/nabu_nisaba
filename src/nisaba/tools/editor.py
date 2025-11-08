@@ -183,7 +183,7 @@ class EditorTool(NisabaTool):
             
             # Render to markdown and write to file
             rendered = self.manager.render()
-            output_file = Path.cwd() / ".nisaba" / "editor_windows.md"
+            output_file = Path.cwd() / ".nisaba" / "tui" / "editor_view.md"
             output_file.parent.mkdir(parents=True, exist_ok=True)
             output_file.write_text(rendered, encoding='utf-8')
             
