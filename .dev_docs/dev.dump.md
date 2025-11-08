@@ -48,32 +48,26 @@ git submodule update --init test/test_github_projects
 #################################################################################################
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 
-- [ ] editor
-    - [-] finish implementation
-        - [x] diff bug
-        - [x] integrate status bar
-        - [x] remove read/write/edit
-            - [x] remove TOOL_WINDOWS
-            - [x] remove obsolete tools
-- [ ] workspace in messages
-    - [ ] switch everything but augments and transcript into messages
-    - [ ] unify proxy logic into state machine
-
-- [ ] tool improvements and refactor
-    - [ ] nabu search
-        - [ ] remove FILE_WINDOWS
+- [ ] nisaba primimg
+    - [x] workspace in messages
+    - [x] switch everything but augments and transcript into messages
     - [ ] augment tools to augment commands
+    - [ ] unify proxy logic into state machine
+    - [ ] constants (as in filenames) are strings everywhere
+    - [ ] nisaba tool return standardization (responsebuilder?)
+        - [ ] manually inspect and re-format tool responses
+            - [ ] ...{tool_ennumeration_comes_here}...
+    - [ ] disable nabu file tools
     - [ ] notifications rework
-    - [ ] edit to open the file
-    - [ ] tool return standardization (responsebuilder?)
-    - [ ] constants (as filenames) are everywhere
-    - [ ] review tool return
-        - [-] kill execution time
+    - [ ] edit 
+        - [ ] to open the edited range
+        - [ ] to buffer edits and commit to file on proxy intercept? (repl of line intervals not add up timewise)
+            - [ ] commit triggers file save and diff
+            - [ ] commit triggers notification
+- [ ] nabu priming
+    - [ ] file watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
+    - [ ] rethink previously disabled tools
     - [ ] ... TBD
-
-- [ ] File Watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
-- [ ] precalc tokens in file cache
-- [ ] standardize responses
 
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 #################################################################################################
