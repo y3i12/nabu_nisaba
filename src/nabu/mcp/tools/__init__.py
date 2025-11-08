@@ -13,7 +13,7 @@ from nabu.mcp.tools.codebase_management_tools import ActivateCodebaseTool, ListC
 from nabu.mcp.tools.vector_search_tools import FindClonesTool
 from nabu.mcp.tools.search_tools import SearchTool
 from nabu.mcp.tools.structural_view_tool import StructuralViewTool
-from nabu.mcp.tools.file_windows_tool import FileWindowsTool
+#from nabu.mcp.tools.file_windows_tool import FileWindowsTool
 
 __all__ = [
     "NabuTool",
@@ -32,6 +32,6 @@ __all__ = [
     "SearchTool",
     "FindClonesTool",
     # Navigation tools
-    "StructuralViewTool",
-    "FileWindowsTool",
+    "StructuralViewTool"
+#    "FileWindowsTool",
 ]

@@ -51,13 +51,13 @@ git submodule update --init test/test_github_projects
 - [ ] nisaba primimg
     - [x] workspace in messages
     - [x] switch everything but augments and transcript into messages
+    - [-] disable nabu file tools
     - [ ] augment tools to augment commands
     - [ ] unify proxy logic into state machine
     - [ ] constants (as in filenames) are strings everywhere
     - [ ] nisaba tool return standardization (responsebuilder?)
         - [ ] manually inspect and re-format tool responses
             - [ ] ...{tool_ennumeration_comes_here}...
-    - [ ] disable nabu file tools
     - [ ] notifications rework
     - [ ] edit 
         - [ ] to open the edited range
