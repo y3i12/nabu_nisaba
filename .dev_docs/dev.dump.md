@@ -55,14 +55,22 @@ git submodule update --init test/test_github_projects
         - [x] remove read/write/edit
             - [x] remove TOOL_WINDOWS
             - [x] remove obsolete tools
-        - [ ] nabu search -> nisaba files (calling http tool)
-            - [ ] remove FILE_WINDOWS
-        - [ ] augment tools to augment commands
-        - [ ] notifications rework
-        - [ ] edit to open the file
-        - [ ] review tool return
-            - [-] kill execution time
-        - [ ] ... TBD
+- [ ] workspace in messages
+    - [ ] switch everything but augments and transcript into messages
+    - [ ] unify proxy logic into state machine
+
+- [ ] tool improvements and refactor
+    - [ ] nabu search
+        - [ ] remove FILE_WINDOWS
+    - [ ] augment tools to augment commands
+    - [ ] notifications rework
+    - [ ] edit to open the file
+    - [ ] tool return standardization (responsebuilder?)
+    - [ ] constants (as filenames) are everywhere
+    - [ ] review tool return
+        - [-] kill execution time
+    - [ ] ... TBD
+
 - [ ] File Watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
 - [ ] precalc tokens in file cache
 - [ ] standardize responses
@@ -155,56 +163,56 @@ can you think on what's the best way for you to proceed with this, which are the
 
 
 ```
- 10 results - 9 files
+10 results - 9 files
 
 src/nabu/mcp/formatters/tools/clones.py:
-  17      
-  18:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
-  19          """Format find_clones output in compact style."""
+17      
+18:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+19          """Format find_clones output in compact style."""
 
 src/nabu/mcp/formatters/tools/codebases.py:
-  17      
-  18:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
-  19          """Format list_codebases output in compact style."""
+17      
+18:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+19          """Format list_codebases output in compact style."""
 
-  71      
-  72:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
-  73          """Format activate_codebase output in compact style."""
+71      
+72:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+73          """Format activate_codebase output in compact style."""
 
 src/nabu/mcp/formatters/tools/exploration.py:
-  40  
-  41:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
-  42          """Format explore_project output with stratified sampling."""
+40  
+41:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+42          """Format explore_project output with stratified sampling."""
 
 src/nabu/mcp/formatters/tools/impact.py:
-  16  
-  17:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
-  18          """Format impact_analysis_workflow output in compact style."""
+16  
+17:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+18          """Format impact_analysis_workflow output in compact style."""
 
 src/nabu/mcp/formatters/tools/query.py:
-  23  
-  24:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
-  25          """Format query output in adaptive compact style."""
+23  
+24:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+25          """Format query output in adaptive compact style."""
 
 src/nabu/mcp/formatters/tools/reindex.py:
-  17  
-  18:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
-  19          """Format reindex output in compact style."""
+17  
+18:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+19          """Format reindex output in compact style."""
 
 src/nabu/mcp/formatters/tools/search.py:
-  12  
-  13:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
-  14          """Format search results in compact, scannable markdown."""
+12  
+13:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+14          """Format search results in compact, scannable markdown."""
 
 src/nabu/mcp/formatters/tools/status.py:
-  18      
-  19:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
-  20          """Format show_status output with progressive detail levels."""
+18      
+19:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+20          """Format show_status output with progressive detail levels."""
 
 src/nabu/mcp/formatters/tools/structure.py:
-  16  
-  17:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
-  18          """Format show_structure output in compact style (skeleton + optional relationships)."""
+16  
+17:     def format(self, data: Dict[str, Any], execution_time_ms: float = 0.0) -> str:
+18          """Format show_structure output in compact style (skeleton + optional relationships)."""
 ```
 
 we are slowly migrating away from a few concepts in this ecosystem. the next one will be FILE_WINDOW. can you understand how editor tool works, how server discovery works and how nabu is integrating with nisaba? tell me what you learned afterwards.
