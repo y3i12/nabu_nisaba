@@ -1,13 +1,26 @@
 """
 Todo management tool for nisaba workspace.
 """
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 from pathlib import Path
 from nisaba.tools.base import NisabaTool
+from nisaba.structured_file import StructuredFileCache
 
+if TYPE_CHECKING:
+    from nisaba.factory import MCPFactory
 
 class TodoWriteTool(NisabaTool):
     """Manage todos in persistent workspace file with numbered operations."""
+
+    def __init__(self, factory: "MCPFactory"):
+        """Initialize the TodoWriteTool with StructuredFileCache."""
+        super().__init__(factory)
+        # Use StructuredFileCache for atomic read-modify-write operations
+        self._todos_file = StructuredFileCache(
+            file_path=Path("./.nisaba/tui/todo_view.md"),
+            name="todo",
+            tag=None  # No tag wrapping for todos
+        )
 
     def _parse_todos(self, content: str) -> List[Dict[str, Any]]:
         """
@@ -104,8 +117,8 @@ class TodoWriteTool(NisabaTool):
             Dict with success status and message
         """
         try:
-            todos_file = Path("./.nisaba/todos.md")
-            todos_file.parent.mkdir(parents=True, exist_ok=True)
+            # Ensure directory exists
+            self._todos_file.file_path.parent.mkdir(parents=True, exist_ok=True)
             
             # Normalize index/indices to list
             target_indices = []
@@ -116,7 +129,7 @@ class TodoWriteTool(NisabaTool):
             
             # Handle operations
             if operation == "clear":
-                todos_file.write_text("")
+                self._todos_file.write("")
                 return {
                     "success": True,
                     "message": "Cleared all todos",
@@ -138,7 +151,7 @@ class TodoWriteTool(NisabaTool):
                         "done": item.get("done", False) or item.get("status") in ["completed", "done"]
                     })
                 content = self._format_todos(parsed)
-                todos_file.write_text(content)
+                self._todos_file.write(content)
                 return {
                     "success": True,
                     "message": f"Set {len(parsed)} todo(s)",
@@ -153,10 +166,6 @@ class TodoWriteTool(NisabaTool):
                         "nisaba": True,
                     }
                 
-                # Parse existing
-                existing_content = todos_file.read_text() if todos_file.exists() else ""
-                existing = self._parse_todos(existing_content)
-                
                 # Convert new todos
                 new_todos = []
                 for item in todos:
@@ -165,37 +174,45 @@ class TodoWriteTool(NisabaTool):
                         "done": item.get("done", False) or item.get("status") in ["completed", "done"]
                     })
                 
-                # Insert at position (None = append)
-                actual_position = position
-                if position is None:
-                    actual_position = len(existing) + 1
-                    existing.extend(new_todos)
-                else:
-                    # Validate position
-                    if position < 1:
-                        position = 1
-                        actual_position = 1
-                    if position > len(existing) + 1:
-                        position = len(existing) + 1
-                        actual_position = position
-                    # Insert at position (1-based to 0-based)
-                    insert_idx = position - 1
-                    existing = existing[:insert_idx] + new_todos + existing[insert_idx:]
+                # Use list to capture actual position in closure
+                actual_position = [position if position is not None else -1]
                 
-                content = self._format_todos(existing)
-                todos_file.write_text(content)
+                def extend_todos(content: str) -> str:
+                    """Extend todos at position."""
+                    existing = self._parse_todos(content) if content.strip() else []
+                    
+                    # Determine insert position
+                    pos = position
+                    if pos is None:
+                        pos = len(existing) + 1
+                    else:
+                        if pos < 1:
+                            pos = 1
+                        if pos > len(existing) + 1:
+                            pos = len(existing) + 1
+                    
+                    actual_position[0] = pos
+                    
+                    # Insert at position (1-based to 0-based)
+                    insert_idx = pos - 1
+                    result = existing[:insert_idx] + new_todos + existing[insert_idx:]
+                    
+                    return self._format_todos(result)
+                
+                # Atomic update
+                self._todos_file.atomic_update(extend_todos)
                 
                 # Format rich message
                 if len(new_todos) == 1:
-                    msg = f"Extended at position {actual_position}: {new_todos[0]['content']}"
+                    msg = f"Extended at position {actual_position[0]}: {new_todos[0]['content']}"
                 else:
-                    msg = f"Extended at position {actual_position} with {len(new_todos)} items"
+                    msg = f"Extended at position {actual_position[0]} with {len(new_todos)} items"
                 
                 return {
                     "success": True,
                     "message": msg,
                     "nisaba": True,
-                    "position": actual_position,
+                    "position": actual_position[0],
                     "items": [item["content"] for item in new_todos]
                 }
             
@@ -207,27 +224,29 @@ class TodoWriteTool(NisabaTool):
                         "nisaba": True,
                     }
                 
-                # Parse existing
-                existing_content = todos_file.read_text() if todos_file.exists() else ""
-                existing = self._parse_todos(existing_content)
-                
-                # Validate indices
-                self._validate_indices(target_indices, len(existing))
-                
-                # Collect items to remove for notification
+                # Use list to capture removed items in closure
                 removed_items = []
-                for idx in target_indices:
-                    removed_items.append({
-                        "index": idx,
-                        "content": existing[idx - 1]["content"]
-                    })
                 
-                # Remove in descending order to preserve indices
-                for idx in sorted(target_indices, reverse=True):
-                    del existing[idx - 1]  # Convert 1-based to 0-based
+                def remove_items(content: str) -> str:
+                    """Remove todos by index."""
+                    existing = self._parse_todos(content) if content.strip() else []
+                    self._validate_indices(target_indices, len(existing))
+                    
+                    # Collect items to remove for notification
+                    for idx in target_indices:
+                        removed_items.append({
+                            "index": idx,
+                            "content": existing[idx - 1]["content"]
+                        })
+                    
+                    # Remove in descending order to preserve indices
+                    for idx in sorted(target_indices, reverse=True):
+                        del existing[idx - 1]  # Convert 1-based to 0-based
+                    
+                    return self._format_todos(existing)
                 
-                content = self._format_todos(existing)
-                todos_file.write_text(content)
+                # Atomic update
+                self._todos_file.atomic_update(remove_items)
                 
                 # Format rich message
                 if len(removed_items) == 1:
@@ -251,27 +270,29 @@ class TodoWriteTool(NisabaTool):
                         "nisaba": True,
                     }
                 
-                # Parse existing
-                existing_content = todos_file.read_text() if todos_file.exists() else ""
-                existing = self._parse_todos(existing_content)
-                
-                # Validate indices
-                self._validate_indices(target_indices, len(existing))
-                
-                # Collect items for notification
+                # Use list to capture marked items in closure
                 marked_items = []
-                for idx in target_indices:
-                    marked_items.append({
-                        "index": idx,
-                        "content": existing[idx - 1]["content"]
-                    })
                 
-                # Mark as done
-                for idx in target_indices:
-                    existing[idx - 1]["done"] = True  # Convert 1-based to 0-based
+                def mark_done(content: str) -> str:
+                    """Mark todos as done."""
+                    existing = self._parse_todos(content) if content.strip() else []
+                    self._validate_indices(target_indices, len(existing))
+                    
+                    # Collect items for notification
+                    for idx in target_indices:
+                        marked_items.append({
+                            "index": idx,
+                            "content": existing[idx - 1]["content"]
+                        })
+                    
+                    # Mark as done
+                    for idx in target_indices:
+                        existing[idx - 1]["done"] = True
+                    
+                    return self._format_todos(existing)
                 
-                content = self._format_todos(existing)
-                todos_file.write_text(content)
+                # Atomic update
+                self._todos_file.atomic_update(mark_done)
                 
                 # Format rich message
                 if len(marked_items) == 1:
@@ -296,27 +317,29 @@ class TodoWriteTool(NisabaTool):
                         "nisaba": True,
                     }
                 
-                # Parse existing
-                existing_content = todos_file.read_text() if todos_file.exists() else ""
-                existing = self._parse_todos(existing_content)
-                
-                # Validate indices
-                self._validate_indices(target_indices, len(existing))
-                
-                # Collect items for notification
+                # Use list to capture unmarked items in closure
                 unmarked_items = []
-                for idx in target_indices:
-                    unmarked_items.append({
-                        "index": idx,
-                        "content": existing[idx - 1]["content"]
-                    })
                 
-                # Mark as undone
-                for idx in target_indices:
-                    existing[idx - 1]["done"] = False  # Convert 1-based to 0-based
+                def mark_undone(content: str) -> str:
+                    """Mark todos as undone."""
+                    existing = self._parse_todos(content) if content.strip() else []
+                    self._validate_indices(target_indices, len(existing))
+                    
+                    # Collect items for notification
+                    for idx in target_indices:
+                        unmarked_items.append({
+                            "index": idx,
+                            "content": existing[idx - 1]["content"]
+                        })
+                    
+                    # Mark as undone
+                    for idx in target_indices:
+                        existing[idx - 1]["done"] = False
+                    
+                    return self._format_todos(existing)
                 
-                content = self._format_todos(existing)
-                todos_file.write_text(content)
+                # Atomic update
+                self._todos_file.atomic_update(mark_undone)
                 
                 # Format rich message
                 if len(unmarked_items) == 1:
@@ -334,16 +357,23 @@ class TodoWriteTool(NisabaTool):
                 }
             
             elif operation == "set_all_done":
-                # Parse existing
-                existing_content = todos_file.read_text() if todos_file.exists() else ""
-                existing = self._parse_todos(existing_content)
+                def mark_all_done(content: str) -> str:
+                    """Mark all todos as done."""
+                    existing = self._parse_todos(content) if content.strip() else []
+                    
+                    # Mark all as done
+                    for todo in existing:
+                        todo["done"] = True
+                    
+                    return self._format_todos(existing)
                 
-                # Mark all as done
-                for todo in existing:
-                    todo["done"] = True
+                # Atomic update
+                self._todos_file.atomic_update(mark_all_done)
                 
-                content = self._format_todos(existing)
-                todos_file.write_text(content)
+                # Get count from cache
+                content = self._todos_file.content
+                existing = self._parse_todos(content) if content.strip() else []
+                
                 return {
                     "success": True,
                     "nisaba": True,
@@ -373,3 +403,4 @@ class TodoWriteTool(NisabaTool):
                 "nisaba": True,
                 "error_type": type(e).__name__
             }
+

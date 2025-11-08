@@ -3,7 +3,7 @@
 PreCompact Hook: Extract conversational narrative before compaction.
 
 Reads .jsonl, filters out tool blocks, extracts text content,
-and saves to .nisaba/last_session_transcript.md
+and saves to .nisaba/tui/compacted_transcript.md
 
 Exit code 0: Allow CLI's native compaction to proceed.
 """
@@ -129,7 +129,7 @@ def main():
             sys.exit(0)
 
         # Accumulate with existing transcript (prepend old history)
-        output_path = Path.cwd() / ".nisaba" / "last_session_transcript.md"
+        output_path = Path.cwd() / '.nisaba' / 'tui' / 'compacted_transcript.md'
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(output_path.read_text() + "\n\n" + new_transcript)
         print(f"Transcript saved: {output_path}", file=sys.stderr)

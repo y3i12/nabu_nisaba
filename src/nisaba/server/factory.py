@@ -36,11 +36,6 @@ class NisabaMCPFactory(MCPFactory):
         self.guidance = WorkflowGuidance(augment_manager=self.augment_manager)
         logger.info("✨ Augments-based guidance enabled")
 
-        # Initialize tool result windows manager
-        from nisaba.tui.tool_result_windows_manager import ToolResultWindowsManager
-        self.tool_result_manager = ToolResultWindowsManager()
-        logger.info("🪟 Tool result windows manager initialized")
-
         # Initialize editor manager
         from nisaba.tui.editor_manager import EditorManager
         self.editor_manager = EditorManager()

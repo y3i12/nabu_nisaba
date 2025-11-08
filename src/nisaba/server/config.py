@@ -20,7 +20,7 @@ class NisabaConfig(MCPConfig):
     # Augments directory (default: cwd/.nisaba/augments)
     augments_dir: Optional[Path] = None
 
-    # Composed augments file (default: cwd/.nisaba/nisaba_composed_augments.md)
+    # Composed augments file (default: cwd/.nisaba/tui/augment_view.md)
     composed_augments_file: Optional[Path] = None
 
     def __post_init__(self):
@@ -29,4 +29,4 @@ class NisabaConfig(MCPConfig):
             self.augments_dir = Path.cwd() / ".nisaba" / "augments"
 
         if self.composed_augments_file is None:
-            self.composed_augments_file = Path.cwd() / ".nisaba" / "nisaba_composed_augments.md"
+            self.composed_augments_file = Path.cwd() / '.nisaba' / 'tui' /  'augment_view.md'

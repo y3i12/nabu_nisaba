@@ -10,6 +10,7 @@ import logging
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Dict, List, Set, Optional, Tuple
+from nisaba.structured_file import JsonStructuredFile
 
 logger = logging.getLogger(__name__)
 
@@ -78,75 +79,76 @@ class AugmentManager:
         self._tool_associations: Dict[str, List[str]] = {}
 
         # Cached augment tree (for system prompt injection)
-        self._cached_augment_tree: Optional[str] = None
 
         # Load available augments from disk
         self._load_augments_from_dir()
-
-        # Generate initial augment tree cache
-        self._update_augment_tree_cache()
-
-        logger.info(f"AugmentManager initialized: {len(self.available_augments)} augments available")
         
-        # Restore active augments from state
+        # Use JsonStructuredFile for atomic state persistence
+        self._state_file = JsonStructuredFile(
+            file_path=self.state_file,
+            name="augment_state",
+            default_factory=lambda: {
+                "active_augments": [],
+                "pinned_augments": []
+            }
+        )
+
         self.load_state()
 
     @property
     def state_file(self) -> Path:
         """Path to state persistence file."""
-        return self.augments_dir.parent / "augments_state.json"
+        return Path.cwd() / '.nisaba' / 'tui' /  'augment_state.json'
 
     def save_state(self) -> None:
-        """Save active and pinned augments to JSON."""
-        import json
-
+        """Save active and pinned augments to JSON using atomic operations."""
         state = {
             "active_augments": sorted(self.active_augments),
             "pinned_augments": sorted(self.pinned_augments)
         }
 
-        self.state_file.parent.mkdir(parents=True, exist_ok=True)
-        self.state_file.write_text(json.dumps(state, indent=2), encoding='utf-8')
+        # Use JsonStructuredFile for atomic write with locking
+        self._state_file.write_json(state)
         logger.debug(f"Saved {len(self.active_augments)} active, {len(self.pinned_augments)} pinned augments to state file")
 
     def load_state(self) -> None:
-        """Restore active and pinned augments from JSON (graceful degradation)."""
-        import json
+        """Restore active and pinned augments from JSON using cached operations."""
+        state = self._state_file.load_json()
+        
+        # Restore pinned augments first
+        pinned = state.get("pinned_augments", [])
+        for aug_path in pinned:
+            if aug_path in self.available_augments:
+                self.pinned_augments.add(aug_path)
+            else:
+                logger.warning(f"Skipping unavailable pinned augment: {aug_path}")
+        
+        # Restore active augments
+        active = state.get("active_augments", [])
+        for aug_path in active:
+            if aug_path in self.available_augments:
+                self.active_augments.add(aug_path)
+            else:
+                logger.warning(f"Skipping unavailable augment: {aug_path}")
+        
+        # Auto-activate pinned augments (merge into active set)
+        self.active_augments.update(self.pinned_augments)
+        
+        # Rebuild tool associations and compose
+        if self.active_augments:
+            self._rebuild_tool_associations()
+            self._compose_and_write()
+        
+        logger.info(f"Restored {len(self.active_augments)} active augments ({len(self.pinned_augments)} pinned) from state file")
 
-        if not self.state_file.exists():
-            logger.debug("No augments state file found, starting with empty active set")
-            return
+        self.active_augments.update(self.pinned_augments)
 
-        try:
-            state = json.loads(self.state_file.read_text(encoding='utf-8'))
-            active_augments = state.get("active_augments", [])
-            pinned_augments = state.get("pinned_augments", [])
+        # Rebuild tool associations and compose
+        if self.active_augments:
+            self._rebuild_tool_associations()
+            self._compose_and_write()
 
-            # Restore pinned augments
-            for augment_path in pinned_augments:
-                if augment_path in self.available_augments:
-                    self.pinned_augments.add(augment_path)
-                else:
-                    logger.warning(f"Skipping missing pinned augment: {augment_path}")
-
-            # Restore active augments
-            for augment_path in active_augments:
-                if augment_path in self.available_augments:
-                    self.active_augments.add(augment_path)
-                else:
-                    logger.warning(f"Skipping missing augment: {augment_path}")
-
-            # Auto-activate pinned augments (merge into active set)
-            self.active_augments.update(self.pinned_augments)
-
-            # Rebuild tool associations and compose
-            if self.active_augments:
-                self._rebuild_tool_associations()
-                self._compose_and_write()
-
-            logger.info(f"Restored {len(self.active_augments)} active augments ({len(self.pinned_augments)} pinned) from state file")
-        except Exception as e:
-            logger.warning(f"Failed to load augments state: {e}")
+        logger.info(f"Restored {len(self.active_augments)} active augments ({len(self.pinned_augments)} pinned) from state file")
 
     def _load_augments_from_dir(self) -> None:
         """Load all augment files from augments directory."""

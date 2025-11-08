@@ -6,6 +6,7 @@ from pathlib import Path
 
 from nabu.tui.file_window import FileWindow
 from nabu.db.kuzu_manager import KuzuConnectionManager
+from nisaba.structured_file import JsonStructuredFile
 
 logger = logging.getLogger(__name__)
 
@@ -18,16 +19,22 @@ class FileWindowsManager:
         self.db_manager = db_manager
         self.factory = factory
         self.load_state()
+        
+        # Use JsonStructuredFile for atomic state persistence
+        self._state_file = JsonStructuredFile(
+            file_path=self.state_file,
+            name="file_windows_state",
+            default_factory=lambda: {"windows": {}}
+        )
+
 
     @property
     def state_file(self) -> Path:
         """Path to state persistence file."""
-        return Path.cwd() / ".nisaba" / "file_windows_state.json"
+        return Path.cwd() / '.nisaba' / 'tui' / 'file_window_state.json'
 
     def save_state(self) -> None:
-        """Save windows state to JSON."""
-        import json
-        
+        """Save windows state to JSON using atomic operations."""
         state = {
             "windows": {
                 wid: {
@@ -43,58 +50,51 @@ class FileWindowsManager:
             }
         }
         
-        self.state_file.parent.mkdir(parents=True, exist_ok=True)
-        self.state_file.write_text(json.dumps(state, indent=2), encoding='utf-8')
+        # Use JsonStructuredFile for atomic write with locking
+        self._state_file.write_json(state)
         logger.debug(f"Saved {len(self.windows)} windows to state file")
 
     def load_state(self) -> None:
-        """Restore windows from JSON (graceful degradation)."""
-        import json
+        """Restore windows from JSON using cached operations."""
+        state = self._state_file.load_json()
         
-        if not self.state_file.exists():
-            logger.debug("No state file found, starting with empty windows")
-            return
+        for window_data in state.get("windows", {}).values():
+            try:
+                # Re-read content from file (handles staleness)
+                content = self._read_lines(
+                    window_data["file_path"],
+                    window_data["start_line"],
+                    window_data["end_line"]
+                )
+                
+                # Reconstruct window
+                window = FileWindow(
+                    id=window_data["id"],
+                    file_path=Path(window_data["file_path"]),
+                    start_line=window_data["start_line"],
+                    end_line=window_data["end_line"],
+                    content=content,
+                    window_type=window_data["window_type"],
+                    metadata=window_data.get("metadata", {}),
+                    opened_at=window_data.get("opened_at", 0.0)
+                )
+                self.windows[window.id] = window
+            except Exception as e:
+                logger.warning(f"Skipping window {window_data.get('id')}: {e}")
+                continue
         
-        try:
-            state = json.loads(self.state_file.read_text(encoding='utf-8'))
-            
-            for window_data in state.get("windows", {}).values():
-                try:
-                    # Re-read content from file (handles staleness)
-                    content = self._read_lines(
-                        window_data["file_path"],
-                        window_data["start_line"],
-                        window_data["end_line"]
-                    )
-                    
-                    # Reconstruct window
-                    window = FileWindow(
-                        id=window_data["id"],
-                        file_path=Path(window_data["file_path"]),
-                        start_line=window_data["start_line"],
-                        end_line=window_data["end_line"],
-                        content=content,
-                        window_type=window_data["window_type"],
-                        metadata=window_data.get("metadata", {}),
-                        opened_at=window_data.get("opened_at", 0.0)
-                    )
-                    self.windows[window.id] = window
-                except Exception as e:
-                    logger.warning(f"Skipping window {window_data.get('id')}: {e}")
-                    continue
+        logger.info(f"Restored {len(self.windows)} windows from state file")
+
+    def open_frame_window(self, frame_path: str) -> str:
+        content = self._read_lines(
+            frame_data['file_path'],
+            frame_data['start_line'],
             
             logger.info(f"Restored {len(self.windows)} windows from state file")
         except Exception as e:
             logger.warning(f"Failed to load state file: {e}")
 
     def open_frame_window(self, frame_path: str) -> str:
-        """Open frame's full body."""
-        # Query kuzu for frame location
-        frame_data = self._get_frame_location(frame_path)
-        if not frame_data:
-            raise ValueError(f"Frame not found: {frame_path}")
-
-        # Read file content
         content = self._read_lines(
             frame_data['file_path'],
             frame_data['start_line'],

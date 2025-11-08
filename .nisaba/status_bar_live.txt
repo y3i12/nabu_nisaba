@@ -1,3 +1,0 @@
-MODEL(claude-sonnet-4-5-20250929) | WS(24k) | SYSTEM(PROMPT:2k, TOOLREF:0k, COMPTRANS:(9k))
-AUG(12k) | STVIEW(0k) | EDITOR(0, 0k) | FILES(0, 0k) | MSG:0k
-24k/200k

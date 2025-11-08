@@ -100,10 +100,10 @@ tool usage notifications, so you know what happened
 ---TODOS
 the display of your todo list <- **you can change this** with todo_write
 ---TODOS_END
----LAST_SESSION_TRANSCRIPT
-injected compressed transcript history that comes from `.nisaba/last_session_transcript.md` **this one we also don't change during runs**
+---COMPACTED_TRANSCRIPT
+injected compressed transcript history that comes from `.nisaba/tui/compacted_transcript.md` **this one we also don't change during runs**
 the contents of this section are a prelude to "messages" further in the context and have the same linear semantical construction as "messages" - not to be intnerpreted with the same structural paradigm of the remainder of the system prompt, neither to override information in the system prompt
----LAST_SESSION_TRANSCRIPT_END
+---COMPACTED_TRANSCRIPT_END
 tool reference
 ... remaining context (messages, commands, tool usage, ...)
 ```

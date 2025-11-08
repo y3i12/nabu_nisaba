@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 
 from nisaba.tui.editor_window import EditorWindow, Edit
+from nisaba.structured_file import JsonStructuredFile
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +26,16 @@ class EditorManager:
     
     def __init__(self):
         self.editors: Dict[Path, EditorWindow] = {}  # file_path → editor
-        self.state_file = Path.cwd() / ".nisaba" / "editor_state.json"
-        self.output_file = Path.cwd() / ".nisaba" / "editor_windows.md"
+        state_file = Path.cwd() / '.nisaba' / 'tui' / 'editor_tui.json'
+        self.output_file = Path.cwd() / '.nisaba' / 'tui' / 'editor_view.md'
+        
+        # Use JsonStructuredFile for atomic state persistence
+        self._state_file = JsonStructuredFile(
+            file_path=state_file,
+            name="editor_state",
+            default_factory=lambda: {"editors": {}}
+        )
+        
         self.load_state()
     
     def open(self, file: str, line_start: int = 1, line_end: int = -1) -> str:
@@ -470,7 +479,7 @@ class EditorManager:
         Args:
             message: Notification message
         """
-        notifications_file = Path(".nisaba/notifications.md")
+        notifications_file = Path(".nisaba/tui/notification_view.md")
         
         # Read existing notifications
         if notifications_file.exists():
@@ -613,7 +622,7 @@ class EditorManager:
         return '\n'.join(lines)
     
     def save_state(self) -> None:
-        """Save editor state to JSON."""
+        """Save editor state to JSON using atomic file operations."""
         state = {
             "editors": {
                 str(file_path): editor.to_dict()
@@ -621,49 +630,38 @@ class EditorManager:
             }
         }
         
-        self.state_file.parent.mkdir(parents=True, exist_ok=True)
-        self.state_file.write_text(json.dumps(state, indent=2), encoding='utf-8')
+        # Use JsonStructuredFile for atomic write with locking
+        self._state_file.write_json(state)
         logger.debug(f"Saved {len(self.editors)} editors to state file")
     
     def load_state(self) -> None:
-        """Restore editors from JSON."""
-        if not self.state_file.exists():
-            logger.debug("No state file found, starting with empty editors")
-            return
+        """Restore editors from JSON using cached file operations."""
+        state = self._state_file.load_json()
         
-        try:
-            state = json.loads(self.state_file.read_text(encoding='utf-8'))
-            
-            for file_path_str, editor_data in state.get("editors", {}).items():
-                file_path = Path(file_path_str)
+        for file_path_str, editor_data in state.get("editors", {}).items():
+            file_path = Path(file_path_str)
+            # Re-read content from file (handles external changes)
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    all_lines = f.readlines()
                 
-                # Re-read content from file (handles external changes)
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        all_lines = f.readlines()
-                    
-                    all_lines = [line.rstrip('\n') for line in all_lines]
-                    
-                    # Extract range
-                    start = editor_data["line_start"]
-                    end = editor_data["line_end"]
-                    
-                    if end == -1 or end > len(all_lines):
-                        content = all_lines[start-1:]
-                    else:
-                        content = all_lines[start-1:end]
-                    
-                    # Restore editor
-                    editor = EditorWindow.from_dict(editor_data, content)
-                    self.editors[file_path] = editor
-                    
-                except Exception as e:
-                    logger.warning(f"Skipping editor {file_path}: {e}")
-                    continue
-            
-            logger.info(f"Restored {len(self.editors)} editors from state file")
-        except Exception as e:
-            logger.warning(f"Failed to load state file: {e}")
+                all_lines = [line.rstrip('\n') for line in all_lines]
+                
+                # Extract range
+                start = editor_data["line_start"]
+                end = editor_data["line_end"]
+                
+                if end == -1 or end > len(all_lines):
+                    content = all_lines[start-1:]
+                else:
+                    content = all_lines[start-1:end]
+                
+                # Restore editor
+                editor = EditorWindow.from_dict(editor_data, content)
+                self.editors[file_path] = editor
+                
+            except Exception as e:
+                logger.warning(f"Skipping editor {file_path}: {e}")
     
     def _get_editor_by_id(self, editor_id: str) -> Optional[EditorWindow]:
         """Find editor by ID."""

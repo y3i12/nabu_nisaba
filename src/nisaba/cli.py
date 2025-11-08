@@ -346,7 +346,7 @@ def augments_list():
 
     # Use default augments directory
     augments_dir = Path.cwd() / ".nisaba" / "augments"
-    composed_file = Path.cwd() / ".nisaba" / "nisaba_composed_augments.md"
+    composed_file = Path.cwd() / '.nisaba' / 'tui' / 'augment_view.md'
 
     if not augments_dir.exists():
         OutputFormat.print_error(
@@ -386,7 +386,7 @@ def augments_activate(patterns, exclude):
     from nisaba.augments import AugmentManager
 
     augments_dir = Path.cwd() / ".nisaba" / "augments"
-    composed_file = Path.cwd() / ".nisaba" / "nisaba_composed_augments.md"
+    composed_file = Path.cwd() / '.nisaba' / 'tui' / 'augment_view.md'
 
     if not augments_dir.exists():
         OutputFormat.print_error(f"Augments directory not found: {augments_dir}")
@@ -423,7 +423,7 @@ def augments_deactivate(patterns):
     from nisaba.augments import AugmentManager
 
     augments_dir = Path.cwd() / ".nisaba" / "augments"
-    composed_file = Path.cwd() / ".nisaba" / "nisaba_composed_augments.md"
+    composed_file = Path.cwd() / '.nisaba' / 'tui' / 'augment_view.md'
 
     if not augments_dir.exists():
         OutputFormat.print_error(f"Augments directory not found: {augments_dir}")
