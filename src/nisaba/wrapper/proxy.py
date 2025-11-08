@@ -648,7 +648,6 @@ class AugmentInjector:
         
         # Compact format optimized for horizontal space
         parts = [
-            f"MODEL({model_name})",
             f"WS({ws['total']//1000}k)",
             f"SYSTEM(PROMPT:{ws['system']['prompt']//1000}k, "
                    f"TOOLREF:{ws['system']['tools']//1000}k, "
@@ -659,13 +658,14 @@ class AugmentInjector:
             f"FILES({ws['files']['count']}, {ws['files']['tokens']//1000}k)",
             # f"TOOLS({ws['tools']['count']}, {ws['tools']['tokens']//1000}k)",
             f"MSG:{status_data['messages']//1000}k",
+            f"MODEL({model_name})",
             f"{status_data['total']//1000}k/{status_data['budget']//1000}k"
         ]
         SPLIT = 3
         status = "\n".join([
             ' | '.join(parts[0:SPLIT]),
-            ' | '.join(parts[SPLIT:-1]),
-            parts[-1]
+            ' | '.join(parts[SPLIT:-2]),
+            ' | '.join(parts[-2:]),
         ])
         
         try:
