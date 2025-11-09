@@ -311,8 +311,18 @@ class AugmentInjector:
 
         
         if 'messages' in body and len(body["messages"]) > 2:
-            # Commit any pending editor edits before loading workspace
-            self._commit_pending_edits()
+            # Check if last message contains tool results (don't commit during tool roundtrips)
+            last_message = body["messages"][-1]
+            is_tool_result = False
+            if isinstance(last_message.get("content"), list):
+                is_tool_result = any(
+                    isinstance(c, dict) and c.get("type") == "tool_result"
+                    for c in last_message["content"]
+                )
+            
+            # Only commit on user messages, not on tool result roundtrips
+            if not is_tool_result:
+                self._commit_pending_edits()
             
             status_bar = f"\n{self._generate_status_bar(body)}"
             body['messages'].append( 

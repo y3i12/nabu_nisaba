@@ -6,13 +6,43 @@ context management in Claude Code.
 """
 
 from typing import Dict, Any, List
-from nisaba.tools.base import NisabaTool
+from nisaba import MCPTool, MCPToolResponse
+
+class AugmentTool(MCPTool):
+    @property
+    def augment_manager(self):
+        """
+        Access to AugmentManager (if factory has one).
+
+        Returns None if factory doesn't implement augments support.
+
+        Returns:
+            AugmentManager instance or None
+        """
+        return getattr(self.factory, 'augment_manager', None)
+    
+    @property
+    def augment_manager_not_present_error(self) -> MCPToolResponse:
+        return self.response(success=False, message="ConfigurationError: Augments system not initialized",nisaba=True)
+    
+    def _augment_result_append_key(self, result:dict[str,Any], key:str, message_list:list[str]) -> list[str]:
+        if key in result:
+            message_list.append(f"{key} [{', '.join(result[key])}]")
+        return message_list
+
+    def augment_manager_result_response(self, result:dict[str,Any]) -> MCPToolResponse:
+        message_list:list[str] = []
+        for key in ('affected', 'dependencies', 'skipped'):
+            message_list = self._augment_result_append_key(result, key, message_list)
+            
+        message = ', '.join(message_list)
+        return self.response(success=True, message=message, nisaba=True)
 
 
-class ActivateAugmentsTool(NisabaTool):
+class ActivateAugmentsTool(AugmentTool):
     """Activate augments by pattern (supports wildcards and exclusions)."""
 
-    async def execute(self, patterns: List[str], exclude: List[str] = []) -> Dict[str, Any]:
+    async def execute(self, patterns: List[str], exclude: List[str] = []) -> MCPToolResponse:
         """
         Activate augments matching patterns.
 
@@ -31,23 +61,17 @@ class ActivateAugmentsTool(NisabaTool):
         """
         try:
             if not self.augment_manager:
-                return {
-                    "success": False,
-                    "error": "Augments system not initialized",
-                    "error_type": "ConfigurationError"
-                }
-
-            result = self.augment_manager.activate_augments(patterns, exclude)
-            return {"success": True, "data": result}
+                return self.augment_manager_not_present_error
+            return self.augment_manager_result_response(self.augment_manager.activate_augments(patterns, exclude))
+        
         except Exception as e:
-            self.logger.error(f"Failed to activate augments: {e}", exc_info=True)
-            return {"success": False, "error": str(e), "error_type": type(e).__name__}
+            return self.response_exception(e, "Failed to activate augment", nisaba=True)
 
 
-class DeactivateAugmentsTool(NisabaTool):
+class DeactivateAugmentsTool(AugmentTool):
     """Deactivate augments by pattern."""
 
-    async def execute(self, patterns: List[str]) -> Dict[str, Any]:
+    async def execute(self, patterns: List[str]) -> MCPToolResponse:
         """
         Deactivate augments matching patterns.
 
@@ -65,23 +89,18 @@ class DeactivateAugmentsTool(NisabaTool):
         """
         try:
             if not self.augment_manager:
-                return {
-                    "success": False,
-                    "error": "Augments system not initialized",
-                    "error_type": "ConfigurationError"
-                }
+                return self.augment_manager_not_present_error
 
-            result = self.augment_manager.deactivate_augments(patterns)
-            return {"success": True, "data": result}
+            return self.augment_manager_result_response(self.augment_manager.deactivate_augments(patterns))
+        
         except Exception as e:
-            self.logger.error(f"Failed to deactivate augments: {e}", exc_info=True)
-            return {"success": False, "error": str(e), "error_type": type(e).__name__}
+            return self.response_exception(e, "Failed to deactivate augment", nisaba=True)
 
 
-class PinAugmentTool(NisabaTool):
+class PinAugmentTool(AugmentTool):
     """Pin augments by pattern (always active, cannot be deactivated)."""
 
-    async def execute(self, patterns: List[str]) -> Dict[str, Any]:
+    async def execute(self, patterns: List[str]) -> MCPToolResponse:
         """
         Pin augments matching patterns.
 
@@ -99,23 +118,18 @@ class PinAugmentTool(NisabaTool):
         """
         try:
             if not self.augment_manager:
-                return {
-                    "success": False,
-                    "error": "Augments system not initialized",
-                    "error_type": "ConfigurationError"
-                }
+                return self.augment_manager_not_present_error
 
-            result = self.augment_manager.pin_augment(patterns)
-            return {"success": True, "data": result}
+            return self.augment_manager_result_response(self.augment_manager.pin_augment(patterns))
+        
         except Exception as e:
-            self.logger.error(f"Failed to pin augments: {e}", exc_info=True)
-            return {"success": False, "error": str(e), "error_type": type(e).__name__}
+            return self.response_exception(e, "Failed to pin augment", nisaba=True)
 
 
-class UnpinAugmentTool(NisabaTool):
+class UnpinAugmentTool(AugmentTool):
     """Unpin augments by pattern (allows deactivation)."""
 
-    async def execute(self, patterns: List[str]) -> Dict[str, Any]:
+    async def execute(self, patterns: List[str]) -> MCPToolResponse:
         """
         Unpin augments matching patterns.
 
@@ -133,23 +147,16 @@ class UnpinAugmentTool(NisabaTool):
         """
         try:
             if not self.augment_manager:
-                return {
-                    "success": False,
-                    "error": "Augments system not initialized",
-                    "error_type": "ConfigurationError"
-                }
+                return self.augment_manager_not_present_error
 
-            result = self.augment_manager.unpin_augment(patterns)
-            return {"success": True, "data": result}
+            return self.augment_manager_result_response(self.augment_manager.unpin_augment(patterns))
         except Exception as e:
-            self.logger.error(f"Failed to unpin augments: {e}", exc_info=True)
-            return {"success": False, "error": str(e), "error_type": type(e).__name__}
+            return self.response_exception(e, "Failed to unpin augment", nisaba=True)
 
-
-class LearnAugmentTool(NisabaTool):
+class LearnAugmentTool(AugmentTool):
     """Create a new augment."""
 
-    async def execute(self, group: str, name: str, content: str) -> Dict[str, Any]:
+    async def execute(self, group: str, name: str, content: str) -> MCPToolResponse:
         """
         Create a new augment and save it to the augments directory.
 
@@ -168,14 +175,8 @@ class LearnAugmentTool(NisabaTool):
         """
         try:
             if not self.augment_manager:
-                return {
-                    "success": False,
-                    "error": "Augments system not initialized",
-                    "error_type": "ConfigurationError"
-                }
+                return self.augment_manager_not_present_error
 
-            result = self.augment_manager.learn_augment(group, name, content)
-            return {"success": True, "data": result}
+            return self.augment_manager_result_response(self.augment_manager.learn_augment(group, name, content))
         except Exception as e:
-            self.logger.error(f"Failed to create augment: {e}", exc_info=True)
-            return {"success": False, "error": str(e), "error_type": type(e).__name__}
+            return self.response_exception(e, "Failed to create augment", nisaba=True)

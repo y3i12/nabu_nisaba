@@ -1,3 +1,24 @@
 {
-  "editors": {}
+  "editors": {
+    "/tmp/final_parallel_test.txt": {
+      "id": "739e6832-4163-4fb7-817f-fbf13fead22f",
+      "file_path": "/tmp/final_parallel_test.txt",
+      "line_start": 1,
+      "line_end": 6,
+      "opened_at": 1762684162.0001316,
+      "last_mtime": 1762684173.5218585,
+      "edit_count": 0,
+      "splits": {}
+    },
+    "/tmp/ultimate_test.txt": {
+      "id": "841177f0-e11d-4602-93aa-57711b232086",
+      "file_path": "/tmp/ultimate_test.txt",
+      "line_start": 1,
+      "line_end": 6,
+      "opened_at": 1762685527.5652153,
+      "last_mtime": 1762685560.2667198,
+      "edit_count": 2,
+      "splits": {}
+    }
+  }
 }

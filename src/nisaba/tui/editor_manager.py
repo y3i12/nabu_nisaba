@@ -812,13 +812,51 @@ class EditorManager:
         
         edits = self.pending_edits[editor_id]
         
-        logger.info(f"Committing {len(edits)} edits for {editor.file_path}")
+        # Separate line vs string operations
+        line_ops = [e for e in edits if e['type'] in ['insert', 'delete', 'replace_lines']]
+        string_ops = [e for e in edits if e['type'] == 'replace']
         
-        # Edits were already applied to editor.content when queued
-        # Now just write to disk once
+        # Sort line ops BOTTOM-UP (descending by start line)
+        # This prevents line shift issues when processing multiple edits
+        def get_line_num(e):
+            if e['type'] == 'insert':
+                return e.get('before_line', 0)
+            return e.get('line_start', 0)
+        
+        line_ops.sort(key=get_line_num, reverse=True)
+        
+        logger.info(f"Committing {len(line_ops)} line ops + {len(string_ops)} string ops for {editor.file_path}")
+        
+        # Apply line ops BOTTOM-UP to editor.content
+        for op in line_ops:
+            if op['type'] == 'replace_lines':
+                line_start = op['line_start']
+                line_end = op['line_end']
+                content = op['content']
+                editor.content[line_start - 1:line_end] = [content]
+                logger.debug(f"  Applied replace_lines({line_start}-{line_end})")
+            elif op['type'] == 'delete':
+                line_start = op['line_start']
+                line_end = op['line_end']
+                del editor.content[line_start - 1:line_end]
+                logger.debug(f"  Applied delete({line_start}-{line_end})")
+            elif op['type'] == 'insert':
+                before_line = op['before_line']
+                content = op['content']
+                editor.content.insert(before_line - 1, content)
+                logger.debug(f"  Applied insert(before {before_line})")
+        
+        # Apply string ops to current content
+        for op in string_ops:
+            old = op['old']
+            new = op['new']
+            editor.content = [line.replace(old, new) for line in editor.content]
+            logger.debug(f"  Applied replace('{old[:20]}...' → '{new[:20]}...')")
+        
+        # Single write to disk
         self._write_to_disk(editor)
         
         # Clear queue
         del self.pending_edits[editor_id]
-        logger.debug(f"Committed edits for {editor.file_path}")
+        logger.debug(f"Committed all edits for {editor.file_path}")
 

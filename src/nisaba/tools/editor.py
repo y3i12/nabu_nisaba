@@ -1,11 +1,12 @@
 """Editor tool - unified file editing with persistent windows."""
 
-from typing import Dict, Any, Optional
+from nisaba import MCPTool, MCPToolResponse
 from pathlib import Path
-from nisaba.tools.base import NisabaTool
+from typing import Dict, Any, Optional
+from typing import Any, Dict, TYPE_CHECKING, get_type_hints
 
 
-class EditorTool(NisabaTool):
+class EditorTool(MCPTool):
     """
     Unified file editor with persistent windows and change tracking.
     
@@ -36,7 +37,7 @@ class EditorTool(NisabaTool):
         line_end: Optional[int] = -1,
         before_line: Optional[int] = None,
         split_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+    ) -> MCPToolResponse:
         """
         Execute editor operation.
         
@@ -84,6 +85,12 @@ class EditorTool(NisabaTool):
             }
         
         try:
+            assert(isinstance(line_start, int))
+            assert(isinstance(line_end, int))
+
+            message = ""
+            result = {}
+
             if operation == 'open':
                 if not file:
                     return self._error("'file' parameter required for open")
@@ -181,25 +188,25 @@ class EditorTool(NisabaTool):
                 message = f"Editors: {status['editor_count']}, Total lines: {status['total_lines']}"
                 result = status
             
-            # Render to markdown and write to file
-            rendered = self.manager.render()
-            output_file = Path.cwd() / ".nisaba" / "tui" / "editor_view.md"
-            output_file.parent.mkdir(parents=True, exist_ok=True)
-            output_file.write_text(rendered, encoding='utf-8')
+            # Skip render for edit operations - proxy will batch commit
+            # Only render for non-edit operations (open, write, close, status, split)
+            if operation not in ['replace', 'insert', 'delete', 'replace_lines']:
+                rendered = self.manager.render()
+                output_file = Path.cwd() / ".nisaba" / "tui" / "editor_view.md"
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+                output_file.write_text(rendered, encoding='utf-8')
+
             
             return {
                 "success": True,
                 "message": message,
                 "nisaba": True,
-                **result
+                #**result
             }
-        
         except Exception as e:
-            self.logger.error(f"Editor operation failed: {e}", exc_info=True)
             return {
                 "success": False,
-                "error": str(e),
-                "error_type": type(e).__name__,
+                "message": f"{type(e).__name__}: {str(e)}"
                 "nisaba": True
             }
     
@@ -207,7 +214,6 @@ class EditorTool(NisabaTool):
         """Return error response."""
         return {
             "success": False,
-            "error": msg,
-            "error_type": "ValueError",
+            "message": msg,
             "nisaba": True
         }

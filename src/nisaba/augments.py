@@ -309,7 +309,7 @@ class AugmentManager:
             exclude: List of patterns to exclude
 
         Returns:
-            Dict with 'loaded', 'dependencies', 'failed' lists
+            Dict with 'affected', 'dependencies'
         """
         to_activate: Set[str] = set()
 
@@ -342,9 +342,8 @@ class AugmentManager:
         self.save_state()
 
         return {
-            'loaded': sorted(to_activate),
-            'dependencies': sorted(dependencies),
-            'failed': []
+            'affected': sorted(to_activate),
+            'dependencies': sorted(dependencies)
         }
 
     def deactivate_augments(self, patterns: List[str]) -> Dict[str, List[str]]:
@@ -383,8 +382,8 @@ class AugmentManager:
         self.save_state()
 
         return {
-            'unloaded': sorted(to_deactivate),
-            'pinned_skipped': sorted(pinned_skipped)
+            'affected': sorted(to_deactivate),
+            'skipped': sorted(pinned_skipped)
         }
 
     def pin_augment(self, patterns: List[str]) -> Dict[str, List[str]]:
@@ -395,7 +394,7 @@ class AugmentManager:
             patterns: List of patterns to match
 
         Returns:
-            Dict with 'pinned' list
+            Dict with 'affected' list
         """
         to_pin: Set[str] = set()
 
@@ -422,7 +421,7 @@ class AugmentManager:
         self._update_augment_tree_cache()
 
         return {
-            'pinned': sorted(to_pin)
+            'affected': sorted(to_pin)
         }
 
     def unpin_augment(self, patterns: List[str]) -> Dict[str, List[str]]:
@@ -435,7 +434,7 @@ class AugmentManager:
             patterns: List of patterns to match
 
         Returns:
-            Dict with 'unpinned' list
+            Dict with 'affected' list
         """
         to_unpin: Set[str] = set()
 
@@ -454,10 +453,10 @@ class AugmentManager:
         self._update_augment_tree_cache()
 
         return {
-            'unpinned': sorted(to_unpin)
+            'affected': sorted(to_unpin)
         }
 
-    def learn_augment(self, group: str, name: str, content: str) -> Dict[str, str]:
+    def learn_augment(self, group: str, name: str, content: str) -> Dict[str, List[str]]:
         """
         Create a new augment.
 
@@ -467,7 +466,7 @@ class AugmentManager:
             content: Augment content (markdown)
 
         Returns:
-            Dict with 'path' and 'file_path'
+            affected
         """
         # Create group directory if needed
         group_dir = self.augments_dir / group
@@ -487,8 +486,7 @@ class AugmentManager:
         logger.info(f"Created augment: {augment.path}")
 
         return {
-            'path': augment.path,
-            'file_path': str(augment_file)
+            'affected': [ augment.path ]
         }
 
     def get_related_tools(self, tool_name: str) -> List[str]:
