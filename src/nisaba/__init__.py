@@ -4,7 +4,7 @@ from nisaba.agent import Agent
 from nisaba.factory import MCPFactory
 from nisaba.registry import ToolRegistry, RegisteredTool
 from nisaba.config import MCPConfig, MCPContext
-from nisaba.tool import MCPTool
+from nisaba.tool import MCPTool, MCPToolResponse
 from nisaba.markers import ToolMarker, ToolMarkerOptional, ToolMarkerDevOnly, ToolMarkerMutating
 from nisaba.guidance import WorkflowGuidance, GuidanceGraph, GuidancePattern
 from nisaba.schema_utils import sanitize_for_openai_tools
@@ -20,7 +20,6 @@ from nisaba.cli import (
     validate_dir_or_exit,
 )
 from nisaba.tools import (
-    NisabaTool,
     ActivateAugmentsTool,
     DeactivateAugmentsTool,
     PinAugmentTool, 
@@ -38,6 +37,7 @@ __all__ = [
     "MCPConfig",
     "MCPContext",
     "MCPTool",
+    "MCPToolResponse",
     "ToolMarker",
     "ToolMarkerOptional",
     "ToolMarkerDevOnly",

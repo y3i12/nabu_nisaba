@@ -2,13 +2,13 @@
 Manage tool result visibility states.
 """
 from typing import Any, Dict, List
-from nisaba.tools.base import NisabaTool
+from nisaba import MCPTool, MCPToolResponse
 
 
-class ToolResultTool(NisabaTool):
+class ToolResultTool(MCPTool):
     """Manage tool result window states for compact/expanded display."""
 
-    async def execute(self, operation: str, tool_ids: List[str] = None) -> Dict[str, Any]:
+    async def execute(self, operation: str, tool_ids: List[str] = None) -> MCPToolResponse:
         """
         Manage tool result visibility in request timeline.
 

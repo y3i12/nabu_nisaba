@@ -55,16 +55,18 @@ git submodule update --init test/test_github_projects
         - [x] disable mcp tool
         - [x] remove augments reference
     - [-] line replacement with editor
-        - [ ] buffer it, remove it or intruct to exectue backwards?
-        - [ ] to buffer edits and commit to file on proxy intercept? (repl of line intervals not add up timewise)
+        - [-] nisaba tool return standardization (responsebuilder?)
+            - [-] manually inspect and re-format tool responses
+                - [-] augments
+                - [ ] editor
+                - [ ] todo
+                - [ ] tool_result                
+        - [-] to buffer edits and commit to file on proxy intercept? (line ops not add up timewise)
             - [ ] commit triggers file save and diff
             - [ ] commit triggers notification
     - [ ] augment tools to augment commands
     - [ ] unify proxy logic into state machine
     - [ ] constants (as in filenames) are strings everywhere
-    - [ ] nisaba tool return standardization (responsebuilder?)
-        - [ ] manually inspect and re-format tool responses
-            - [ ] ...{tool_ennumeration_comes_here}...
     - [ ] notifications rework
     - [ ] edit 
         - [ ] to open the edited range
@@ -72,7 +74,7 @@ git submodule update --init test/test_github_projects
     - [ ] file watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
     - [ ] rethink previously disabled tools
     - [ ] ... TBD
-
+- [ ] is the meta subject attractive to recommender systems?
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 #################################################################################################
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
@@ -213,6 +215,53 @@ src/nabu/mcp/formatters/tools/structure.py:
 18          """Format show_structure output in compact style (skeleton + optional relationships)."""
 ```
 
-we are slowly migrating away from a few concepts in this ecosystem. the next one will be FILE_WINDOW. can you understand how editor tool works, how server discovery works and how nabu is integrating with nisaba? tell me what you learned afterwards.
+we have a problem with editor, it is my lack of perception.
 
-my idea for this:
+the editor shows the content of the file in the current state and it is taken as a slice of time that you base your operations on. the problem lies when multipl replace lines are made in parallel, an not necesarily because of the editor, but because of perception.
+
+take the following lipsum as example:
+
+```
+1: At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti 
+2: atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique
+3: sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum
+4: facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil
+5: impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor 
+6: repellendus. Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut 
+7: et voluptates repudiandae sint et molestiae non recusandae. Itaque earum rerum hic tenetur a sapiente delectus,
+8: ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat.
+```
+
+using this example it is normal in a workflow to want to replace 2 different sections, for instance:
+```
+editor.replace(1, 2, 'replacement 1')
+editor.replace(5, 6, 'replacement 2')
+```
+
+when running this, the expected result is:
+```
+1: replacement 1
+2: sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum
+3: facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil
+4: replacement 2
+5: et voluptates repudiandae sint et molestiae non recusandae. Itaque earum rerum hic tenetur a sapiente delectus,
+6: ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat.
+```
+
+instead we get:
+```
+1: replacement 1
+2: sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum
+3: facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil
+4: impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor 
+5: replacement 2
+6: ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat.
+```
+
+this hapeens because the edit messages are executed sequentially over the text. and the text shifts before the second `replace`.
+
+i hought on making something simple as keeping an offset in memory and "nudge" the subsequent replacements, but this will complicate when string replacements are combined with line replacements.
+
+and then i came to the conclusion that creating a "commit" system is the only way to keep it in sync. edits (insert, delete, line replacement, string replacement) in a list and "commit" them when the proxy sends the message, processing all line-based edits from the bottom and at the end the string replacements.
+
+do you think this would work?
