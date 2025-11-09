@@ -4,35 +4,6 @@
 
 ---
 
-## Structural View (`structural_view`)
-
-```
-expand(path)        → show_children | lazy_load@kuzu | idempotent
-collapse(path)      → hide_children | cached | idempotent  
-search(query)       → P³(UniXcoder×CodeBERT) + FTS + RRF | add_markers(●,score)
-clear_search()      → remove_markers | preserve_navigation
-reset(depth=N)      → collapse_all + expand_to(N) | destructive
-```
-
-**Depth sweet spots:** 0=collapsed, 2=default(pkg), 3=verbose
-
----
-
-## File Windows (`file_windows`)
-
-```
-open_frame(frame_path)              → {window_id} | full_body(class|fn|pkg)
-open_range(file, start, end)        → {window_id} | arbitrary_lines [1-indexed]
-open_search(query, max_N, ctx=3)    → {window_ids[]} | semantic + context
-update(window_id, start, end)       → re_snapshot | manual_refresh
-close(window_id)                    → remove_single
-clear_all()                         → remove_all | no_undo
-status()                            → {count, total_lines, windows[]}
-```
-
-**Paths:** qualified_name (preferred) | simple_name (fuzzy) | partial_path
-
----
 
 ## Nabu Graph (`query_relationships`, `check_impact`, `find_clones`, `get_frame_skeleton`, `show_structure`)
 
@@ -62,7 +33,7 @@ show_structure(frame_path)     → detailed_metadata + relationships
 search(query, top_k=10) → P³ + FTS + RRF | ranked_results
 
 ∆ structural_view.search: doesn't mutate tree
-∆ file_windows.open_search: doesn't open windows
+∆ editor.open_search: doesn't open windows
 Pure query → returns data for decisions
 ```
 
@@ -127,17 +98,6 @@ Pattern: execute → observe → close (via nisaba_nisaba_tool_result_state)
 ```
 
 ---
-
-## Nisaba Tools (Workspace Layer)
-
-```
-nisaba_read(file, start?, end?)    → {window_id} | content → FILE_WINDOWS
-nisaba_write(file, content)        → create | workspace-aware
-nisaba_edit(file, old, new)        → modify | workspace-aware
-
-Pattern: persistent visibility in FILE_WINDOWS
-  nisaba_read(file) → FILE_WINDOWS (keep for reference)
-```
 
 ---
 
@@ -232,7 +192,7 @@ Augments:
   Unload: when switching_domains
 
 Management:
-  Monitor: file_windows.status(), editor.status(), nisaba_tool_windows.status()
+  Monitor: editor.status(), editor.status(), nisaba_tool_windows.status()
   Close: proactively after understanding
   Prefer: clear_all when switching
   open_search: efficient (snippets vs full files)
@@ -304,12 +264,12 @@ editor.open(file) → editor.split(fn_A) + editor.split(fn_B) | same_file parall
 
 ```
 ∇(visibility):
-  file_windows.status() → current_windows{count, lines}
+  editor.status() → current_windows{count, lines}
   editor.status() → editors{count, dirty, splits} + refresh
   nisaba_tool_windows.status() → result_windows
   
 ∆(cleanup):
-  file_windows.clear_all()
+  editor.clear_all()
   editor.close_all()
   nisaba_tool_windows.clear_all()
   nisaba_nisaba_tool_result_state(close_all) → compact tool results
@@ -331,6 +291,46 @@ Editor: open → visible → edit → ∆inline → notify → persist
 ---
 
 **Symbols:**
+- → : returns/produces
+- ∆ : difference/change
+- ∇ : navigation/traversal
+- @ : at/in location
+- ← : recommended/optimal
+- {} : returns object
+- [] : array/list
+- | : or/such that
+- ≥ : greater than or equal
+- < : less than
+- ? : optional parameter
+
+**REQUIRES:** __base/002_environment_mechanics
+
+---
+- ← : recommended/optimal
+- {} : returns object
+- [] : array/list
+- | : or/such that
+- ≥ : greater than or equal
+- < : less than
+- ? : optional parameter
+
+**REQUIRES:** __base/002_environment_mechanics
+
+---
+- ∆ : difference/change
+- ∇ : navigation/traversal
+- @ : at/in location
+- ← : recommended/optimal
+- {} : returns object
+- [] : array/list
+- | : or/such that
+- ≥ : greater than or equal
+- < : less than
+- ? : optional parameter
+
+**REQUIRES:** __base/002_environment_mechanics
+
+---
 - → : returns/produces
 - ∆ : difference/change
 - ∇ : navigation/traversal

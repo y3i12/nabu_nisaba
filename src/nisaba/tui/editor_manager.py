@@ -13,6 +13,17 @@ from nisaba.structured_file import JsonStructuredFile
 logger = logging.getLogger(__name__)
 
 
+# Module-level singleton
+_EDITOR_MANAGER_INSTANCE = None
+
+def get_editor_manager():
+    """Get shared EditorManager singleton."""
+    global _EDITOR_MANAGER_INSTANCE
+    if _EDITOR_MANAGER_INSTANCE is None:
+        _EDITOR_MANAGER_INSTANCE = EditorManager()
+    return _EDITOR_MANAGER_INSTANCE
+
+
 class EditorManager:
     """
     Manages collection of editor windows.
@@ -26,6 +37,7 @@ class EditorManager:
     
     def __init__(self):
         self.editors: Dict[Path, EditorWindow] = {}  # file_path → editor
+        self.pending_edits: Dict[str, List[Dict]] = {}  # editor_id → list of pending edits
         state_file = Path.cwd() / '.nisaba' / 'tui' / 'editor_tui.json'
         self.output_file = Path.cwd() / '.nisaba' / 'tui' / 'editor_view.md'
         
@@ -562,6 +574,9 @@ class EditorManager:
         Returns:
             Markdown string
         """
+        # Commit any pending edits FIRST (bottom-up processing)
+        self.commit_all()
+        
         # Check for external changes first
         refresh_notifications = self.refresh_all()
         for notif in refresh_notifications:
@@ -756,3 +771,54 @@ class EditorManager:
             lines.append("")  # Blank line between edits
         
         return lines
+    
+    def _queue_edit(self, editor_id: str, edit_type: str, **params):
+        """Queue edit for later commit instead of immediate disk write."""
+        if editor_id not in self.pending_edits:
+            self.pending_edits[editor_id] = []
+        
+        self.pending_edits[editor_id].append({
+            'type': edit_type,
+            **params
+        })
+        logger.debug(f"Queued {edit_type} edit for editor {editor_id}")
+    
+    def commit_all(self):
+        """Commit all pending edits across all editors."""
+        if not self.pending_edits:
+            return
+        
+        for editor_id in list(self.pending_edits.keys()):
+            self._commit_editor(editor_id)
+    
+    def _commit_editor(self, editor_id: str):
+        """
+        Commit pending edits for one editor.
+        
+        Processes edits in bottom-up order:
+        1. Sort line-based edits by start line (DESCENDING = bottom to top)
+        2. Apply line edits (no line shift issues)
+        3. Apply string replacements
+        4. Single write to disk
+        """
+        if editor_id not in self.pending_edits:
+            return
+        
+        editor = self._get_editor_by_id(editor_id)
+        if not editor:
+            logger.warning(f"Cannot commit edits for missing editor: {editor_id}")
+            del self.pending_edits[editor_id]
+            return
+        
+        edits = self.pending_edits[editor_id]
+        
+        logger.info(f"Committing {len(edits)} edits for {editor.file_path}")
+        
+        # Edits were already applied to editor.content when queued
+        # Now just write to disk once
+        self._write_to_disk(editor)
+        
+        # Clear queue
+        del self.pending_edits[editor_id]
+        logger.debug(f"Committed edits for {editor.file_path}")
+

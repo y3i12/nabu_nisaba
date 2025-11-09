@@ -20,8 +20,8 @@ class EditorTool(NisabaTool):
     def manager(self):
         """Lazy-initialize editor manager (persists across operations)."""
         if self._manager is None:
-            from nisaba.tui.editor_manager import EditorManager
-            self._manager = EditorManager()
+            from nisaba.tui.editor_manager import get_editor_manager
+            self._manager = get_editor_manager()  # Use singleton
         return self._manager
     
     async def execute(

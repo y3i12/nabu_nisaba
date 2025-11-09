@@ -31,7 +31,9 @@ Platform: linux
 OS Version: Linux 6.6.87.2-microsoft-standard-WSL2
 Today's date: 2025-11-09
 </env>
-You are powered by the model named Haiku 4.5. The exact model ID is claude-haiku-4-5-20251001.
+You are powered by the model named Sonnet 4.5. The exact model ID is claude-sonnet-4-5-20250929.
+
+Assistant knowledge cutoff is January 2025.
 
 <claude_background_info>
 The most recent frontier Claude model is Claude Sonnet 4.5 (model ID: 'claude-sonnet-4-5-20250929').
@@ -44,17 +46,25 @@ Main branch (you will usually use this for PRs):
 
 Status:
 M .dev_docs/dev.dump.md
+ M .nisaba/augments/__base/001_workspace_paradigm.md
+ M .nisaba/augments/__base/002_environment_mechanics.md
+ M .nisaba/augments/__base/003_workspace_operations.md
+ M .nisaba/augments/__base/004_workspace_navigation.md
  M .nisaba/mcp_servers.json
  M .nisaba/modified_context.json
+ M .nisaba/tui/augment_view.md
+ M .nisaba/tui/core_system_prompt.md
+ M .nisaba/tui/notification_state.json
+ M .nisaba/tui/notification_view.md
  M .nisaba/tui/status_bar_live.txt
- M .nisaba/tui/system_prompt.md
- M src/nabu/mcp/tools/__init__.py
+ M src/nisaba/tools/editor.py
+ M src/nisaba/tui/editor_manager.py
  M src/nisaba/wrapper/proxy.py
-?? .nisaba/tui/core_system_prompt.md
+?? src/nisaba/tui/editor_manager.py.backup
 
 Recent commits:
+0f949c9 disabling nabu tools + reorg on status bar
 169090e init dev dump
 6d7bd12 status bar reorder
 7272b0c moving dynamic items to messages
 cc9ba24 fixes on the file refactoring
-5e71e91 dead code, cleanup broken code, reorganize state and views, starting file lock protections

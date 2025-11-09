@@ -52,6 +52,13 @@ git submodule update --init test/test_github_projects
     - [x] workspace in messages
     - [x] switch everything but augments and transcript into messages
     - [-] disable nabu file tools
+        - [x] disable mcp tool
+        - [x] remove augments reference
+    - [-] line replacement with editor
+        - [ ] buffer it, remove it or intruct to exectue backwards?
+        - [ ] to buffer edits and commit to file on proxy intercept? (repl of line intervals not add up timewise)
+            - [ ] commit triggers file save and diff
+            - [ ] commit triggers notification
     - [ ] augment tools to augment commands
     - [ ] unify proxy logic into state machine
     - [ ] constants (as in filenames) are strings everywhere
@@ -61,9 +68,6 @@ git submodule update --init test/test_github_projects
     - [ ] notifications rework
     - [ ] edit 
         - [ ] to open the edited range
-        - [ ] to buffer edits and commit to file on proxy intercept? (repl of line intervals not add up timewise)
-            - [ ] commit triggers file save and diff
-            - [ ] commit triggers notification
 - [ ] nabu priming
     - [ ] file watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
     - [ ] rethink previously disabled tools

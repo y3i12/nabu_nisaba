@@ -1,9 +1,9 @@
 {
   "version": "1.0",
   "servers": {
-    "nisaba_116227": {
+    "nisaba_240684": {
       "name": "nisaba",
-      "pid": 116227,
+      "pid": 240684,
       "stdio_active": true,
       "http": {
         "enabled": true,
@@ -11,12 +11,12 @@
         "port": 9973,
         "url": "http://localhost:9973"
       },
-      "started_at": "2025-11-08T23:46:38.797346Z",
+      "started_at": "2025-11-09T10:09:08.996019Z",
       "cwd": "/home/y3i12/nabu_nisaba"
     },
-    "nabu_mcp_116420": {
+    "nabu_mcp_240870": {
       "name": "nabu_mcp",
-      "pid": 116420,
+      "pid": 240870,
       "stdio_active": true,
       "http": {
         "enabled": true,
@@ -24,7 +24,7 @@
         "port": 1338,
         "url": "http://localhost:1338"
       },
-      "started_at": "2025-11-08T23:46:48.576349Z",
+      "started_at": "2025-11-09T10:09:19.030626Z",
       "cwd": "/home/y3i12/nabu_nisaba"
     }
   }
