@@ -7,7 +7,7 @@
 ## State Containers
 
 ```
-Workspace = {STRUCTURAL_VIEW, FILE_WINDOWS, EDITOR_WINDOWS, TOOL_WINDOWS, AUGMENTS, TODOS, NOTIFICATIONS}
+Workspace = {STRUCTURAL_VIEW, EDITOR_WINDOWS, TOOL_WINDOWS, AUGMENTS, TODOS, NOTIFICATIONS}
 
 ∀ container ∈ Workspace:
   - persist(turns) = true
@@ -129,7 +129,7 @@ System_prompt@decide ≠ system_prompt@result
 ## State Sync
 
 ```
-Files: {structural_view.md, file_windows.md, editor_windows.md, tool_result_windows.md, 
+Files: {structural_view.md, editor.md, editor_windows.md, tool_result_windows.md, 
         augments_composed.md, todos.md}
 
 Sync: tool_complete → file_write → proxy_mtime → reload → inject_system_prompt
@@ -167,8 +167,8 @@ messages[N]: tool_result block (temporal memory)
   - Metadata for conversational flow
   
 system_prompt sections: actual content (spatial memory)
-  - TOOL_RESULT_WINDOWS: grep/bash outputs
-  - FILE_WINDOWS: opened file content (read-only snapshots)
+  - TOOL_WINDOWS: grep/bash outputs
+  - EDITOR_WINDOWS: opened file content (read-only snapshots)
   - EDITOR_WINDOWS: active editing (mutable, dirty tracking)
   - Persistent across turns
 ```
@@ -236,7 +236,7 @@ Not: query → response → next_query
 Workspace ≡ spatial ∧ simultaneous ∧ persistent
 
 Editor paradigm:
-  Read-only: FILE_WINDOWS (snapshots, no ∆)
+  Read-only: EDITOR_WINDOWS (snapshots, no ∆)
   Interactive: EDITOR_WINDOWS (edit, split, track dirty)
   Unified > Fragmented (one tool vs read+write+edit)
 ```

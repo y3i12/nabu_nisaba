@@ -19,7 +19,7 @@ System prompt mutates ⟹ different knowledge when tool returns.
 ## State Model
 
 ```
-Workspace ≡ {STRUCTURAL_VIEW, FILE_WINDOWS, EDITOR_WINDOWS, TOOL_WINDOWS, AUGMENTS} | persistent ∧ mutable
+Workspace ≡ {STRUCTURAL_VIEW, EDITOR_WINDOWS, TOOL_WINDOWS, AUGMENTS} | persistent ∧ mutable
 
 ∀ section ∈ Workspace: section persists across turns
 Tool(op) → ∆(section) → new visibility

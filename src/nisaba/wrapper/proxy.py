@@ -282,10 +282,7 @@ class AugmentInjector:
             body["tools"] = filtered_tools
 
         if "system" in body:
-            if len(body["system"]) < 2:
-                # Generate status bar from current state
-                status_bar = f"\n---STATUS_BAR\n{self._generate_status_bar(body)}\n---STATUS_BAR_END"
-                
+            if len(body["system"]) < 2:                
                 body["system"].append(
                     {
                         "type": "text",
@@ -314,7 +311,10 @@ class AugmentInjector:
 
         
         if 'messages' in body and len(body["messages"]) > 2:
-            status_bar = f"\n---STATUS_BAR\n{self._generate_status_bar(body)}\n---STATUS_BAR_END"
+            # Commit any pending editor edits before loading workspace
+            self._commit_pending_edits()
+            
+            status_bar = f"\n{self._generate_status_bar(body)}"
             body['messages'].append( 
                 {
                     "role": "user",
@@ -530,6 +530,23 @@ class AugmentInjector:
             logger.warning(f"tiktoken encoding failed, using fallback: {e}")
             # Fallback to rough estimate if tiktoken fails
             return len(text) // 4
+    
+    def _commit_pending_edits(self) -> None:
+        """
+        Commit any pending editor changes before injecting workspace.
+        
+        This ensures workspace state reflects all queued edits from
+        previous tool executions.
+        """
+        try:
+            from nisaba.tui.editor_manager import get_editor_manager
+            
+            manager = get_editor_manager()
+            if hasattr(manager, 'pending_edits') and manager.pending_edits:
+                manager.commit_all()
+                logger.debug(f"Committed {len(manager.pending_edits)} pending editor queues")
+        except Exception as e:
+            logger.warning(f"Failed to commit pending edits: {e}")
     
     def _generate_status_bar(self, body: dict) -> str:
         """
