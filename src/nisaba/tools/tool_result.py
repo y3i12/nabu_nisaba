@@ -2,7 +2,7 @@
 Manage tool result visibility states.
 """
 from typing import Any, Dict, List
-from nisaba import BaseTool, BaseToolResponse
+from nisaba.tools.base_tool import BaseTool, BaseToolResponse
 
 
 class ToolResultTool(BaseTool):

@@ -6,7 +6,7 @@ context management in Claude Code.
 """
 
 from typing import Dict, Any, List
-from nisaba import BaseTool, BaseToolResponse
+from nisaba.tools.base_tool import BaseTool, BaseToolResponse
 
 class AugmentTool(BaseTool):
     @property

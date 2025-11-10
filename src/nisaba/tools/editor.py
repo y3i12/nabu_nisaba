@@ -12,7 +12,21 @@ if TYPE_CHECKING:
     from nisaba.factory import MCPFactory
 
 class EditorTool(BaseOperationTool):
+    """
+    Execute editor operation.
 
+    Unified file editing with workspace persistence for reading, writing, or editing files
+    """
+    
+    def __init__(self, factory:"MCPFactory"):
+        super().__init__(
+            factory=factory
+        )
+
+    @classmethod
+    def nisaba(cls) -> bool:
+        return True
+    
     @classmethod
     def _format_str(cls, _str:str) -> str:
         return f"{_str}"
@@ -32,13 +46,6 @@ class EditorTool(BaseOperationTool):
     def _format_split_id(cls, str:str) -> str:
         return f"split_id({str})"
 
-    def __init__(self, factory:MCPFactory):
-        super().__init__(
-            factory=factory,
-            nisaba=True
-        )
-
-    @abstractmethod
     @classmethod
     def get_operation_config(cls) -> Dict[str,Operation]:
         return cls.make_operations([
@@ -140,8 +147,8 @@ class EditorTool(BaseOperationTool):
                     description='Close editor or split view',
                     result_formatter=cls._format_ok,
                     parameters=[
-                        cls.make_parameter(name='editor_id',required_or='split_id',description=''),
-                        cls.make_parameter(name='split_id',required=True,description=''),
+                        cls.make_parameter(name='editor_id',required_or='split_id',description='Editor ID'),
+                        cls.make_parameter(name='split_id',required=True,description='Split ID'),
                     ]
                 ),
                 cls.make_operation(
@@ -149,9 +156,7 @@ class EditorTool(BaseOperationTool):
                     name='close_all',
                     description='Close all editor windows',
                     result_formatter=cls._format_str,
-                    parameters=[
-                        cls.make_parameter(name='editor_id',required=True,description=''),
-                    ]
+                    parameters=[]
                 ),
             ])
 

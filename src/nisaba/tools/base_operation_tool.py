@@ -2,7 +2,7 @@ import inspect
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from nisaba import BaseTool, BaseToolResponse
+from nisaba.tools.base_tool import BaseTool, BaseToolResponse
 from typing import Any, Callable, Dict, List, TYPE_CHECKING, get_type_hints
 
 try:
@@ -14,7 +14,7 @@ except ImportError:
 if TYPE_CHECKING:
     from nisaba.factory import MCPFactory
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class OperationParameter:
     name:str
     required:bool
@@ -23,7 +23,7 @@ class OperationParameter:
     description:str
 
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class Operation:
     command:Callable
     result_formatter:Callable
@@ -33,8 +33,8 @@ class Operation:
     skip_render:bool=False
   
 class BaseOperationTool(BaseTool):
-    def __init__(self, factory:MCPFactory, nisaba=False):
-        super().__init__(factory, nisaba)
+    def __init__(self, factory:"MCPFactory", nisaba=False):
+        super().__init__(factory)
         self.operations_and_parameters:dict[str,Operation] = self.get_operation_config()
     
     @classmethod
@@ -54,6 +54,10 @@ class BaseOperationTool(BaseTool):
         return cls.response_error(message=f"Invalid operation: {operation}")
     
     @classmethod
+    def response_missing_operation(cls) -> BaseToolResponse:
+        return cls.response_error(message=f"Missing operation")
+    
+    @classmethod
     def response_parameter_missing(cls, operation:str, parameters:list[str]) -> BaseToolResponse:
         return cls.response_error(f"parameter(s) [{', '.join(parameters)}] required by operation `{operation}`")
 
@@ -61,12 +65,13 @@ class BaseOperationTool(BaseTool):
         return self.operations_and_parameters.get(operation)
     
     @classmethod
-    @abstractmethod
     def get_operation_config(cls) -> Dict[str,Operation]:
-        pass
+        """
+        Needs override
+        """
+        return {}
 
     @classmethod
-    @abstractmethod
     def get_tool_schema(cls) -> Dict[str, Any]:
         """
         Generate JSON schema from execute() signature and docstring.
@@ -76,12 +81,8 @@ class BaseOperationTool(BaseTool):
         """
         tool_name = cls.get_name_from_cls()
 
-        # Get execute method
-        execute_method = cls.execute
-        sig = inspect.signature(execute_method)
-        
         # Parse docstring
-        docstring_text = execute_method.__doc__ or ""
+        docstring_text = cls.__doc__ or ""
 
         if DOCSTRING_PARSER_AVAILABLE and docstring_text:
             docstring = parse_docstring(docstring_text)
@@ -109,7 +110,8 @@ class BaseOperationTool(BaseTool):
         for operation in operation_config.values():
             parameter_list:List[str] = []
 
-            for parameter in operation.parameters.values():
+            for parameter_name in operation.parameters.keys():
+                parameter:OperationParameter = operation.parameters[parameter_name]
                 if parameter not in properties:
                     properties[parameter.name] = {'type':'string', 'description':parameter.description}
           
@@ -125,7 +127,7 @@ class BaseOperationTool(BaseTool):
         
         if len(operation_description_list):
             description += "\n\nOperations:\n" + "\n".join(operation_description_list)
-            
+
         return {
             "name": tool_name,
             "description": description,
@@ -136,8 +138,14 @@ class BaseOperationTool(BaseTool):
             }
         }
     
-    @abstractmethod
-    async def execute(self, operation:str, **kwargs) -> BaseToolResponse:
+    async def execute(self, **kwargs) -> BaseToolResponse:
+        operation = kwargs.get('operation', None)
+        if operation is None:
+            return self.response_missing_operation()
+        
+        return self._execute(operation=str(operation), **kwargs)
+    
+    def _execute(self, operation:str, **kwargs) -> BaseToolResponse:
         """
         Execute the operation tool with given parameters.
 
