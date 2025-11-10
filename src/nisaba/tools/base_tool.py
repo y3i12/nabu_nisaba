@@ -77,7 +77,6 @@ class BaseTool(ABC):
         return False
     
     @classmethod
-    @abstractmethod
     def get_tool_schema(cls) -> Dict[str, Any]:
         """
         Generate JSON schema from execute() signature and docstring.

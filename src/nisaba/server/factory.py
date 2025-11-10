@@ -7,7 +7,7 @@ import logging
 
 from mcp.server.fastmcp import FastMCP
 from nisaba import MCPFactory, BaseTool
-from nisaba.augments import AugmentManager
+from nisaba.augments import get_augment_manager
 from nisaba.guidance import WorkflowGuidance
 from nisaba.server.config import NisabaConfig
 from nisaba.tools.base import NisabaTool
@@ -24,22 +24,12 @@ class NisabaMCPFactory(MCPFactory):
 
         # Tool instances cache
         self._tool_instances = None
-
-        # Initialize augments manager
-        self.augment_manager = AugmentManager(
+        
+        # Initialize shared AugmentManager
+        self.augment_manager = get_augment_manager(
             augments_dir=config.augments_dir,
             composed_file=config.composed_augments_file
         )
-        logger.info(f"📚 Augments manager initialized: {len(self.augment_manager.available_augments)} augments")
-
-        # Initialize guidance
-        self.guidance = WorkflowGuidance(augment_manager=self.augment_manager)
-        logger.info("✨ Augments-based guidance enabled")
-
-        # Initialize editor manager
-        from nisaba.tui.editor_manager import EditorManager
-        self.editor_manager = EditorManager()
-        logger.info("📝 Editor manager initialized")
 
     def _get_tool_base_class(self) -> type:
         """Return NisabaTool as base class."""

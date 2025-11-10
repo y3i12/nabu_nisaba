@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 from nabu.mcp.config.nabu_config import NabuConfig
 from nisaba.guidance import WorkflowGuidance
-from nisaba.augments import AugmentManager
+from nisaba.augments import get_augment_manager
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ class NabuAgent(Agent):
             augments_dir = first_cb.repo_path / '.nisaba' / 'augments'
             composed_file = first_cb.repo_path / '.nisaba' / 'tui' / 'augment_view.md'
 
-        self.augment_manager = AugmentManager(augments_dir, composed_file)
+        self.augment_manager = get_augment_manager(augments_dir, composed_file)
         logger.info(f"📚 Augments manager initialized: {len(self.augment_manager.available_augments)} augments available")
 
         # Workflow guidance (augments-based only)

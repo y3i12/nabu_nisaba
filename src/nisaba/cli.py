@@ -342,7 +342,7 @@ def augments():
 @augments.command("list")
 def augments_list():
     """List all available augments grouped by category."""
-    from nisaba.augments import AugmentManager
+    from nisaba.augments import get_augment_manager
 
     # Use default augments directory
     augments_dir = Path.cwd() / ".nisaba" / "augments"
@@ -358,7 +358,7 @@ def augments_list():
         )
         sys.exit(1)
 
-    manager = AugmentManager(augments_dir, composed_file)
+    manager = get_augment_manager(augments_dir, composed_file)
     augments_data = manager.show_augments()
 
     if not augments_data:
@@ -383,7 +383,7 @@ def augments_list():
 @click.option("--exclude", multiple=True, help="Patterns to exclude")
 def augments_activate(patterns, exclude):
     """Activate augments matching patterns."""
-    from nisaba.augments import AugmentManager
+    from nisaba.augments import get_augment_manager
 
     augments_dir = Path.cwd() / ".nisaba" / "augments"
     composed_file = Path.cwd() / '.nisaba' / 'tui' / 'augment_view.md'
@@ -392,7 +392,7 @@ def augments_activate(patterns, exclude):
         OutputFormat.print_error(f"Augments directory not found: {augments_dir}")
         sys.exit(1)
 
-    manager = AugmentManager(augments_dir, composed_file)
+    manager = get_augment_manager(augments_dir, composed_file)
 
     try:
         result = manager.activate_augments(list(patterns), list(exclude))
@@ -420,7 +420,7 @@ def augments_activate(patterns, exclude):
 @click.argument("patterns", nargs=-1, required=True)
 def augments_deactivate(patterns):
     """Deactivate augments matching patterns."""
-    from nisaba.augments import AugmentManager
+    from nisaba.augments import get_augment_manager
 
     augments_dir = Path.cwd() / ".nisaba" / "augments"
     composed_file = Path.cwd() / '.nisaba' / 'tui' / 'augment_view.md'
@@ -429,7 +429,7 @@ def augments_deactivate(patterns):
         OutputFormat.print_error(f"Augments directory not found: {augments_dir}")
         sys.exit(1)
 
-    manager = AugmentManager(augments_dir, composed_file)
+    manager = get_augment_manager(augments_dir, composed_file)
 
     try:
         result = manager.deactivate_augments(list(patterns))

@@ -17,7 +17,6 @@ from typing import Optional
 from mitmproxy import options
 from mitmproxy.tools import dump
 
-from nisaba.augments import AugmentManager
 from nisaba.server.config import NisabaConfig
 from nisaba.server.factory import NisabaMCPFactory
 from nisaba.wrapper.proxy import AugmentInjector
@@ -101,13 +100,6 @@ class UnifiedNisabaServer:
         logger.info("🚀 Starting Unified Nisaba Server")
         logger.info("=" * 60)
 
-        # Initialize shared AugmentManager
-        self.augment_manager = AugmentManager(
-            augments_dir=self.augments_dir,
-            composed_file=self.composed_file
-        )
-        logger.info(f"📚 Shared AugmentManager initialized: {len(self.augment_manager.available_augments)} augments")
-
         # Start both components
         await self._start_proxy()
         await self._start_mcp_server()
@@ -184,9 +176,6 @@ class UnifiedNisabaServer:
 
         # Create factory with shared AugmentManager
         self.mcp_factory = NisabaMCPFactory(config)
-
-        # IMPORTANT: Replace factory's AugmentManager with our shared instance
-        self.mcp_factory.augment_manager = self.augment_manager
 
         # Create MCP server (HTTP transport)
         self.mcp_server = self.mcp_factory.create_mcp_server(
