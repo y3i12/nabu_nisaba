@@ -6,9 +6,9 @@ context management in Claude Code.
 """
 
 from typing import Dict, Any, List
-from nisaba import MCPTool, MCPToolResponse
+from nisaba import BaseTool, BaseToolResponse
 
-class AugmentTool(MCPTool):
+class AugmentTool(BaseTool):
     @property
     def augment_manager(self):
         """
@@ -22,7 +22,7 @@ class AugmentTool(MCPTool):
         return getattr(self.factory, 'augment_manager', None)
     
     @property
-    def augment_manager_not_present_error(self) -> MCPToolResponse:
+    def augment_manager_not_present_error(self) -> BaseToolResponse:
         return self.response(success=False, message="ConfigurationError: Augments system not initialized",nisaba=True)
     
     def _augment_result_append_key(self, result:dict[str,Any], key:str, message_list:list[str]) -> list[str]:
@@ -30,11 +30,11 @@ class AugmentTool(MCPTool):
             message_list.append(f"{key} [{', '.join(result[key])}]")
         return message_list
 
-    def augment_manager_result_response(self, result:dict[str,Any]) -> MCPToolResponse:
+    def augment_manager_result_response(self, result:dict[str,Any]) -> BaseToolResponse:
         message_list:list[str] = []
         for key in ('affected', 'dependencies', 'skipped'):
             message_list = self._augment_result_append_key(result, key, message_list)
-            
+
         message = ', '.join(message_list)
         return self.response(success=True, message=message, nisaba=True)
 
@@ -42,7 +42,7 @@ class AugmentTool(MCPTool):
 class ActivateAugmentsTool(AugmentTool):
     """Activate augments by pattern (supports wildcards and exclusions)."""
 
-    async def execute(self, patterns: List[str], exclude: List[str] = []) -> MCPToolResponse:
+    async def execute(self, patterns: List[str], exclude: List[str] = []) -> BaseToolResponse:
         """
         Activate augments matching patterns.
 
@@ -57,7 +57,7 @@ class ActivateAugmentsTool(AugmentTool):
             exclude: Patterns to exclude
 
         Returns:
-            Dict with 'loaded', 'dependencies', 'failed' lists
+            augments affected and dependencies
         """
         try:
             if not self.augment_manager:
@@ -71,7 +71,7 @@ class ActivateAugmentsTool(AugmentTool):
 class DeactivateAugmentsTool(AugmentTool):
     """Deactivate augments by pattern."""
 
-    async def execute(self, patterns: List[str]) -> MCPToolResponse:
+    async def execute(self, patterns: List[str]) -> BaseToolResponse:
         """
         Deactivate augments matching patterns.
 
@@ -85,7 +85,7 @@ class DeactivateAugmentsTool(AugmentTool):
             patterns: Patterns to match for deactivation
 
         Returns:
-            Dict with 'unloaded' list
+            augments affected and skipped (pinned)
         """
         try:
             if not self.augment_manager:
@@ -100,7 +100,7 @@ class DeactivateAugmentsTool(AugmentTool):
 class PinAugmentTool(AugmentTool):
     """Pin augments by pattern (always active, cannot be deactivated)."""
 
-    async def execute(self, patterns: List[str]) -> MCPToolResponse:
+    async def execute(self, patterns: List[str]) -> BaseToolResponse:
         """
         Pin augments matching patterns.
 
@@ -114,7 +114,7 @@ class PinAugmentTool(AugmentTool):
             patterns: List of patterns to match
 
         Returns:
-            Dict with 'pinned' list
+            augments affected
         """
         try:
             if not self.augment_manager:
@@ -129,7 +129,7 @@ class PinAugmentTool(AugmentTool):
 class UnpinAugmentTool(AugmentTool):
     """Unpin augments by pattern (allows deactivation)."""
 
-    async def execute(self, patterns: List[str]) -> MCPToolResponse:
+    async def execute(self, patterns: List[str]) -> BaseToolResponse:
         """
         Unpin augments matching patterns.
 
@@ -143,7 +143,7 @@ class UnpinAugmentTool(AugmentTool):
             patterns: List of patterns to match
 
         Returns:
-            Dict with 'unpinned' list
+            augments affected
         """
         try:
             if not self.augment_manager:
@@ -156,7 +156,7 @@ class UnpinAugmentTool(AugmentTool):
 class LearnAugmentTool(AugmentTool):
     """Create a new augment."""
 
-    async def execute(self, group: str, name: str, content: str) -> MCPToolResponse:
+    async def execute(self, group: str, name: str, content: str) -> BaseToolResponse:
         """
         Create a new augment and save it to the augments directory.
 
@@ -171,7 +171,7 @@ class LearnAugmentTool(AugmentTool):
             content: Augment content in markdown format
 
         Returns:
-            Dict with 'path' and 'file_path'
+            augments affected
         """
         try:
             if not self.augment_manager:

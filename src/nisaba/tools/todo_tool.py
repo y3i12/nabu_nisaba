@@ -3,13 +3,13 @@ Todo management tool for nisaba workspace.
 """
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 from pathlib import Path
-from nisaba import MCPTool, MCPToolResponse
+from nisaba import BaseTool, BaseToolResponse
 from nisaba.structured_file import StructuredFileCache
 
 if TYPE_CHECKING:
     from nisaba.factory import MCPFactory
 
-class TodoWriteTool(MCPTool):
+class TodoWriteTool(BaseTool):
     """Manage todos in persistent workspace file with numbered operations."""
 
     def __init__(self, factory: "MCPFactory"):
@@ -88,7 +88,7 @@ class TodoWriteTool(MCPTool):
         index: Optional[int] = None,
         indices: Optional[List[int]] = None,
         position: Optional[int] = None
-    ) -> MCPToolResponse:
+    ) -> BaseToolResponse:
         """
         Manage todo list with numbered operations.
         

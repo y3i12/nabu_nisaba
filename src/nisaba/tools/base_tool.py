@@ -1,13 +1,13 @@
 """Abstract base class for MCP tools."""
 
+import inspect
 import logging
 import time
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, TYPE_CHECKING, get_type_hints
 
-# Docstring parsing (optional dependency)
 try:
     from docstring_parser import parse as parse_docstring
     DOCSTRING_PARSER_AVAILABLE = True
@@ -15,14 +15,17 @@ except ImportError:
     DOCSTRING_PARSER_AVAILABLE = False
 
 
+if TYPE_CHECKING:
+    from nisaba.factory import MCPFactory
+
 @dataclass
-class MCPToolResponse:
+class BaseToolResponse:
     """Metadata for a nisaba certified return"""
     success:bool = False
     message:Any = None
     nisaba:bool = False
 
-class MCPTool(ABC):
+class BaseTool(ABC):
     """
     Abstract base class for all MCP tools.
 
@@ -30,16 +33,20 @@ class MCPTool(ABC):
     - execute(**kwargs) -> Dict[str, Any]: The main tool logic
     """
 
-    def __init__(self, factory: "MCPFactory"):
+    def __init__(self, factory:MCPFactory, nisaba:bool=False):
         """
         Initialize tool with factory reference.
 
         Args:
             factory: The MCPFactory that created this tool
         """
-        self.factory = factory
+        self.factory:MCPFactory = factory
         self.config = factory.config
-        self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.get_name()}")
+        self.nisaba:bool = nisaba
+    
+    @classmethod
+    def logger(cls):
+        return  logging.getLogger(f"{cls.__class__.__module__}.{cls.get_name()}")
 
     @classmethod
     def get_name_from_cls(cls) -> str:
@@ -58,11 +65,13 @@ class MCPTool(ABC):
         name = "".join(["_" + c.lower() if c.isupper() else c for c in name]).lstrip("_")
         return name
 
-    def get_name(self) -> str:
+    @classmethod
+    def get_name(cls) -> str:
         """Get instance tool name."""
-        return self.get_name_from_cls()
+        return cls.get_name_from_cls()
 
     @classmethod
+    @abstractmethod
     def get_tool_schema(cls) -> Dict[str, Any]:
         """
         Generate JSON schema from execute() signature and docstring.
@@ -75,7 +84,7 @@ class MCPTool(ABC):
         # Get execute method
         execute_method = cls.execute
         sig = inspect.signature(execute_method)
-
+        
         # Parse docstring
         docstring_text = execute_method.__doc__ or ""
 
@@ -147,6 +156,7 @@ class MCPTool(ABC):
         }
 
     @classmethod
+    @abstractmethod
     def get_tool_description(cls) -> str:
         """
         Get human-readable tool description.
@@ -165,23 +175,15 @@ class MCPTool(ABC):
         return cls.__doc__ or ""
     
     @abstractmethod
-    async def execute(self, **kwargs) -> MCPToolResponse:
+    async def execute(self, **kwargs) -> BaseToolResponse:
         """
         Execute the tool with given parameters.
-
-        Must return a dictionary with structure:
-        {
-            "success": bool,
-            "data": Any,              # if success
-            "error": str,             # if not success
-            "error_type": str         # if not success
-        }
 
         Args:
             **kwargs: Tool-specific parameters
 
         Returns:
-            Dict with success/error response
+            BaseToolResponse
         """
         pass
 
@@ -252,7 +254,7 @@ class MCPTool(ABC):
         Returns:
             True if tool is optional
         """
-        from .markers import ToolMarkerOptional
+        from ..markers import ToolMarkerOptional
         return issubclass(cls, ToolMarkerOptional)
 
     @classmethod
@@ -263,7 +265,7 @@ class MCPTool(ABC):
         Returns:
             True if tool is dev-only
         """
-        from .markers import ToolMarkerDevOnly
+        from ..markers import ToolMarkerDevOnly
         return issubclass(cls, ToolMarkerDevOnly)
 
     @classmethod
@@ -274,7 +276,7 @@ class MCPTool(ABC):
         Returns:
             True if tool mutates state
         """
-        from .markers import ToolMarkerMutating
+        from ..markers import ToolMarkerMutating
         return issubclass(cls, ToolMarkerMutating)
 
     @classmethod
@@ -427,13 +429,26 @@ class MCPTool(ABC):
         # Default to string for unknown types
         return "string"
     
-    # CONVENIANCE TOOL RETURN METHOD
-    def response(self, success:bool = False, message:Any = None, nisaba:bool = False) -> MCPToolResponse:
+    # CONVENIANCE TOOL RETURN METHODS
+    @classmethod
+    def response(cls, success:bool = False, message:Any = None) -> BaseToolResponse:
         """Return response."""
-        return MCPToolResponse(success=False, message=message, nisaba=True)
+        return BaseToolResponse(success=success, message=message, nisaba=self.nisaba)
     
-    def response_exception(self, e:Exception, message:Any = None, nisaba:bool = False) -> MCPToolResponse:
+    @classmethod
+    def response_success(cls, message:Any = None) -> BaseToolResponse:
+        """Return error response."""
+        return cls.response(success=True, message=message)
+    
+    @classmethod
+    def response_error(cls, message:Any = None, exc_info:bool=False) -> BaseToolResponse:
+        """Return error response."""
+        cls.logger().error(message, exc_info=exc_info)
+        return cls.response(success=False, message=message)
+    
+    @classmethod
+    def response_exception(cls, e:Exception, message:Any = None) -> BaseToolResponse:
         """Return exception response."""
         error_message =  f"{message} - {type(e).__name__}: {str(e)}"
-        self.logger.error(error_message, exc_info=True)
-        return MCPToolResponse(success=False, message=error_message, nisaba=nisaba)
+        return cls.response_error(message=error_message, exc_info=True)
+

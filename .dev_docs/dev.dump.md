@@ -48,6 +48,7 @@ git submodule update --init test/test_github_projects
 #################################################################################################
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 
+**[ ] TODO; [x] DONE; [-] IN PROGRESS; [=] IMPLEMENTED;**
 - [ ] nisaba primimg
     - [x] workspace in messages
     - [x] switch everything but augments and transcript into messages
@@ -55,16 +56,18 @@ git submodule update --init test/test_github_projects
         - [x] disable mcp tool
         - [x] remove augments reference
     - [-] line replacement with editor
-        - [-] nisaba tool return standardization (responsebuilder?)
+        - [-] nisaba tool return standardization
+            - [-] abstract operation tool
+                - [ ] schema from init
             - [-] manually inspect and re-format tool responses
                 - [-] augments
-                - [ ] editor
+                    - [ ] augment tools to augment commands
+                - [=] editor
                 - [ ] todo
                 - [ ] tool_result                
         - [-] to buffer edits and commit to file on proxy intercept? (line ops not add up timewise)
             - [ ] commit triggers file save and diff
             - [ ] commit triggers notification
-    - [ ] augment tools to augment commands
     - [ ] unify proxy logic into state machine
     - [ ] constants (as in filenames) are strings everywhere
     - [ ] notifications rework

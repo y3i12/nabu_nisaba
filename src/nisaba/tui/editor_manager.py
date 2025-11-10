@@ -516,7 +516,7 @@ class EditorManager:
         content = "Recent activity:\\n" + "\\n".join(new_notifications) + "\\n"
         notifications_file.write_text(content)
     
-    def close(self, editor_id: str) -> bool:
+    def close_editor(self, editor_id: str) -> bool:
         """
         Close editor window.
         
@@ -535,6 +535,13 @@ class EditorManager:
         
         logger.info(f"Closed editor: {editor.file_path}")
         return True
+    
+    def close(self, editor_id:str|None = None, split_id:str|None = None) -> bool:
+        if editor_id is not None:
+            return self.close_editor(editor_id=editor_id)
+        elif split_id is not None:
+            return self.close_split(split_id=split_id)
+        return False
     
     def close_all(self) -> None:
         """Close all editor windows."""

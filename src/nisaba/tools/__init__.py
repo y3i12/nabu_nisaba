@@ -1,6 +1,7 @@
 """Nisaba MCP tools."""
 
-from nisaba import MCPTool, MCPToolResponse
+from nisaba.tools.base_tool import BaseTool, BaseToolResponse
+from nisaba.tools.base_operation_tool import BaseOperationTool
 from nisaba.tools.augments_tools import (
     ActivateAugmentsTool,
     DeactivateAugmentsTool,
@@ -13,8 +14,9 @@ from nisaba.tools.todo_tool import TodoWriteTool
 from nisaba.tools.tool_result import ToolResultTool
 
 __all__ = [
-    "MCPTool",
-    "MCPToolResponse",
+    "BaseTool",
+    "BaseOperationTool",
+    "BaseToolResponse",
     "ActivateAugmentsTool",
     "DeactivateAugmentsTool",
     "PinAugmentTool",

@@ -14,7 +14,7 @@ from pydantic import Field
 
 from nisaba.config import MCPConfig
 from nisaba.registry import ToolRegistry
-from nisaba.tool import MCPTool
+from nisaba.tools.base_tool import BaseTool
 
 if TYPE_CHECKING:
     from nisaba.templates import InstructionsTemplateEngine
@@ -62,7 +62,7 @@ class MCPFactory(ABC):
         # Dual transport infrastructure
         self._tool_locks: Dict[str, asyncio.Lock] = {}
         self._http_server_task: Optional[asyncio.Task] = None
-        self._tool_instances_cache: Optional[List[MCPTool]] = None
+        self._tool_instances_cache: Optional[List[BaseTool]] = None
 
         # MCP server discovery registry
         self._server_id: Optional[str] = None
@@ -88,7 +88,7 @@ class MCPFactory(ABC):
         pass
 
     @abstractmethod
-    def _iter_tools(self) -> Iterator[MCPTool]:
+    def _iter_tools(self) -> Iterator[BaseTool]:
         """
         Iterate over enabled tool instances.
 
@@ -207,7 +207,7 @@ class MCPFactory(ABC):
 
         return mcp
 
-    def _create_typed_wrapper(self, tool_instance: MCPTool, tool_schema: dict) -> Any:
+    def _create_typed_wrapper(self, tool_instance: BaseTool, tool_schema: dict) -> Any:
         """
         Create a typed wrapper function for a tool with async locking.
 

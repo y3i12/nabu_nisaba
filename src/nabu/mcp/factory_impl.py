@@ -78,9 +78,9 @@ class NabuMCPFactorySingleProcess(NabuMCPFactory):
     @property
     def guidance(self):
         """
-        Delegate to agent's guidance for nisaba MCPTool integration.
+        Delegate to agent's guidance for nisaba BaseTool integration.
 
-        Nisaba's MCPTool._record_guidance() checks self.factory.guidance,
+        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
         so we expose agent's guidance system at factory level.
         """
         return self.agent.guidance if hasattr(self, 'agent') else None
