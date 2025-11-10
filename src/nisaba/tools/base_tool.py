@@ -33,16 +33,17 @@ class BaseTool(ABC):
     - execute(**kwargs) -> Dict[str, Any]: The main tool logic
     """
 
-    def __init__(self, factory:MCPFactory, nisaba:bool=False):
+    def __init__(self, factory:"MCPFactory"):
         """
         Initialize tool with factory reference.
 
         Args:
             factory: The MCPFactory that created this tool
         """
-        self.factory:MCPFactory = factory
-        self.config = factory.config
-        self.nisaba:bool = nisaba
+        self.factory:"MCPFactory" = factory
+        self.config = None
+        if factory:
+            self.config = factory.config
     
     @classmethod
     def logger(cls):
@@ -70,6 +71,11 @@ class BaseTool(ABC):
         """Get instance tool name."""
         return cls.get_name_from_cls()
 
+    @classmethod
+    @abstractmethod
+    def nisaba(cls) -> bool:
+        return False
+    
     @classmethod
     @abstractmethod
     def get_tool_schema(cls) -> Dict[str, Any]:
@@ -156,7 +162,6 @@ class BaseTool(ABC):
         }
 
     @classmethod
-    @abstractmethod
     def get_tool_description(cls) -> str:
         """
         Get human-readable tool description.
@@ -433,7 +438,7 @@ class BaseTool(ABC):
     @classmethod
     def response(cls, success:bool = False, message:Any = None) -> BaseToolResponse:
         """Return response."""
-        return BaseToolResponse(success=success, message=message, nisaba=self.nisaba)
+        return BaseToolResponse(success=success, message=message, nisaba=cls.nisaba())
     
     @classmethod
     def response_success(cls, message:Any = None) -> BaseToolResponse:

@@ -3,7 +3,7 @@ Todo management tool for nisaba workspace.
 """
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 from pathlib import Path
-from nisaba import BaseTool, BaseToolResponse
+from nisaba.tools.base_tool import BaseTool, BaseToolResponse
 from nisaba.structured_file import StructuredFileCache
 
 if TYPE_CHECKING:
