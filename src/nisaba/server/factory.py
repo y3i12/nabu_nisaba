@@ -6,7 +6,7 @@ from pathlib import Path
 import logging
 
 from mcp.server.fastmcp import FastMCP
-from nisaba import MCPFactory, MCPTool
+from nisaba import MCPFactory, BaseTool
 from nisaba.augments import AugmentManager
 from nisaba.guidance import WorkflowGuidance
 from nisaba.server.config import NisabaConfig
@@ -49,7 +49,7 @@ class NisabaMCPFactory(MCPFactory):
         """Return nisaba tools module prefix."""
         return "nisaba.tools"
 
-    def _iter_tools(self) -> Iterator[MCPTool]:
+    def _iter_tools(self) -> Iterator[BaseTool]:
         """
         Iterate over enabled tool instances.
 

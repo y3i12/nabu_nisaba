@@ -10,7 +10,7 @@ import re
 from contextvars import ContextVar
 
 # Import from framework
-from nisaba import MCPTool
+from nisaba import BaseTool
 from nisaba.utils.response import ResponseBuilder, ErrorSeverity
 
 from nabu.mcp.utils.regex_helpers import extract_keywords_from_regex
@@ -61,11 +61,11 @@ def detect_regex_pattern(target: str) -> bool:
     return any(indicator in target for indicator in regex_indicators)
 
 
-class NabuTool(MCPTool):
+class NabuTool(BaseTool):
     """
     Nabu-specific MCP tool base class.
 
-    Extends MCPTool with nabu-specific features:
+    Extends BaseTool with nabu-specific features:
     - Database manager access
     - Incremental updater access
     - Output formatters (markdown, json)
@@ -86,7 +86,7 @@ class NabuTool(MCPTool):
         super().__init__(factory)
         self._output_format = "json"  # Nabu-specific: track requested output format
 
-    # Note: get_name_from_cls() and get_name() inherited from MCPTool
+    # Note: get_name_from_cls() and get_name() inherited from BaseTool
 
     # Agent access property (explicit pattern acknowledgment)
     @property
@@ -891,8 +891,8 @@ class NabuTool(MCPTool):
         return class_doc.strip()
 
     # Note: get_tool_pitch, get_tool_examples, get_tool_tips, and get_tool_patterns
-    # are now inherited from nisaba.MCPTool base class
-    # Note: execute() is also inherited from nisaba.MCPTool base class
+    # are now inherited from nisaba.BaseTool base class
+    # Note: execute() is also inherited from nisaba.BaseTool base class
 
     async def execute_with_timing(self, **kwargs) -> Dict[str, Any]:
         """
@@ -1018,4 +1018,4 @@ class NabuTool(MCPTool):
             context=context
         )
     
-    # Note: is_optional(), is_dev_only(), is_mutating() inherited from MCPTool
+    # Note: is_optional(), is_dev_only(), is_mutating() inherited from BaseTool
