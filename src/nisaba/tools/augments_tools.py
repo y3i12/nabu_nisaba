@@ -7,19 +7,9 @@ context management in Claude Code.
 
 from typing import Dict, Any, List
 from nisaba.tools.base_tool import BaseTool, BaseToolResponse
+from nisaba.augments import AugmentManager, get_augment_manager
 
 class AugmentTool(BaseTool):
-    @property
-    def augment_manager(self):
-        """
-        Access to AugmentManager (if factory has one).
-
-        Returns None if factory doesn't implement augments support.
-
-        Returns:
-            AugmentManager instance or None
-        """
-        return getattr(self.factory, 'augment_manager', None)
     
     @property
     def augment_manager_not_present_error(self) -> BaseToolResponse:
@@ -38,11 +28,7 @@ class AugmentTool(BaseTool):
         message = ', '.join(message_list)
         return self.response(success=True, message=message, nisaba=True)
 
-
-class ActivateAugmentsTool(AugmentTool):
-    """Activate augments by pattern (supports wildcards and exclusions)."""
-
-    async def execute(self, patterns: List[str], exclude: List[str] = []) -> BaseToolResponse:
+    def load_operation(self, patterns: List[str], exclude: List[str] = []) -> BaseToolResponse:
         """
         Activate augments matching patterns.
 
@@ -67,11 +53,7 @@ class ActivateAugmentsTool(AugmentTool):
         except Exception as e:
             return self.response_exception(e, "Failed to activate augment", nisaba=True)
 
-
-class DeactivateAugmentsTool(AugmentTool):
-    """Deactivate augments by pattern."""
-
-    async def execute(self, patterns: List[str]) -> BaseToolResponse:
+    async def unload_operation(self, patterns: List[str]) -> BaseToolResponse:
         """
         Deactivate augments matching patterns.
 
@@ -96,11 +78,7 @@ class DeactivateAugmentsTool(AugmentTool):
         except Exception as e:
             return self.response_exception(e, "Failed to deactivate augment", nisaba=True)
 
-
-class PinAugmentTool(AugmentTool):
-    """Pin augments by pattern (always active, cannot be deactivated)."""
-
-    async def execute(self, patterns: List[str]) -> BaseToolResponse:
+    def pin_operation(self, patterns: List[str]) -> BaseToolResponse:
         """
         Pin augments matching patterns.
 
@@ -125,11 +103,7 @@ class PinAugmentTool(AugmentTool):
         except Exception as e:
             return self.response_exception(e, "Failed to pin augment", nisaba=True)
 
-
-class UnpinAugmentTool(AugmentTool):
-    """Unpin augments by pattern (allows deactivation)."""
-
-    async def execute(self, patterns: List[str]) -> BaseToolResponse:
+    def unpin_operation(self, patterns: List[str]) -> BaseToolResponse:
         """
         Unpin augments matching patterns.
 
@@ -153,10 +127,7 @@ class UnpinAugmentTool(AugmentTool):
         except Exception as e:
             return self.response_exception(e, "Failed to unpin augment", nisaba=True)
 
-class LearnAugmentTool(AugmentTool):
-    """Create a new augment."""
-
-    async def execute(self, group: str, name: str, content: str) -> BaseToolResponse:
+    async def store_operation(self, group: str, name: str, content: str) -> BaseToolResponse:
         """
         Create a new augment and save it to the augments directory.
 
@@ -180,3 +151,6 @@ class LearnAugmentTool(AugmentTool):
             return self.augment_manager_result_response(self.augment_manager.learn_augment(group, name, content))
         except Exception as e:
             return self.response_exception(e, "Failed to create augment", nisaba=True)
+
+    def _render(self):
+        pass

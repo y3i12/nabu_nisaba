@@ -60,9 +60,17 @@ class BaseOperationTool(BaseTool):
     @classmethod
     def response_parameter_missing(cls, operation:str, parameters:list[str]) -> BaseToolResponse:
         return cls.response_error(f"parameter(s) [{', '.join(parameters)}] required by operation `{operation}`")
-
-    def operation(self, operation:str) -> Operation|None:
-        return self.operations_and_parameters.get(operation)
+ 
+    @classmethod
+    def _format_str(cls, _str:str) -> str:
+        return f"{_str}"
+    
+    @classmethod
+    def _format_ok(cls, ok:bool) -> str:
+        if ok:
+            return "ok"
+        
+        return "not ok and shouldn't happen"
     
     @classmethod
     def get_operation_config(cls) -> Dict[str,Operation]:
@@ -138,6 +146,9 @@ class BaseOperationTool(BaseTool):
             }
         }
     
+    def operation(self, operation:str) -> Operation|None:
+        return self.operations_and_parameters.get(operation)
+   
     async def execute(self, **kwargs) -> BaseToolResponse:
         operation = kwargs.get('operation', None)
         if operation is None:

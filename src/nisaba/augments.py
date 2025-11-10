@@ -42,6 +42,20 @@ class Augment:
         """Get display name for this augment."""
         return f"{self.group}/{self.name}"
 
+# Module-level singleton
+_AUGMENT_MANAGER_INSTANCE = None
+
+def get_augment_manager(augments_dir: Path|None = None, composed_file: Path|None = None):
+    """Get/Set shared AugmentManager singleton."""
+    global _AUGMENT_MANAGER_INSTANCE
+    if _AUGMENT_MANAGER_INSTANCE:
+        return _AUGMENT_MANAGER_INSTANCE
+
+    if augments_dir is None or composed_file is None:
+        raise Exception("missing augments_dir or composed_file")
+
+    _AUGMENT_MANAGER_INSTANCE = AugmentManager(augments_dir=augments_dir, composed_file=composed_file)
+    return _AUGMENT_MANAGER_INSTANCE
 
 class AugmentManager:
     """
@@ -62,6 +76,9 @@ class AugmentManager:
             augments_dir: Directory containing augment files
             composed_file: Path to composed augments output file
         """
+        if get_augment_manager() is not None:
+            raise Exception('Double augment manager init')
+        
         self.augments_dir = Path(augments_dir)
         self.composed_file = Path(composed_file)
 

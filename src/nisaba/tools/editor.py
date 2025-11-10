@@ -28,17 +28,6 @@ class EditorTool(BaseOperationTool):
         return True
     
     @classmethod
-    def _format_str(cls, _str:str) -> str:
-        return f"{_str}"
-    
-    @classmethod
-    def _format_ok(cls, ok:bool) -> str:
-        if ok:
-            return "ok"
-        
-        return "not ok and shouldn't happen"
-    
-    @classmethod
     def _format_editor_id(cls, str:str) -> str:
         return f"editor_id({str})"
     
@@ -165,54 +154,3 @@ class EditorTool(BaseOperationTool):
         output_file = Path.cwd() / ".nisaba" / "tui" / "editor_view.md"
         output_file.parent.mkdir(parents=True, exist_ok=True)
         output_file.write_text(rendered, encoding='utf-8')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-"""
-Execute editor operation.
-
-Operations:
-- open: Open file in editor (returns existing if already open)
-- write: Write content to file and open editor
-- replace: Replace string in editor content
-- insert: Insert content before specified line
-- delete: Delete line range
-- replace_lines: Replace line range with new content
-- split: Create split view of editor
-- resize: Resize editor or split window
-- close_split: Close split view
-- close: Close editor window (and all splits)
-- close_all: Close all editor windows
-- status: Get editor status summary
-
-:meta pitch: Unified file editing with workspace persistence
-:meta when: Reading, writing, or editing files
-Args:
-    operation: Operation type
-    file: File path (for open, write)
-    content: File content (for write)
-    editor_id: Editor window ID (for replace, insert, delete, replace_lines, split, close)
-    old: String to replace (for replace)
-    new: Replacement string (for replace)
-    line_start: Start line for open/delete/replace_lines/split/resize (1-indexed, default 1)
-    line_end: End line for open/delete/replace_lines/split/resize (-1 = end of file, default -1)
-    before_line: Line to insert before (for insert)
-    split_id: Split ID (for close_split, resize)
-    before_line: Line to insert before (for insert)
-    split_id: Split ID (for close_split, resize)
-
-Returns:
-    Dict with success status and operation result
-"""
