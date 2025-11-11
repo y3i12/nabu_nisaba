@@ -36,14 +36,9 @@
       "mcp__nabu__show_status",
       "mcp__nabu__show_structure",
       "mcp__nabu__structural_view",
-      "mcp__nisaba__activate_augments",
-      "mcp__nisaba__deactivate_augments",
-      "mcp__nisaba__editor",
-      "mcp__nisaba__learn_augment",
-      "mcp__nisaba__todo_write",
-      "mcp__nisaba__pin_augment",
-      "mcp__nisaba__unpin_augment",
-      "mcp__nisaba_nisaba_todo_write",
+      "mcp__nisaba__augment",
+      "mcp__nisaba__result",
+      "mcp__nisaba__todo",
       "mcp__serena__activate_project",
       "mcp__serena__check_onboarding_performed",
       "mcp__serena__create_text_file",
@@ -68,12 +63,12 @@
       "mcp__serena__think_about_task_adherence",
       "mcp__serena__think_about_whether_you_are_done",
       "mcp__serena__write_memory",
-      "WebFetch",
-      "WebSearch",
       
+
       "Edit",
       "Read",
-      "TodoWrite",
+      "WebFetch",
+      "WebSearch",
       "Write"
     ],
     "deny": [
@@ -82,7 +77,10 @@
       "Read(./.venv/**)",
       "Read(./**/.git/**)",
       "Read(./**/node_modules/**)",
-      "Read(./src/serena/**)"
+      "Read(./src/serena/**)",
+
+
+      "TodoWrite"
     ]
   },
   "enableAllProjectMcpServers": true,
