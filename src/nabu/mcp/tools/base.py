@@ -1,7 +1,7 @@
 """Base class for nabu MCP tools."""
 
 from abc import abstractmethod
-from typing import Any, Dict, TYPE_CHECKING, get_type_hints, Optional, get_origin, get_args, List, Union
+from typing import Any, Dict, TYPE_CHECKING, get_type_hints, Optional, List
 from pathlib import Path
 import logging
 import time
@@ -10,7 +10,7 @@ import re
 from contextvars import ContextVar
 
 # Import from framework
-from nisaba import BaseTool
+from nisaba.tools.base_tool import BaseTool
 from nisaba.utils.response import ResponseBuilder, ErrorSeverity
 
 from nabu.mcp.utils.regex_helpers import extract_keywords_from_regex
@@ -23,6 +23,7 @@ try:
 except ImportError:
     DOCSTRING_PARSER_AVAILABLE = False
     Docstring = None  # type: ignore
+    parse_docstring = None  # type: ignore
 
 if TYPE_CHECKING:
     from nabu.mcp.factory import NabuMCPFactory
@@ -87,6 +88,16 @@ class NabuTool(BaseTool):
         self._output_format = "json"  # Nabu-specific: track requested output format
 
     # Note: get_name_from_cls() and get_name() inherited from BaseTool
+
+    @classmethod
+    def nisaba(cls) -> bool:
+        """
+        Nabu tools are not nisaba-certified (they use ResponseBuilder formatting).
+
+        Returns:
+            False - nabu tools use custom response formatting
+        """
+        return False
 
     # Agent access property (explicit pattern acknowledgment)
     @property
@@ -282,7 +293,7 @@ class NabuTool(BaseTool):
             try:
                 regex_obj = re.compile(target)
             except re.error as e:
-                self.logger.error(f"Invalid regex pattern '{target}': {e}")
+                self.logger().error(f"Invalid regex pattern '{target}': {e}")
                 return []
 
             try:
@@ -396,7 +407,7 @@ class NabuTool(BaseTool):
                 return results
 
             except Exception as e:
-                self.logger.error(f"Regex frame resolution failed for '{target}': {e}", exc_info=True)
+                self.logger().error(f"Regex frame resolution failed for '{target}': {e}", exc_info=True)
                 return []
 
         # ========== NON-REGEX PATH (backward compatible) ==========
@@ -488,7 +499,7 @@ class NabuTool(BaseTool):
             return [frame_dict]
 
         except Exception as e:
-            self.logger.error(f"Frame resolution failed for '{target}': {e}", exc_info=True)
+            self.logger().error(f"Frame resolution failed for '{target}': {e}", exc_info=True)
             return []
 
     async def _fts_fuzzy_resolve(
@@ -538,7 +549,7 @@ class NabuTool(BaseTool):
         try:
             result = self.db_manager.execute(cypher_query, load_extensions=True)
         except Exception as e:
-            self.logger.error(f"FTS fuzzy resolve failed: {e}")
+            self.logger().error(f"FTS fuzzy resolve failed: {e}")
             return []
 
         if not result or not hasattr(result, 'get_as_df'):
@@ -637,83 +648,8 @@ class NabuTool(BaseTool):
             "return_type": row.get('return_type', '')
         }
 
+    # Note: _python_type_to_json_type() inherited from BaseTool
 
-    @classmethod
-    def _python_type_to_json_type(cls, python_type: Any) -> str:
-        """
-        Convert Python type hint to JSON Schema type.
-        
-        Args:
-            python_type: Python type annotation
-            
-        Returns:
-            JSON Schema type string
-        """
-        # Handle None/NoneType
-        if python_type is None or python_type == type(None):
-            return "null"
-        
-        # Handle typing module types
-        origin = get_origin(python_type)
-        
-        # Handle Optional[T] -> T | None
-        if origin is type(None) or str(python_type).startswith('typing.Optional'):
-            args = get_args(python_type)
-            if args:
-                return cls._python_type_to_json_type(args[0])
-            return "null"
-        
-        # Handle List, Dict, etc
-        if origin is list:
-            return "array"
-        if origin is dict:
-            return "object"
-        if origin is tuple:
-            return "array"
-        
-        # Handle Union types (not Optional)
-        if origin is Union:
-            args = get_args(python_type)
-            # For now, just use first non-None type
-            for arg in args:
-                if arg != type(None):
-                    return cls._python_type_to_json_type(arg)
-        
-        # Map basic Python types to JSON Schema types
-        type_map = {
-            str: "string",
-            int: "integer",
-            float: "number",
-            bool: "boolean",
-            dict: "object",
-            list: "array",
-            Dict: "object",
-            List: "array",
-        }
-        
-        # Try exact match first
-        if python_type in type_map:
-            return type_map[python_type]
-        
-        # Check if it's a class (try name-based matching)
-        if hasattr(python_type, '__name__'):
-            type_name = python_type.__name__
-            if type_name in ['str', 'string']:
-                return "string"
-            elif type_name in ['int', 'integer']:
-                return "integer"
-            elif type_name in ['float', 'number', 'double']:
-                return "number"
-            elif type_name in ['bool', 'boolean']:
-                return "boolean"
-            elif type_name in ['dict', 'Dict']:
-                return "object"
-            elif type_name in ['list', 'List']:
-                return "array"
-        
-        # Default to string
-        return "string"
-    
     @classmethod
     def get_tool_schema(cls) -> Dict[str, Any]:
         """
@@ -749,8 +685,8 @@ class NabuTool(BaseTool):
         
         # Parse docstring
         docstring_text = execute_method.__doc__ or ""
-        
-        if DOCSTRING_PARSER_AVAILABLE and docstring_text:
+
+        if DOCSTRING_PARSER_AVAILABLE and docstring_text and parse_docstring:
             docstring = parse_docstring(docstring_text)
             
             # Build description components
@@ -880,8 +816,8 @@ class NabuTool(BaseTool):
         """
         class_doc = cls.__doc__ or ""
         execute_doc = cls.execute.__doc__ or ""
-        
-        if DOCSTRING_PARSER_AVAILABLE and execute_doc:
+
+        if DOCSTRING_PARSER_AVAILABLE and execute_doc and parse_docstring:
             docstring = parse_docstring(execute_doc)
             return docstring.short_description or class_doc.strip()
         
@@ -894,6 +830,28 @@ class NabuTool(BaseTool):
     # are now inherited from nisaba.BaseTool base class
     # Note: execute() is also inherited from nisaba.BaseTool base class
 
+    def _base_response_to_dict(self, response) -> Dict[str, Any]:
+        """
+        Convert BaseToolResponse to Dict for MCP protocol compatibility.
+
+        Args:
+            response: BaseToolResponse from execute() or error handlers
+
+        Returns:
+            Dict representation for MCP protocol
+        """
+        from nisaba.tools.base_tool import BaseToolResponse
+
+        if isinstance(response, BaseToolResponse):
+            # Extract message (could be dict or simple value)
+            if response.success:
+                return response.message if isinstance(response.message, dict) else {"data": response.message}
+            else:
+                return response.message if isinstance(response.message, dict) else {"error": response.message}
+
+        # Already a dict, return as-is
+        return response
+
     async def execute_with_timing(self, **kwargs) -> Dict[str, Any]:
         """
         Execute tool with automatic timing and codebase context switching.
@@ -902,6 +860,7 @@ class NabuTool(BaseTool):
         - Timing and error handling
         - Automatic codebase context management (middleware pattern)
         - Session tracking
+        - Conversion of BaseToolResponse to Dict for MCP protocol
         """
         start_time = time.time()
 
@@ -920,54 +879,60 @@ class NabuTool(BaseTool):
         else:
             # Pop codebase for context switching (multi-codebase query support)
             requested_codebase = kwargs.pop("codebase", None)
-        
+
         # Validate requested codebase if specified
         if requested_codebase is not None:
             if requested_codebase not in self.factory.db_managers:
                 available = list(self.factory.db_managers.keys())
-                return self._error_response(
+                error_response = self._error_response(
                     ValueError(f"Unknown codebase: '{requested_codebase}'"),
-                    start_time,
                     recovery_hint=f"Available codebases: {', '.join(available)}. Use list_codebases() to see all registered codebases."
                 )
-        
+                # Convert BaseToolResponse to Dict for MCP protocol
+                return self._base_response_to_dict(error_response)
+
         # Set codebase context for this execution (thread-safe via contextvars)
         token = _current_codebase_context.set(requested_codebase)
 
         try:
-            # Execute tool (tools transparently use correct db_manager via property)
+            # Execute tool (returns BaseToolResponse)
             result = await self.execute(**kwargs)
-    
-            # Record in guidance system using parent class method
-            self._record_guidance(self.get_name(), kwargs, result)
 
-            return result
-        
+            # Convert to dict for guidance recording
+            result_dict = self._base_response_to_dict(result)
+
+            # Record in guidance system using parent class method
+            self._record_guidance(self.get_name(), kwargs, result_dict)
+
+            return result_dict
+
         except Exception as e:
-            self.logger.error(f"Tool execution failed: {e}", exc_info=True)
-            return self._error_response(e, start_time)
-        
+            self.logger().error(f"Tool execution failed: {e}", exc_info=True)
+            error_response = self._error_response(e)
+            return self._base_response_to_dict(error_response)
+
         finally:
             # ALWAYS restore context (critical for async safety)
             _current_codebase_context.reset(token)
     
     def _success_response(
-        self, 
-        data: Any, 
+        self,
+        data: Any,
         warnings: Optional[List[str]] = None,
         metadata: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+    ):
         """
         Create standardized success response using ResponseBuilder.
-        
+
+        Wraps ResponseBuilder dict output in BaseToolResponse for consistency.
+
         Args:
             data: Response payload
-            start_time: Start time for execution time calculation
             warnings: Optional warning messages
             metadata: Optional operation metadata
-            
+
         Returns:
-            Standardized success response
+            BaseToolResponse containing ResponseBuilder formatted dict
         """
         # Format data according to requested output format
         from nabu.mcp.formatters import get_formatter_registry
@@ -981,41 +946,49 @@ class NabuTool(BaseTool):
             formatted_data = formatter.format(data, tool_name=self.get_name())
         except ValueError as e:
             # Unsupported format - log warning and fall back to JSON
-            self.logger.warning(f"Output format error: {e}. Falling back to JSON.")
+            self.logger().warning(f"Output format error: {e}. Falling back to JSON.")
             formatted_data = data
 
-        return ResponseBuilder.success(
+        # Build ResponseBuilder dict
+        response_dict = ResponseBuilder.success(
             data=formatted_data,
             warnings=warnings,
             metadata=metadata
         )
+
+        # Wrap in BaseToolResponse
+        return self.response_success(message=response_dict)
     
     def _error_response(
-        self, 
-        error: Exception, 
-        start_time: float = None,
+        self,
+        error: Exception,
         severity: ErrorSeverity = ErrorSeverity.ERROR,
         recovery_hint: Optional[str] = None,
         context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+    ):
         """
         Create standardized error response using ResponseBuilder.
-        
+
+        Wraps ResponseBuilder dict output in BaseToolResponse for consistency.
+
         Args:
             error: Exception that occurred
-            start_time: Start time for execution time calculation
             severity: Error severity level
             recovery_hint: Suggested recovery action
             context: Error context information
-            
+
         Returns:
-            Standardized error response
+            BaseToolResponse containing ResponseBuilder formatted dict
         """
-        return ResponseBuilder.error(
+        # Build ResponseBuilder dict
+        error_dict = ResponseBuilder.error(
             error=error,
             severity=severity,
             recovery_hint=recovery_hint,
             context=context
         )
+
+        # Wrap in BaseToolResponse
+        return self.response_error(message=error_dict)
     
     # Note: is_optional(), is_dev_only(), is_mutating() inherited from BaseTool

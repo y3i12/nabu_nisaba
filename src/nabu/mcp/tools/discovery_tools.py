@@ -230,7 +230,7 @@ class MapCodebaseTool(NabuTool):
             return self._success_response(data, start_time)
             
         except Exception as e:
-            self.logger.error(f"Project exploration failed: {e}", exc_info=True)
+            self.logger().error(f"Project exploration failed: {e}", exc_info=True)
             return self._error_response(
                 e,
                 start_time,

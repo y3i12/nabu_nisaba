@@ -935,8 +935,7 @@ System_prompt@decide ≠ system_prompt@result
 ## State Sync
 
 ```
-Files: {structural_view.md, editor.md, editor_windows.md, tool_result_windows.md, 
-        augments_composed.md, todos.md}
+Files: {structural_view.md, augment_view.md, todo_view.md}
 
 Sync: tool_complete → file_write → proxy_mtime → reload → inject_system_prompt
 

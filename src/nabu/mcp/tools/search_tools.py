@@ -209,14 +209,14 @@ class SearchTool(NabuTool):
             regex_res = []
 
             if isinstance(results[0], Exception):
-                self.logger.warning(f"FTS search failed: {results[0]}")
+                self.logger().warning(f"FTS search failed: {results[0]}")
             if isinstance(results[1], Exception):
-                self.logger.warning(f"Semantic search failed: {results[1]}")
+                self.logger().warning(f"Semantic search failed: {results[1]}")
 
             # Conditionally extract regex results (index 2 if regex enabled)
             if is_regex_input:
                 if isinstance(results[2], Exception):
-                    self.logger.warning(f"Regex search failed: {results[2]}")
+                    self.logger().warning(f"Regex search failed: {results[2]}")
                 else:
                     regex_res = results[2]
 
@@ -267,7 +267,7 @@ class SearchTool(NabuTool):
             }, start_time)
 
         except Exception as e:
-            self.logger.error(f"Unified search failed: {e}", exc_info=True)
+            self.logger().error(f"Unified search failed: {e}", exc_info=True)
             return self._error_response(
                 e, start_time,
                 recovery_hint="Check database health with show_status(detail_level='debug')",
@@ -324,14 +324,14 @@ class SearchTool(NabuTool):
                 self.db_manager.execute, resolution_query, load_extensions=True
             )
         except Exception as e:
-            self.logger.warning(f"FTS resolution index query failed: {e}")
+            self.logger().warning(f"FTS resolution index query failed: {e}")
 
         try:
             content_result = await asyncio.to_thread(
                 self.db_manager.execute, content_query, load_extensions=True
             )
         except Exception as e:
-            self.logger.warning(f"FTS content index query failed: {e}")
+            self.logger().warning(f"FTS content index query failed: {e}")
 
         results_tuple = (resolution_result, content_result)
 
@@ -403,13 +403,13 @@ class SearchTool(NabuTool):
             cb_emb = cb_gen.generate_embedding_from_text(query)
 
             if not ux_emb or not cb_emb:
-                self.logger.warning("Failed to generate embeddings for semantic search")
+                self.logger().warning("Failed to generate embeddings for semantic search")
                 return []
 
             query_embedding = compute_non_linear_consensus(ux_emb, cb_emb)
 
         except ImportError as e:
-            self.logger.error(f"Embedding imports failed: {e}")
+            self.logger().error(f"Embedding imports failed: {e}")
             return []
 
         # Query vector index
@@ -561,7 +561,7 @@ class SearchTool(NabuTool):
                     try:
                         regex_obj = re.compile(pattern)
                     except re.error as e:
-                        self.logger.warning(f"Regex compilation failed in content filter: {e}")
+                        self.logger().warning(f"Regex compilation failed in content filter: {e}")
                         return results[:top]
 
                     # Filter FTS candidates with regex on content
@@ -589,5 +589,5 @@ class SearchTool(NabuTool):
             return results[:top]
 
         except Exception as e:
-            self.logger.error(f"Regex search failed: {e}")
+            self.logger().error(f"Regex search failed: {e}")
             return []
