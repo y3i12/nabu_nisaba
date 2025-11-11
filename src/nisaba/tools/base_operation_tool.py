@@ -118,23 +118,39 @@ class BaseOperationTool(BaseTool):
 
         for operation in operation_config.values():
             parameter_list:List[str] = []
+            visited_params = set()
 
-            # TODO: OR chain
+            # Build parameter list and add to schema properties
+            # Handle OR-chains by grouping them together
             for parameter_name in operation.parameters.keys():
+                if parameter_name in visited_params:
+                    continue
+
                 parameter:OperationParameter = operation.parameters[parameter_name]
-                if parameter not in properties:
+                if parameter.name not in properties:
                     properties[parameter.name] = {'type':parameter.type, 'description':parameter.description}
-          
-                description = f"{parameter.name}:{parameter.type}"
-        
-                parameter_list.append(f"{parameter.name}:{parameter.type}")
+
+                # Check if this parameter is part of an OR-chain
+                if parameter.required and parameter.required_or is not None:
+                    or_chain = [f"{parameter.name}:{parameter.type}"]
+                    visited_params.add(parameter.name)
+                    current = parameter
+                    # Follow the chain
+                    while current.required_or is not None:
+                        current = operation.parameters[current.required_or]
+                        or_chain.append(f"{current.name}:{current.type}")
+                        visited_params.add(current.name)
+                    parameter_list.append(f"({' OR '.join(or_chain)})")
+                else:
+                    visited_params.add(parameter.name)
+                    parameter_list.append(f"{parameter.name}:{parameter.type}")
 
             operation_description = ""
             if len(parameter_list):
                 operation_description = f"- {operation.name}({', '.join(parameter_list)}): {operation.description}"
             else:
                 operation_description = f"- {operation.name}: {operation.description}"
-                
+
             operation_description_list.append(operation_description)
         
         if len(operation_description_list):
