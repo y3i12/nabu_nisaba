@@ -1,2 +1,2 @@
 Recent activity:
-✓ Read() → ok
+✓ Bash() → ok
