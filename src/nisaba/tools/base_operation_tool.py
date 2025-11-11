@@ -124,7 +124,9 @@ class BaseOperationTool(BaseTool):
                 parameter:OperationParameter = operation.parameters[parameter_name]
                 if parameter not in properties:
                     properties[parameter.name] = {'type':parameter.type, 'description':parameter.description}
-
+          
+                description = f"{parameter.name}:{parameter.type}"
+        
                 parameter_list.append(f"{parameter.name}:{parameter.type}")
 
             operation_description = ""
