@@ -27,12 +27,12 @@ class EditorTool(BaseOperationTool):
         return True
     
     @classmethod
-    def _format_editor_id(cls, str:str) -> str:
-        return f"editor_id({str})"
+    def _format_editor_id(cls, editor_id:str) -> str:
+        return f"editor_id({editor_id})"
     
     @classmethod
-    def _format_split_id(cls, str:str) -> str:
-        return f"split_id({str})"
+    def _format_split_id(cls, split_id:str) -> str:
+        return f"split_id({split_id})"
 
     @classmethod
     def get_operation_config(cls) -> Dict[str,Operation]:
@@ -112,7 +112,7 @@ class EditorTool(BaseOperationTool):
                     result_formatter=cls._format_split_id,
                     parameters=[
                         cls.make_parameter(name='editor_id',required_or='split_id',description='Editor ID'),
-                        cls.make_parameter(name='split_id',required=True,description='Slipt ID'),
+                        cls.make_parameter(name='split_id',required=True,description='Split ID'),
                         cls.make_parameter(name='line_start',required=True,description='Line start'),
                         cls.make_parameter(name='line_end',required=True,description='Line end'),
                     ]
@@ -124,7 +124,7 @@ class EditorTool(BaseOperationTool):
                     result_formatter=cls._format_ok,
                     parameters=[
                         cls.make_parameter(name='editor_id',required_or='split_id',description='Editor ID'),
-                        cls.make_parameter(name='split_id',required=True,description='Slipt ID'),
+                        cls.make_parameter(name='split_id',required=True,description='Split ID'),
                         cls.make_parameter(name='line_start',required=True,description='Line start'),
                         cls.make_parameter(name='line_end',required=True,description='Line end'),
                     ]
