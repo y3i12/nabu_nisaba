@@ -128,7 +128,7 @@ class ShowStatusTool(NabuTool):
 
                         codebase_data["confidence_distribution"] = confidence_dist
                     except Exception as e:
-                        self.logger.warning(f"Failed to get confidence distribution for {name}: {e}")
+                        self.logger().warning(f"Failed to get confidence distribution for {name}: {e}")
 
             codebases_info.append(codebase_data)
         

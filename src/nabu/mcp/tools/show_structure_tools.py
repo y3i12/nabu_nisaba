@@ -268,7 +268,7 @@ class ShowStructureTool(NabuTool):
                 recovery_hint="Check that the frame exists and language is supported."
             )
         except Exception as e:
-            self.logger.error(f"Frame skeleton generation failed for '{target}': {e}", exc_info=True)
+            self.logger().error(f"Frame skeleton generation failed for '{target}': {e}", exc_info=True)
             return self._error_response(
                 e,
                 start_time,

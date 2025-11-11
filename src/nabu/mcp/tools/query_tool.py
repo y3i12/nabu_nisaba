@@ -189,7 +189,7 @@ class QueryRelationshipsTool(NabuTool):
             )
         
         except Exception as e:
-            self.logger.error(f"Query failed: {cypher_query[:100]}...", exc_info=True)
+            self.logger().error(f"Query failed: {cypher_query[:100]}...", exc_info=True)
             return self._error_response(
                 e,
                 start_time,

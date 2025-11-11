@@ -75,8 +75,8 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
                     )
                 )
             
-            self.logger.info(f"Re-indexing repository: {repo_path}")
-            self.logger.info(f"Target database: {db_path}")
+            self.logger().info(f"Re-indexing repository: {repo_path}")
+            self.logger().info(f"Target database: {db_path}")
             
             # Run rebuild in thread pool
             loop = asyncio.get_event_loop()
@@ -143,7 +143,7 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
             )
         
         except Exception as e:
-            self.logger.error(f"Re-index failed: {e}", exc_info=True)
+            self.logger().error(f"Re-index failed: {e}", exc_info=True)
             return self._error_response(
                 e,
                 start_time,
@@ -166,8 +166,8 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
         repo_str = str(codebase_config.repo_path.resolve())
         db_str = str(codebase_config.db_path)
         
-        self.logger.info(f"Reindexing codebase: {repo_str}")
-        self.logger.info(f"Target database: {db_str}")
+        self.logger().info(f"Reindexing codebase: {repo_str}")
+        self.logger().info(f"Target database: {db_str}")
         
         # Close existing manager
         if self.db_manager:
@@ -184,7 +184,7 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
             db_path.unlink()
             db_path.with_suffix(".wal").unlink(missing_ok=True)
             db_path.with_suffix(".wal.shadow").unlink(missing_ok=True)
-            self.logger.info("Removed existing database file")
+            self.logger().info("Removed existing database file")
         
         # Rebuild with extra ignore patterns from config
         nabu.main.parse_codebase(
@@ -203,7 +203,7 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
         # Update backward-compat reference
         self.factory.agent.db_manager = manager
 
-        self.logger.info(f"Database manager re-initialized for '{codebase_name}' after rebuild")
+        self.logger().info(f"Database manager re-initialized for '{codebase_name}' after rebuild")
         
         # Get stats (use longer timeout for large databases)
         result = self.db_manager.execute("MATCH (n:Frame) RETURN n.type as type, count(*) as count", timeout_ms=30000)
@@ -223,14 +223,14 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
                 state=IndexingState.INDEXED,
                 completed_at=time.time()
             )
-            self.logger.info(f"Reset auto-indexing status for '{target_codebase}' to INDEXED")
+            self.logger().info(f"Reset auto-indexing status for '{target_codebase}' to INDEXED")
 
         # Invalidate structural view TUI cache (force fresh tree on next operation)
         from nabu.mcp.tools.structural_view_tool import StructuralViewTool
         for tool in self.factory._iter_tools():
             if isinstance(tool, StructuralViewTool):
                 tool._tui = None
-                self.logger.info("Invalidated structural view TUI cache after rebuild")
+                self.logger().info("Invalidated structural view TUI cache after rebuild")
                 break
 
         return {

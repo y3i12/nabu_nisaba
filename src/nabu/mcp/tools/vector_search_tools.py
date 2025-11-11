@@ -359,7 +359,7 @@ class FindClonesTool(NabuTool):
             }, start_time, warnings=warnings)
 
         except Exception as e:
-            self.logger.error(f"Clone detection failed: {e}", exc_info=True)
+            self.logger().error(f"Clone detection failed: {e}", exc_info=True)
             return self._error_response(e, start_time,
                 context={"min_similarity": min_similarity, "error_type": type(e).__name__}
             )
