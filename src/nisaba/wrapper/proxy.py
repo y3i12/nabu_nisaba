@@ -582,8 +582,9 @@ class AugmentInjector:
                                 messages_tokens += self._estimate_tokens(str(block))
         
         tool_tokens = self._estimate_tokens(json.dumps(body.get('tools', [])))
+        tool_result_tokens = self._estimate_tokens(tool_results)
         # Total usage
-        total_tokens = workspace_tokens + self.system_prompt_cache.token_count + self.core_system_prompt_cache.token_count + tool_tokens + self.augments_cache.token_count
+        total_tokens = workspace_tokens + self.system_prompt_cache.token_count + self.core_system_prompt_cache.token_count + tool_tokens + self.augments_cache.token_count + tool_result_tokens + messages_tokens
         budget = 200  # 200k token budget
 
         # Export JSON for external status line tools
@@ -598,7 +599,7 @@ class AugmentInjector:
                 },
                 "augments": self.augments_cache.token_count,
                 "view": structural_view_tokens,
-                "tool_results": self._estimate_tokens(tool_results),
+                "tool_results": tool_result_tokens,
                 "notifications": self.notifications_cache.line_count - 1,  # header + endl compensation,
                 "todos": self.todos_cache.line_count - 1  # header + endl compensation
             },
@@ -614,7 +615,7 @@ class AugmentInjector:
             f"TOOLS({ws['system']['tools']//1000}k)",
             f"AUG({ws['augments']//1000}k)",
             f"COMPTRANS({ws['system']['transcript']//1000}k)",
-            f"MSG:{status_data['messages']//1000}k",
+            f"MSG({status_data['messages']//1000}k)",
             f"WORKPACE({ws['total']//1000}k)",
             f"STVIEW({ws['view']//1000}k)",
             f"RESULTS({ws['tool_results']//1000}k)",

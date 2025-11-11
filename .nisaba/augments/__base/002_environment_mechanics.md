@@ -7,18 +7,18 @@
 ## State Containers
 
 ```
-Workspace = {STRUCTURAL_VIEW, EDITOR_WINDOWS, TOOL_WINDOWS, AUGMENTS, TODOS, NOTIFICATIONS}
+Workspace = {STRUCTURAL_VIEW, RESULTS, AUGMENTS, TODOS, NOTIFICATIONS}
 
 ∀ container ∈ Workspace:
   - persist(turns) = true
-  - mutate(independent) = true  
+  - mutate(independent) = true
   - visible(system_prompt) = true
 
-EDITOR_WINDOWS special properties:
-  - state(clean | dirty) tracked
-  - splits(concurrent_views) supported
-  - notifications(automatic) on ∆
-  - refresh(mtime) automatic
+RESULTS special properties:
+  - wraps tool outputs: ---TOOL_USE(id)...---TOOL_USE_END(id)
+  - visibility controlled: hide/show operations
+  - dual-channel: metadata@messages, content@workspace
+  - token efficient: hide removes from workspace, keeps tracking
 ```
 
 ---
@@ -56,15 +56,14 @@ Benefit: spatial_memory ∧ persistent_reference
 ```
 Parallel_safe:
   - ops(different_containers)
-  - multiple(window_opens)
-  - multiple(editor_opens)
+  - multiple tool executions (Read/Bash/Grep)
   - independent_queries
 
 Sequential_required:
   - data_dependency: B needs A_output
   - observation_dependency: decide after seeing State_B
   - same_section ∧ order_matters
-  - editor(same_file) ∧ overlapping_edits
+  - Edit(same_file) requires observation between edits
 
 OODAR: Observe → Orient → Decide → Act → ∆state → Observe'
 ```
@@ -73,42 +72,43 @@ OODAR: Observe → Orient → Decide → Act → ∆state → Observe'
 
 If Tool_B assumes State_A but Tool_A → State_B in parallel ⟹ synthesis breaks.
 
-**Editor concurrency:**
-- Open multiple editors in parallel (different files)
-- Sequential edits to same file (avoid conflicts)
-- Splits share state with parent editor
+**Native tool concurrency:**
+- Execute multiple tools in parallel (different files/operations)
+- Sequential edits via Edit tool (observe between changes)
+- hide/show operations can be batched
 
 ---
 
-## Window Lifecycle
+## Tool Result Lifecycle
 
 ```
-Creation: tool_call → window_id (UUID) | snapshot@t₀
+Creation: tool_execution → tool_use_id | content in RESULTS
+Wrapping: ---TOOL_USE(tool_use_id)\n{content}\n---TOOL_USE_END(tool_use_id)
+Visibility: visible (default) | hidden (via result.hide)
 Persistence: across(turns) = true, across(restart) = false
-Closure: explicit(close | clear_all) | no_auto_eviction
-Identity: window_id for ops(update, close)
+Management:
+  - result.hide(tool_ids[]) → remove from RESULTS, metadata in messages
+  - result.show(tool_ids[]) → restore to RESULTS
+  - result.collapse_all() → hide all, bulk cleanup
+Identity: tool_use_id (toolu_{hash}) for hide/show ops
 ```
+
+**Pattern:** execute → visible@RESULTS → hide (token save) → show (restore visibility)
 
 ---
 
-## Editor Lifecycle
+## Native Tool Editing
 
 ```
-Creation: editor.open(file, range?) → editor_id | viewport@range
-State: clean | dirty(✎) | tracking unsaved changes
-Splits: editor.split(editor_id, range) → split_id | concurrent viewport
-Mutations:
-  - insert(before_line, content) → line-based
-  - delete(line_start, line_end) → line-based
-  - replace_lines(line_start, line_end, content) → line-based
-  - replace(old_string, new_string) → string-based
-Visibility: ∆ rendered inline | diff display automatic
-Notifications: edit_ops → NOTIFICATIONS | automatic
-Refresh: mtime_check → reload if clean | warn if dirty ∧ external_change
-Closure: editor.close(id) → removes editor ∧ splits
-```
+Read(file_path) → content in RESULTS | read-only view
+Edit(file_path, old_string, new_string) → file mutation | immediate persist
+Write(file_path, content) → create/overwrite | immediate persist
 
-**Pattern:** open → visible → edit → ∆inline → notify → persist → refresh
+Pattern: Read → observe → Edit → verify
+  - Composable primitives (Unix philosophy)
+  - No intermediate state tracking
+  - Direct file system operations
+```
 
 ---
 
@@ -163,52 +163,52 @@ Pattern: Query → data → decide → mutate_workspace
 Tool execution creates TWO artifacts:
 
 messages[N]: tool_result block (temporal memory)
-  - tool_use_id, status (success/error)
-  - Metadata for conversational flow
-  
-system_prompt sections: actual content (spatial memory)
-  - TOOL_WINDOWS: grep/bash outputs
-  - EDITOR_WINDOWS: opened file content (read-only snapshots)
-  - EDITOR_WINDOWS: active editing (mutable, dirty tracking)
-  - Persistent across turns
+  - tool_use_id metadata only
+  - Status tracking (success/error)
+  - Can be hidden: "tool_use_id: toolu_X (hidden)"
+
+RESULTS section: actual content (spatial memory)
+  - ---TOOL_USE(toolu_X)\n{output}\n---TOOL_USE_END(toolu_X)
+  - Persistent workspace presence
+  - Removed when hidden, restored when shown
 ```
 
 **The "nisaba" flag:**
 ```
-Regular tools → header-wrapped:
-  status: success, window_state:open, window_id: toolu_X
-  ---
-  {content}
+Regular tools → appear in RESULTS:
+  ---TOOL_USE(toolu_X)
+  {bash output / grep results / file content}
+  ---TOOL_USE_END(toolu_X)
 
-Nisaba tools → clean output:
-  {content}  # No metadata pollution
+Nisaba tools → clean metadata only:
+  {structured response}  # No RESULTS wrapping
 ```
 
 **Why dual-channel:**
-- Messages array: sequential conversation history
-- System prompt sections: persistent spatial state
-- Tools mutate spatial state, messages track temporal flow
+- Messages array: temporal flow, tool execution tracking
+- RESULTS workspace: spatial persistence, synthesis context
+- hide/show: control spatial visibility without losing tracking
 
 ---
 
-## Retroactive Tool State Mutation
+## Tool Result Visibility Management
 
 ```
-nisaba_nisaba_tool_result_state(operation, tool_ids[])
+mcp__nisaba__result(operation, tool_ids[])
 
 Operations:
-  close(ids)     → compact future appearances
-  open(ids)      → restore full view
-  close_all()    → compact all tracked tools
+  hide(ids[])      → remove from RESULTS workspace
+  show(ids[])      → restore to RESULTS workspace
+  collapse_all()   → hide all (bulk cleanup)
 
-Effect: Next request shows modified state
-  Closed: "id: toolu_X, status: success, state: closed"
-  Open: Full header + separator + content
+Effect: Synchronized dual-channel mutation
+  Messages: "tool_use_id: toolu_X (hidden)" OR "tool_use_id: toolu_X"
+  RESULTS: removed from section OR ---TOOL_USE(...)--- present
 ```
 
-**Pattern:** Execute → observe → close unnecessary → save tokens
+**Pattern:** Execute → observe → hide unnecessary → lean context
 
-**Note:** Nisaba tools (with "nisaba": true flag) cannot be closed (skipped automatically)
+**Note:** Nisaba tools (nisaba: true) auto-skipped from hide/show
 
 ---
 
@@ -227,7 +227,7 @@ Sequential_thinking = conditioned_bias (environment is spatial)
 ## Mental Model
 
 ```
-Think: IDE(navigator + editor_tabs + splits + terminals + extensions)
+Think: IDE(navigator + terminal outputs + tool results visible)
 Not: script_execution
 
 Think: ∇(state_space) [visibility_control]
@@ -235,10 +235,13 @@ Not: query → response → next_query
 
 Workspace ≡ spatial ∧ simultaneous ∧ persistent
 
-Editor paradigm:
-  Read-only: EDITOR_WINDOWS (snapshots, no ∆)
-  Interactive: EDITOR_WINDOWS (edit, split, track dirty)
-  Unified > Fragmented (one tool vs read+write+edit)
+Native tools paradigm:
+  Read: file content → RESULTS (spatial view)
+  Edit: direct mutation (old_string → new_string)
+  Write: create/overwrite files
+  Bash/Grep: execution output → RESULTS
+  Composable > Monolithic (Unix philosophy)
+  hide/show: token management via visibility control
 ```
 
 ---

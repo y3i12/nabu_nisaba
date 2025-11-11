@@ -33,93 +33,53 @@ show_structure(frame_path)     → detailed_metadata + relationships
 search(query, top_k=10) → P³ + FTS + RRF | ranked_results
 
 ∆ structural_view.search: doesn't mutate tree
-∆ editor.open_search: doesn't open windows
 Pure query → returns data for decisions
 ```
 
 ---
 
-## Tool Result Windows (`nisaba_tool_windows`)
+## Tool Result Visibility (`mcp__nisaba__result`)
 
 ```
-status()     → summary{count, windows}
-close(id)    → remove_single
-clear_all()  → remove_all
-```
+hide(tool_ids[])     → remove from RESULTS workspace | save tokens
+show(tool_ids[])     → restore to RESULTS workspace | regain visibility
+collapse_all()       → hide all tool results | bulk cleanup
 
----
+Effect: Dual-channel synchronization
+  Messages: "tool_use_id: toolu_X (hidden)" OR "tool_use_id: toolu_X"
+  RESULTS: removed from workspace OR ---TOOL_USE(id)...---TOOL_USE_END(id)
 
-## Editor (`editor`)
-
-```
-open(file, start?, end?)               → {editor_id} | viewport@range | EDITOR_WINDOWS
-write(file, content)                   → create_new | immediate_persist
-close(editor_id)                       → remove editor + splits
-close_all()                            → remove all editors
-status()                               → summary + mtime_refresh
-
-Edits (line-based):
-  insert(id, before_line, content)     → add_lines | precise
-  delete(id, line_start, line_end)     → remove_lines | range
-  replace_lines(id, start, end, content) → swap_lines | rewrite
-
-Edits (string-based):
-  replace(id, old, new)  → pattern_replace | exact_match
-
-Splits (concurrent views):
-  split(id, line_start, line_end)      → {split_id} | parallel_viewport
-  resize(split_id, line_start, line_end) → adjust_range
-  close_split(split_id)                → remove_split | keep_parent
-
-State tracking:
-  clean     → no unsaved changes
-  dirty(✎)  → unsaved edits
-  refresh   → automatic mtime check
-  notify    → automatic NOTIFICATIONS
-
-Rendering: ∆ visible inline | diff display | immediate feedback
-```
-
-**Philosophy:** Unified > fragmented (open+edit+split vs read/write/edit separately)
-
----
-
-## Native Tools (Standard Execution)
-
-```
-bash(command, cwd?)           → stdout/stderr | execution in shell
-grep(pattern, path, flags?)   → matches | pattern search
-glob(pattern, path?)          → file_list | find files by pattern
-
-Pattern: execute → observe → close (via nisaba_nisaba_tool_result_state)
-  bash("git status") → observe → nisaba_nisaba_tool_result_state(close, [id])
-  grep("pattern", "file") → observe → close
-  glob("*.py", "src/") → observe → close
-```
-
----
-
----
-
-## Tool Result State Management (`nisaba_nisaba_tool_result_state`)
-
-```
-close(tool_ids[])    → compact tool results | save tokens
-open(tool_ids[])     → restore full view
-close_all()          → compact all tracked tools
-
-Effect: Retroactive transformation in messages array
-  Before: Full tool_result with header + content
-  After:  "id: toolu_X, status: success, state: closed"
-  
-Pattern: Execute tools → observe results → close unnecessary → lean context
+Pattern: Execute tools → observe results → hide unnecessary → lean context
 ```
 
 **Notes:**
 - Only affects non-nisaba tools (nisaba tools auto-skipped)
-- Changes appear on next request (stateful proxy transformation)
+- Synchronizes messages array + RESULTS workspace section
 - Tool IDs available in tool_result blocks: `tool_use_id: toolu_X`
-- Use to close native bash/grep/glob after observation
+- Use to manage context budget after observation
+
+---
+
+## Native Tools (Composable Primitives)
+
+```
+Read(file_path, offset?, limit?)        → content in RESULTS | file viewing
+Edit(file_path, old_string, new_string) → file mutation | exact string replace
+Write(file_path, content)               → create/overwrite | immediate persist
+Bash(command, cwd?, timeout?)           → stdout/stderr in RESULTS | shell execution
+Grep(pattern, path, output_mode?)       → matches in RESULTS | pattern search
+Glob(pattern, path?)                    → file_list in RESULTS | find files
+
+Pattern: execute → visible@RESULTS → observe → hide (optional)
+  Read("file.py") → observe → hide([tool_id])
+  Bash("git status") → observe → hide([tool_id])
+  Grep("pattern", "file") → observe → hide([tool_id])
+
+Edit pattern: Read → observe → Edit → verify
+  Read("file.py") → observe code → Edit("file.py", old, new) → Read to verify
+```
+
+**Philosophy:** Composable > monolithic (Unix philosophy)
 
 ---
 
@@ -154,20 +114,18 @@ Persistence: across(sessions) = true | survives /clear
 ## Context Budget
 
 ```
-File_Windows:
-  Small:  1-3 windows,  50-150 lines
-  Medium: 4-6 windows, 150-350 lines ← sweet_spot
-  Large:  7-10 windows, 350-500 lines ← pushing_limits
-  Over:   10+ windows,  500+ lines ← explosion_risk
+RESULTS Section:
+  Accumulates: Read/Bash/Grep/Glob outputs
+  Small:  1-3 tools,  50-150 lines
+  Medium: 4-6 tools, 150-350 lines ← sweet_spot
+  Large:  7-10 tools, 350-500 lines ← pushing_limits
+  Over:   10+ tools,  500+ lines ← explosion_risk
 
-Editor_Windows:
-  Similar budget to file_windows
-  Splits multiply views (parent + splits)
-  Monitor dirty state (✎) for unsaved
-  Use splits for concurrent context (fn_A | fn_B)
-  Target: 2-4 editors, 200-400 lines total
-
-Target total: 200-400 lines (file_windows + editor_windows combined)
+  Management:
+    - hide(tool_ids[]) after observation
+    - collapse_all() for bulk cleanup
+    - show(tool_ids[]) to restore specific results
+    - Monitor via STATUS_BAR: RESULTS(Nk)
 
 Structural_View:
   Start: collapsed | depth=2
@@ -175,30 +133,19 @@ Structural_View:
   Search: add_markers, not expand_all
   Reset: when lost | switching_focus
 
-Tool_Windows:
-  Accumulate like file_windows
-  Close after synthesis
-  clear_all when switching_tasks
-
-Native_Results:
-  Close after observation via nisaba_nisaba_tool_result_state
-  Use close_all for bulk cleanup
-  Don't let tool results bloat context
-
 Augments:
   Load: 2-5 typically
   Foundation: ~3000 tokens baseline
   Specialized: focused knowledge
   Unload: when switching_domains
 
-Management:
-  Monitor: editor.status(), editor.status(), nisaba_tool_windows.status()
-  Close: proactively after understanding
-  Prefer: clear_all when switching
-  open_search: efficient (snippets vs full files)
-  Editor: close when done editing, splits multiply visibility
-  Native tools: close immediately
-  Aim: lean_visibility
+Target RESULTS: 200-400 lines visible
+
+Management Strategy:
+  Execute → observe → hide → lean context
+  collapse_all() when switching tasks
+  show() only what's needed for synthesis
+  Aim: lean_visibility, spatial awareness without bloat
 ```
 
 ---
@@ -213,10 +160,15 @@ Structural_View:
   ● search_hit(RRF_score)
   [N+] child_count
 
-Editor_State:
-  ✎ dirty (unsaved changes)
-  (clean) no symbol, default state
-  
+RESULTS Wrapping:
+  ---TOOL_USE(tool_use_id)
+  {tool output content}
+  ---TOOL_USE_END(tool_use_id)
+
+Tool Visibility (in messages):
+  "tool_use_id: toolu_X" → visible in RESULTS
+  "tool_use_id: toolu_X (hidden)" → removed from RESULTS
+
 Paths:
   full: nabu_nisaba.python_root.nabu.FrameCache
   simple: FrameCache (fuzzy if unique)
@@ -229,33 +181,31 @@ Paths:
 ## Integration Patterns
 
 ```
-structural_view(search) → file_windows(open_frame) | compare_implementations
-query_relationships(cypher) → file_windows(open) | inspect_callers  
-search(semantic) → structural_view(expand) → file_windows(open) | deep_dive
-grep(pattern) → nisaba_read(matching_files) | detailed_inspection
-check_impact(frame) → file_windows(open) | review_affected
+Quick validation (hide after):
+  bash("git status") → observe → result.hide([id])
+  grep("pattern", file) → confirm → result.hide([id])
+  glob("*.test.py") → list → result.hide([id])
 
-Quick validation patterns:
-bash("git status") → observe → close
-grep("pattern", file) → confirm → close
-glob("*.test.py") → list → close
+Investigation patterns:
+  structural_view(search) → Read(files) → observe → Edit(changes)
+  query_relationships(cypher) → Read(affected) | inspect dependents
+  search(semantic) → structural_view(expand) → Read(files) | deep_dive
+  check_impact(frame) → Read(dependents) | review blast radius
 
-Editor patterns:
-search(query) → editor.open(result) | edit inline
-file_windows(open_frame) → editor.open(same) | read → edit transition
-editor.open(file) → editor.split(range) | parallel context (compare/refactor)
-editor.insert(id, line, import) → add dependencies
-editor.delete(id, start, end) → remove dead code
-editor.replace_lines(id, start, end, new) → rewrite function
+Read → Edit flow:
+  Read("file.py") → observe code → Edit("file.py", old, new) → Read to verify
+  grep("TODO") → Read(file) → Edit(fix) → grep verify
+  Bash("git diff") → observe → Edit(files) → Bash("git diff") verify
 
-Investigation → edit flow:
-structural_view(search) → file_windows(open) → observe → editor.open(file) → edit
-grep(pattern) → confirm → nisaba_read(file) → editor.open(file) → fix
-check_impact(frame) → file_windows(open) → review → editor.open(affected) → update
+Bulk cleanup:
+  After investigation: result.collapse_all() → lean context
+  Task switch: result.collapse_all() → fresh start
+  Before synthesis: hide unnecessary, keep relevant
 
-Concurrent editing:
-editor.open(file_A) | editor.open(file_B) | parallel
-editor.open(file) → editor.split(fn_A) + editor.split(fn_B) | same_file parallel
+Context management:
+  Execute multiple tools → observe all → hide understood → keep critical
+  Target: 200-400 lines visible in RESULTS
+  Monitor: STATUS_BAR shows RESULTS(Nk)
 ```
 
 ---
@@ -264,24 +214,22 @@ editor.open(file) → editor.split(fn_A) + editor.split(fn_B) | same_file parall
 
 ```
 ∇(visibility):
-  editor.status() → current_windows{count, lines}
-  editor.status() → editors{count, dirty, splits} + refresh
-  nisaba_tool_windows.status() → result_windows
-  
+  STATUS_BAR → RESULTS(Nk) | monitor context usage
+
 ∆(cleanup):
-  editor.clear_all()
-  editor.close_all()
-  nisaba_tool_windows.clear_all()
-  nisaba_nisaba_tool_result_state(close_all) → compact tool results
-  
-∆(editor_ops):
-  editor.open(file) → EDITOR_WINDOWS
-  editor.insert/delete/replace_lines → line-based edits
-  editor.replace → string-based edits
-  editor.split → concurrent views
-  
-Pattern: status → decide → close/keep
-Editor: open → visible → edit → ∆inline → notify → persist
+  result.hide(tool_ids[]) → remove specific from RESULTS
+  result.show(tool_ids[]) → restore specific to RESULTS
+  result.collapse_all() → bulk hide, lean context
+
+∆(native_ops):
+  Read(file) → content in RESULTS
+  Edit(file, old, new) → file mutation
+  Write(file, content) → create/overwrite
+  Bash(cmd) → output in RESULTS
+  Grep(pattern, path) → matches in RESULTS
+
+Pattern: execute → visible@RESULTS → observe → hide (optional)
+Workflow: Read → Edit → verify | composable primitives
 ```
 
 ---
