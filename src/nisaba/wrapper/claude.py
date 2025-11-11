@@ -205,6 +205,7 @@ def create_claude_wrapper_command():
                 await server.stop()
                 return 130
             except Exception as e:
+                raise e
                 click.echo(f"\n❌ Error: {e}", err=True)
                 await server.stop()
                 return 1

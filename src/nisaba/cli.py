@@ -345,20 +345,7 @@ def augments_list():
     from nisaba.augments import get_augment_manager
 
     # Use default augments directory
-    augments_dir = Path.cwd() / ".nisaba" / "augments"
-    composed_file = Path.cwd() / '.nisaba' / 'tui' / 'augment_view.md'
-
-    if not augments_dir.exists():
-        OutputFormat.print_error(
-            f"Augments directory not found: {augments_dir}",
-            suggestions=[
-                "Create augments directory with: mkdir -p .nisaba/augments",
-                "Or run from a project with nisaba augments setup"
-            ]
-        )
-        sys.exit(1)
-
-    manager = get_augment_manager(augments_dir, composed_file)
+    manager = get_augment_manager()
     augments_data = manager.show_augments()
 
     if not augments_data:
@@ -385,17 +372,8 @@ def augments_activate(patterns, exclude):
     """Activate augments matching patterns."""
     from nisaba.augments import get_augment_manager
 
-    augments_dir = Path.cwd() / ".nisaba" / "augments"
-    composed_file = Path.cwd() / '.nisaba' / 'tui' / 'augment_view.md'
-
-    if not augments_dir.exists():
-        OutputFormat.print_error(f"Augments directory not found: {augments_dir}")
-        sys.exit(1)
-
-    manager = get_augment_manager(augments_dir, composed_file)
-
     try:
-        result = manager.activate_augments(list(patterns), list(exclude))
+        result = get_augment_manager().activate_augments(list(patterns), list(exclude))
 
         click.echo(f"✅ Activated {len(result['loaded'])} augments")
 
@@ -408,8 +386,6 @@ def augments_activate(patterns, exclude):
             click.echo(f"\nDependencies ({len(result['dependencies'])}):")
             for augment in result['dependencies']:
                 click.echo(f"  • {augment}")
-
-        click.echo(f"\n📝 Augments written to: {composed_file}")
 
     except Exception as e:
         OutputFormat.print_error(f"Failed to activate augments: {e}")

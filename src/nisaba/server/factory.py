@@ -6,11 +6,11 @@ from pathlib import Path
 import logging
 
 from mcp.server.fastmcp import FastMCP
-from nisaba import MCPFactory, BaseTool
+from nisaba import MCPFactory
 from nisaba.augments import get_augment_manager
 from nisaba.guidance import WorkflowGuidance
 from nisaba.server.config import NisabaConfig
-from nisaba.tools.base import NisabaTool
+from nisaba.tools.base_tool import BaseTool
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +26,11 @@ class NisabaMCPFactory(MCPFactory):
         self._tool_instances = None
         
         # Initialize shared AugmentManager
-        self.augment_manager = get_augment_manager(
-            augments_dir=config.augments_dir,
-            composed_file=config.composed_augments_file
-        )
+        self.augment_manager = get_augment_manager()
 
     def _get_tool_base_class(self) -> type:
         """Return NisabaTool as base class."""
-        return NisabaTool
+        return BaseTool
 
     def _get_module_prefix(self) -> str:
         """Return nisaba tools module prefix."""
