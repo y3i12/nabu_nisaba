@@ -43,7 +43,7 @@ class EditorTool(BaseOperationTool):
                     description='Open file in editor (returns existing if already open)',
                     result_formatter=cls._format_editor_id,
                     parameters=[
-                        cls.make_parameter(name='file',required=True,description='File path')
+                        cls.make_parameter(name='file', required=True, type='str', description='File path')
                     ]
                 ),
                 cls.make_operation(
@@ -52,8 +52,8 @@ class EditorTool(BaseOperationTool):
                     description='Write content to file and open editor',
                     result_formatter=cls._format_editor_id,
                     parameters=[
-                        cls.make_parameter(name='file',required=True,description='File path'),
-                        cls.make_parameter(name='content',required=True,description='File content')
+                        cls.make_parameter(name='file',    required=True, type='str', description='File path'),
+                        cls.make_parameter(name='content', required=True, type='str', description='File content')
                     ]
                 ),
                 cls.make_operation(
@@ -62,9 +62,9 @@ class EditorTool(BaseOperationTool):
                     description='Replace string in editor content',
                     result_formatter=cls._format_ok,
                     parameters=[
-                        cls.make_parameter(name='editor_id',required=True,description='Editor ID'),
-                        cls.make_parameter(name='old',required=True,description='String to replace'),
-                        cls.make_parameter(name='new',required=True,description='Replacement string'),
+                        cls.make_parameter(name='editor_id', required=True, type='uuid', description='Editor ID'),
+                        cls.make_parameter(name='old',       required=True, type='str', description='String to replace'),
+                        cls.make_parameter(name='new',       required=True, type='str', description='Replacement string'),
                     ],
                     skip_render=True
                 ),
@@ -74,10 +74,10 @@ class EditorTool(BaseOperationTool):
                     description='Replace line range with new content',
                     result_formatter=cls._format_ok,
                     parameters=[
-                        cls.make_parameter(name='editor_id',required=True,description='Editor ID'),
-                        cls.make_parameter(name='line_start',required=True,description='Line start'),
-                        cls.make_parameter(name='line_end',required=True,description='Line end'),
-                        cls.make_parameter(name='content',required=True,description='Replacement content'),
+                        cls.make_parameter(name='editor_id',  required=True, type='uuid', description='Editor ID'),
+                        cls.make_parameter(name='line_start', required=True, type='int', description='Line start'),
+                        cls.make_parameter(name='line_end',   required=True, type='int', description='Line end'),
+                        cls.make_parameter(name='content',    required=True, type='str', description='Replacement content'),
                     ],
                     skip_render=True
                 ),
@@ -87,9 +87,9 @@ class EditorTool(BaseOperationTool):
                     description='Insert content before specified line',
                     result_formatter=cls._format_ok,
                     parameters=[
-                        cls.make_parameter(name='editor_id',required=True,description='Editor ID'),
-                        cls.make_parameter(name='before_line',required=True,description='Line to insert before'),
-                        cls.make_parameter(name='content',required=True,description='Content to be inserted'),
+                        cls.make_parameter(name='editor_id',   required=True, type='uuid', description='Editor ID'),
+                        cls.make_parameter(name='before_line', required=True, type='int',  description='Line to insert before'),
+                        cls.make_parameter(name='content',     required=True, type='str',  description='Content to be inserted'),
                     ],
                     skip_render=True
                 ),
@@ -99,9 +99,9 @@ class EditorTool(BaseOperationTool):
                     description='Delete line range',
                     result_formatter=cls._format_ok,
                     parameters=[
-                        cls.make_parameter(name='editor_id',required=True,description='Editor ID'),
-                        cls.make_parameter(name='line_start',required=True,description='Line start'),
-                        cls.make_parameter(name='line_end',required=True,description='Line end'),
+                        cls.make_parameter(name='editor_id',  required=True, type='uuid', description='Editor ID'),
+                        cls.make_parameter(name='line_start', required=True, type='int',  description='Line start'),
+                        cls.make_parameter(name='line_end',   required=True, type='int',  description='Line end'),
                     ],
                     skip_render=True
                 ),
@@ -111,10 +111,10 @@ class EditorTool(BaseOperationTool):
                     description='Create split view of editor',
                     result_formatter=cls._format_split_id,
                     parameters=[
-                        cls.make_parameter(name='editor_id',required_or='split_id',description='Editor ID'),
-                        cls.make_parameter(name='split_id',required=True,description='Split ID'),
-                        cls.make_parameter(name='line_start',required=True,description='Line start'),
-                        cls.make_parameter(name='line_end',required=True,description='Line end'),
+                        cls.make_parameter(name='editor_id',  required_or='split_id', type='uuid', description='Editor ID'),
+                        cls.make_parameter(name='split_id',   required=True,          type='uuid', description='Split ID'),
+                        cls.make_parameter(name='line_start', required=True,          type='int',  description='Line start'),
+                        cls.make_parameter(name='line_end',   required=True,          type='int',  description='Line end'),
                     ]
                 ),
                 cls.make_operation(
@@ -123,10 +123,10 @@ class EditorTool(BaseOperationTool):
                     description='Resize editor or split window',
                     result_formatter=cls._format_ok,
                     parameters=[
-                        cls.make_parameter(name='editor_id',required_or='split_id',description='Editor ID'),
-                        cls.make_parameter(name='split_id',required=True,description='Split ID'),
-                        cls.make_parameter(name='line_start',required=True,description='Line start'),
-                        cls.make_parameter(name='line_end',required=True,description='Line end'),
+                        cls.make_parameter(name='editor_id', required_or='split_id', type='uuid', description='Editor ID'),
+                        cls.make_parameter(name='split_id',  required=True,          type='uuid', description='Split ID'),
+                        cls.make_parameter(name='line_start',required=True,          type='int',  description='Line start'),
+                        cls.make_parameter(name='line_end',  required=True,          type='int',  description='Line end'),
                     ]
                 ),
                 cls.make_operation(
@@ -135,8 +135,8 @@ class EditorTool(BaseOperationTool):
                     description='Close editor or split view',
                     result_formatter=cls._format_ok,
                     parameters=[
-                        cls.make_parameter(name='editor_id',required_or='split_id',description='Editor ID'),
-                        cls.make_parameter(name='split_id',required=True,description='Split ID'),
+                        cls.make_parameter(name='editor_id',required_or='split_id', type='uuid', description='Editor ID'),
+                        cls.make_parameter(name='split_id', required=True,          type='uuid', description='Split ID'),
                     ]
                 ),
                 cls.make_operation(

@@ -143,18 +143,10 @@ Main branch (you will usually use this for PRs):
 
 Status:
 M .nisaba/mcp_servers.json
- M .nisaba/modified_context.json
- M .nisaba/tui/core_system_prompt.md
- M .nisaba/tui/editor_tui.json
- M .nisaba/tui/editor_view.md
- M .nisaba/tui/notification_state.json
- M .nisaba/tui/notification_view.md
- M .nisaba/tui/status_bar_live.txt
- M src/nisaba/tools/augment.py
 
 Recent commits:
+f3afb3c augments code dedup
+77f8266 tool fixes - augment
 adf87dc tool fixes - editor
 5a79c64 tool fixes - editor and base tool
 7f1742c todo fix - missing `_render()`
-880d92d first running version after nisaba tool refactor
-4f6fa14 todo refactor finished

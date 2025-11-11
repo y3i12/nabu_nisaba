@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 class OperationParameter:
     name:str
     required:bool
+    type:str
     required_or:str|None
     default:Any|None
     description:str
@@ -46,8 +47,8 @@ class BaseOperationTool(BaseTool):
         return Operation(command=command, result_formatter=result_formatter, name=name, parameters=dict(map(lambda parameter: (parameter.name, parameter), parameters)), description=description, skip_render=skip_render)
     
     @classmethod
-    def make_parameter(cls, name:str, description:str, default:Any|None = None, required:bool = False, required_or:str|None = None ) -> OperationParameter:
-        return OperationParameter(name=name, required=required or isinstance(required_or, str), required_or=required_or, default=default, description=description)
+    def make_parameter(cls, name:str, type:str, description:str, default:Any|None = None, required:bool = False, required_or:str|None = None ) -> OperationParameter:
+        return OperationParameter(name=name, required=required or isinstance(required_or, str), type=type, required_or=required_or, default=default, description=description)
     
     @classmethod
     def response_invalid_operation(cls, operation:str) -> BaseToolResponse:
@@ -121,7 +122,7 @@ class BaseOperationTool(BaseTool):
             for parameter_name in operation.parameters.keys():
                 parameter:OperationParameter = operation.parameters[parameter_name]
                 if parameter not in properties:
-                    properties[parameter.name] = {'type':'string', 'description':parameter.description}
+                    properties[parameter.name] = {'type':parameter.type, 'description':parameter.description}
           
                 parameter_list.append(parameter.name)
 

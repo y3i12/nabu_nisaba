@@ -32,7 +32,7 @@ class ResultTool(BaseOperationTool):
                     description='Expand tool results',
                     result_formatter=cls.tool_collapse_response,
                     parameters=[
-                        cls.make_parameter(name='tool_ids', required=True, description='List of tool_id')
+                        cls.make_parameter(name='tool_ids', required=True, type='list(uuid)', description='List of `tool_use_id`')
                     ]
                 ),
                 cls.make_operation(
@@ -41,7 +41,7 @@ class ResultTool(BaseOperationTool):
                     description='Collapse tool results',
                     result_formatter=cls.tool_collapse_response,
                     parameters=[
-                        cls.make_parameter(name='tool_ids', required=True, description='List of tool_id')
+                        cls.make_parameter(name='tool_ids', required=True, type='list(uuid)', description='List of `tool_use_id`')
                     ]
                 ),
                 cls.make_operation(
