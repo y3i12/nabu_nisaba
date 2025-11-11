@@ -489,6 +489,8 @@ class RequestModifier:
                 # Update the content string for consistency
                 tool_obj = self.state.tool_result_state[tool_id]
                 tool_obj['tool_result_content'] = f"tool_use_id: {tool_id} (hidden)\n"
+                # Remove from RESULTS workspace section
+                self.visible_tool_results.pop(tool_id, None)
                 modified.append(tool_id)
                 logger.debug(f"Closed tool result: {tool_id}")
             else:
@@ -524,6 +526,8 @@ class RequestModifier:
                 # Restore full content format
                 tool_obj = self.state.tool_result_state[tool_id]
                 tool_obj['tool_result_content'] = f"tool_use_id: {tool_id}\n"
+                # Re-add to RESULTS workspace section
+                self.__add_tool_view(tool_id, tool_obj.get('tool_output', ''))
                 modified.append(tool_id)
                 logger.debug(f"Opened tool result: {tool_id}")
             else:

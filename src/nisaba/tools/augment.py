@@ -51,7 +51,7 @@ class AugmentTool(BaseOperationTool):
                     description='Load augments matching patterns',
                     result_formatter=cls.augment_manager_result_response,
                     parameters=[
-                        cls.make_parameter(name='patterns', required=True, type='list(str)', description='List of patterns to match')
+                        cls.make_parameter(name='patterns', required=True, type='array', description='List of patterns to match')
                     ]
                 ),
                 cls.make_operation(
@@ -60,7 +60,7 @@ class AugmentTool(BaseOperationTool):
                     description='Unload augments matching patterns',
                     result_formatter=cls.augment_manager_result_response,
                     parameters=[
-                        cls.make_parameter(name='patterns', required=True, type='list(str)', description='List of patterns to match')
+                        cls.make_parameter(name='patterns', required=True, type='array', description='List of patterns to match')
                     ]
                 ),
                 cls.make_operation(
@@ -69,7 +69,7 @@ class AugmentTool(BaseOperationTool):
                     description='Pin augments matching patterns',
                     result_formatter=cls.augment_manager_result_response,
                     parameters=[
-                        cls.make_parameter(name='patterns', required=True, type='list(str)', description='List of patterns to match')
+                        cls.make_parameter(name='patterns', required=True, type='array', description='List of patterns to match')
                     ],
                     skip_render=True
                 ),
@@ -79,7 +79,7 @@ class AugmentTool(BaseOperationTool):
                     description='Unpin augments matching patterns',
                     result_formatter=cls.augment_manager_result_response,
                     parameters=[
-                        cls.make_parameter(name='patterns', required=True, type='list(str)', description='List of patterns to match')
+                        cls.make_parameter(name='patterns', required=True, type='array', description='List of patterns to match')
                     ],
                     skip_render=True
                 ),
@@ -89,9 +89,9 @@ class AugmentTool(BaseOperationTool):
                     description='Store augment in group/name',
                     result_formatter=cls.augment_manager_result_response,
                     parameters=[
-                        cls.make_parameter(name='group',   required=True, type='str', description= 'Augment group/category (e.g., "code_analysis")'),
-                        cls.make_parameter(name='name',    required=True, type='str', description= 'Augment name (e.g., "find_circular_deps")'),
-                        cls.make_parameter(name='content', required=True, type='str', description= 'Augment content in markdown format'),
+                        cls.make_parameter(name='group',   required=True, type='string', description= 'Augment group/category (e.g., "code_analysis")'),
+                        cls.make_parameter(name='name',    required=True, type='string', description= 'Augment name (e.g., "find_circular_deps")'),
+                        cls.make_parameter(name='content', required=True, type='string', description= 'Augment content in markdown format'),
                     ],
                     skip_render=True
                 )
