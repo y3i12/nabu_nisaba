@@ -424,7 +424,10 @@ class RequestModifier:
 
         session_path = Path(self.cache_path / current_session_id)
         session_path.mkdir(exist_ok=True)
-        
+
+        # Load existing state if available (BEFORE processing messages)
+        self._load_state_file(session_path)
+
         self._write_to_file(session_path / 'original_context.json', json.dumps(body, indent=2, ensure_ascii=False), "Original request written")
 
         body = self._process_request_recursive(body)
@@ -439,11 +442,29 @@ class RequestModifier:
         enc = tiktoken.get_encoding("cl100k_base")
         return len(enc.encode(text))
     
-    def _load_state_file(self) -> None:
+    def _load_state_file(self, session_path: Path) -> None:
         """
-        load state file
+        Load state file from session directory.
+
+        Restores tool_result_state (including window_state: visible/hidden)
+        from previous session, ensuring visibility persistence across restarts.
+
+        Args:
+            session_path: Path to session cache directory
         """
-        pass
+        state_file = session_path / 'state.json'
+
+        if not state_file.exists():
+            logger.debug(f"No state file found at {state_file}, starting fresh")
+            return
+
+        try:
+            state_data = json.loads(state_file.read_text())
+            self.state = RequestModifierState.from_dict(state_data)
+            logger.info(f"Loaded state from {state_file}: {len(self.state.tool_result_state)} tools tracked")
+        except Exception as e:
+            logger.error(f"Failed to load state from {state_file}: {e}")
+            # Keep fresh state on error
 
 
     def _write_to_file(self, file_path:Path, content: str, log_message: str | None  = None) -> None:

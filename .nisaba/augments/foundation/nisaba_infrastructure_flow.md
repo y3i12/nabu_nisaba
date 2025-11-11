@@ -58,14 +58,19 @@ mitmproxy → AugmentInjector.request(flow)
 
 ### Phase 1: RequestModifier.process_request()
 
+**State loading (session restoration):**
+1. Load existing `state.json` from session directory (if exists)
+2. Restore `tool_result_state` with all `window_state` values (visible/hidden)
+3. **Visibility persists across restarts** ✓
+
 Recursively walks `messages` array, tracks tool results:
 
 ```python
-nisaba_tool_result_state = {
+tool_result_state = {
     "toolu_abc123": {
         'block_offset': [msg_idx, content_idx],
         'tool_output': "original content",
-        'window_state': "open",  # or "closed"
+        'window_state': "visible",  # or "hidden" (persisted!)
         'is_nisaba': True,  # cached flag
         'tool_result_content': "formatted content"
     }
@@ -73,10 +78,12 @@ nisaba_tool_result_state = {
 ```
 
 **Behavior:**
-- First encounter: Parses JSON, checks for `"nisaba": true`
+- **On restart:** Load state from `state.json` BEFORE processing messages
+- First encounter (new tool): Parses JSON, checks for `"nisaba": true`, defaults to `window_state: "visible"`
+- Existing tool: Uses loaded state (preserves hidden/visible)
 - Nisaba tools: Keeps plain content
 - Regular tools: Adds header + separator
-- Can close tools later (compact to "id: X, status: success, state: closed")
+- Can hide tools later (compact to "id: X, status: success, state: hidden")
 
 ### Phase 2: _process_notifications()
 
@@ -141,10 +148,11 @@ LAST_SESSION_TRANSCRIPT
 5. Proxy intercepts
 
 6. RequestModifier:
-   - Sees tool_result for toolu_abc123
-   - Detects is_nisaba=true (parses JSON once, caches)
-   - Adds to nisaba_tool_result_state
-   - Keeps content plain (no header)
+   a. Load state from disk (if exists) → restore tool_result_state
+   b. Sees tool_result for toolu_abc123
+   c. Detects is_nisaba=true (parses JSON once, caches)
+   d. Adds to tool_result_state (or uses existing if already tracked)
+   e. Keeps content plain (no header)
 
 7. _process_notifications():
    - Sees toolu_abc123 is new
@@ -181,10 +189,12 @@ Sections persist across turns → IDE-like spatial awareness.
 
 ## Key Insights
 
-**1. RequestModifier is stateful across requests**
+**1. RequestModifier is stateful across requests AND sessions**
 - Tracks every tool result seen
-- Can retroactively transform (close/compact)
+- Can retroactively transform (hide/show)
 - State persists in `.nisaba/request_cache/{session_id}/state.json`
+- **State loads on startup** → `window_state: visible/hidden` survives restarts
+- `collapse_all()` → tools stay hidden across `--continue`
 
 **2. FileCache is the sync mechanism**
 - mtime-based reload (efficient, zero-latency if unchanged)
@@ -202,10 +212,11 @@ Sections persist across turns → IDE-like spatial awareness.
 - `.nisaba/request_cache/{session_id}/state.json`
 - Inspectable for understanding transformations
 
-**5. Tools can be closed retroactively**
-- RequestModifier can change window_state to "closed"
+**5. Tools can be hidden retroactively (with persistence)**
+- RequestModifier can change `window_state` to "hidden"
 - Future requests show compact version
 - Saves tokens for old tool outputs
+- **State persists across restarts** → hidden tools stay hidden
 
 ---
 

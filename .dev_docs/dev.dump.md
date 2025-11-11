@@ -60,8 +60,8 @@ git submodule update --init test/test_github_projects
             - [x] abstract operation tool
                 - [x] schema from init
             - [=] manually inspect and re-format tool responses
-                - [=] augments
-                    - [=] augment tools to augment commands
+                - [x] augments
+                    - [x] augment tools to augment commands
                 ~~- [=] editor~~
                 - [x] result                
                 - [=] todo
@@ -69,8 +69,10 @@ git submodule update --init test/test_github_projects
             - [ ] fix tools above
         - [=] to buffer edits and commit to file on proxy intercept (implemented, needs testing and fixes)
     - [ ] file caches need to become a singleton
+    - [ ] augment.update (autorefresh)
     - [ ] unify proxy logic into state machine
     - [ ] notifications rework?
+    - [ ] removal
 - [ ] nabu priming
     - [ ] file watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
     - [ ] rethink previously disabled tools
