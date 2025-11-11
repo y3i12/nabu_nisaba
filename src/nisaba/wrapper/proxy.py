@@ -186,7 +186,7 @@ class AugmentInjector:
             default_factory=lambda: { "session_id": "", "last_tool_id_seen": "" }
         )
         
-        self.filtered_tools:set[str] = {"Read", "Write", "Edit", "TodoWrite"} # returned to native: "Glob", "Grep", "Bash"
+        self.filtered_tools:set[str] = {} # {"Read", "Write", "Edit", "TodoWrite"} # returned to native: "Glob", "Grep", "Bash"
         self.core_system_prompt_tokens:int = 0
 
         # Store reference globally for tool access

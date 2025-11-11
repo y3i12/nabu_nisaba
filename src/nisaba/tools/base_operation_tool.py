@@ -153,8 +153,10 @@ class BaseOperationTool(BaseTool):
         operation = kwargs.get('operation', None)
         if operation is None:
             return self.response_missing_operation()
-        
-        return self._execute(operation=str(operation), **kwargs)
+
+        # Remove 'operation' from kwargs to avoid duplicate argument error
+        params = {k: v for k, v in kwargs.items() if k != 'operation'}
+        return self._execute(operation=str(operation), **params)
     
     def _execute(self, operation:str, **kwargs) -> BaseToolResponse:
         """

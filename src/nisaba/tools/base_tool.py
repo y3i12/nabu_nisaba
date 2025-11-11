@@ -47,7 +47,7 @@ class BaseTool(ABC):
     
     @classmethod
     def logger(cls):
-        return  logging.getLogger(f"{cls.__class__.__module__}.{cls.get_name()}")
+        return  logging.getLogger(f"{cls.__module__}.{cls.get_name()}")
 
     @classmethod
     def get_name_from_cls(cls) -> str:
@@ -218,7 +218,7 @@ class BaseTool(ABC):
 
             except Exception as guidance_error:
                 # Don't fail tool execution if guidance fails
-                self.logger.warning(f"Guidance tracking failed: {guidance_error}")
+                self.logger().warning(f"Guidance tracking failed: {guidance_error}")
 
     async def execute_with_timing(self, **kwargs) -> Dict[str, Any]:
         """
@@ -243,7 +243,7 @@ class BaseTool(ABC):
             return result
 
         except Exception as e:
-            self.logger.error(f"Tool execution failed: {e}", exc_info=True)
+            self.logger().error(f"Tool execution failed: {e}", exc_info=True)
             return {
                 "success": False,
                 "error": str(e),

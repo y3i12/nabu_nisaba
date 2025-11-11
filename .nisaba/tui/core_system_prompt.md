@@ -43,12 +43,20 @@ Current branch: devel_y3i12_nisaba_refactor
 Main branch (you will usually use this for PRs): 
 
 Status:
-M .nisaba/mcp_servers.json
- M src/nisaba/tools/todo.py
+M .claude/settings.json
+ M .nisaba/mcp_servers.json
+ M .nisaba/modified_context.json
+ M .nisaba/tui/core_system_prompt.md
+ M .nisaba/tui/notification_state.json
+ M .nisaba/tui/notification_view.md
+ M .nisaba/tui/status_bar_live.txt
+ M src/nisaba/tools/base_operation_tool.py
+ M src/nisaba/tools/base_tool.py
+ M src/nisaba/wrapper/proxy.py
 
 Recent commits:
+7f1742c todo fix - missing `_render()`
 880d92d first running version after nisaba tool refactor
 4f6fa14 todo refactor finished
 14a2ba2 implementation of result tool into new infra done
 545285f implementation of augment tool into new infra done - result tool started
-24a5449 mid implementation checkpoint
