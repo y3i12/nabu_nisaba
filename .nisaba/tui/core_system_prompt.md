@@ -66,7 +66,7 @@ Working directory: /home/y3i12/nabu_nisaba
 Is directory a git repo: Yes
 Platform: linux
 OS Version: Linux 6.6.87.2-microsoft-standard-WSL2
-Today's date: 2025-11-11
+Today's date: 2025-11-12
 </env>
 You are powered by the model named Sonnet 4.5. The exact model ID is claude-sonnet-4-5-20250929.
 
@@ -95,20 +95,17 @@ Current branch: devel_y3i12_nisaba_refactor_edit_remove
 Main branch (you will usually use this for PRs): 
 
 Status:
-M .claude/settings.json
- M .nisaba/mcp_servers.json
+M .nisaba/mcp_servers.json
  M .nisaba/modified_context.json
- M .nisaba/tui/core_system_prompt.md
- M .nisaba/tui/notification_state.json
- M .nisaba/tui/notification_view.md
+ M .nisaba/tui/augment_state.json
+ M .nisaba/tui/augment_view.md
+ M .nisaba/tui/compacted_transcript.md
  M .nisaba/tui/status_bar_live.txt
- M src/nisaba/tools/todo.py
- M src/nisaba/wrapper/proxy.py
 ?? .nisaba/tui/todo_view.md
 
 Recent commits:
+24dc06c todo tool
 d58f21d collapsed tool persistance
 cb7b3b6 fix itr 5 + augments
 f683787 fix itr 4
 130addc fix itr 3
-be4e3a9 fix itr 2
