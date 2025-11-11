@@ -214,7 +214,7 @@ class AugmentInjector:
         try:
             # Parse request body as JSON
             body = json.loads(flow.request.content)
-
+            self.request_modifier.clear_visible_tools()
             body = self.request_modifier.process_request(body)
 
             # Detect delta and generate notifications
@@ -299,6 +299,10 @@ class AugmentInjector:
         
         if 'messages' in body and len(body["messages"]) > 2:
             status_bar = f"\n{self._generate_status_bar(body)}"
+            visible_tools = self.request_modifier.get_and_visible_tool_result_views()
+            if visible_tools:
+                visible_tools = f"\n---RESULTS_END\n{visible_tools}\n---RESULTS_END"
+
             body['messages'].append( 
                 {
                     "role": "user",
@@ -308,6 +312,7 @@ class AugmentInjector:
                             "text": f"<system-reminder>\n--- WORKSPACE ---\n{(
                                     f"\n{status_bar}"
                                     f"\n{self.structural_view_cache.load()}"
+                                    f"{visible_tools}" # this has a newline when populated
                                     f"\n{self.notifications_cache.load()}"
                                     f"\n{self.todos_cache.load()}"
                                 )}\n</system-reminder>"

@@ -54,7 +54,7 @@ class RequestModifierState:
         #   "toolu_{hash}": {
         #       'block_offset': tuple[int, int],
         #       'tool_output': (from tool_u.parent.text),
-        #       'window_state': (open|closed),
+        #       'window_state': (visible|hidden),
         #       'tool_result_content': f"window_state:{window_state}, tool_use_id: {toolu_{hash}}"
         #   }
         }
@@ -99,6 +99,7 @@ class RequestModifier:
                 }
             ]
         }
+        self.visible_tool_results:Dict[str,Any] = {}
     
     def _message_block_count(self, key:str, part:dict[Any,Any]) -> Any:
         self.state.last_block_offset[0] += 1 # moves message forward
@@ -168,17 +169,13 @@ class RequestModifier:
         toolu_obj = {
             'block_offset': list(self.state.last_block_offset),  # Copy the offset, don't reference it
             'tool_output': tool_output if tool_output else "",
-            'window_state': "open",
+            'window_state': "visible",
             'is_nisaba': is_nisaba,  # Cache nisaba detection result
             'tool_result_content': (
                                         # Nisaba tools: no header, just plain output
                                         tool_output if is_nisaba
                                         # Regular tools: add header + separator
-                                        else (
-                                            f"window_state:open, tool_use_id: {toolu_id}\n"
-                                            f"---\n"
-                                            f"{tool_output}"
-                                        )
+                                        else f"tool_use_id: {toolu_id}"
                                     )
         }
         
@@ -210,37 +207,30 @@ class RequestModifier:
             self.state._p_state = RMPState.ADD_AND_CONTINUE
             return None
         
-        window_state = tool_state.get('window_state', 'open')
+        window_state = tool_state.get('window_state', 'visible')
         
-        if window_state == "open":
-            # Tool is open - add header + separator + content
+        # TODO: HERE: 
+        if window_state == "visible":
+            # Tool is visible - add header + separator + content
             full_text = tool_state.get('tool_result_content', '')
-            logger.debug(f"    Tool {toolu_id} is open, adding header to content")
+            logger.debug(f"    Tool {toolu_id} is visible, adding header to content")
             self.state._p_state = RMPState.UPDATE_AND_CONTINUE
-            return [{"type": "text", "text": full_text}]
-        # Tool is closed - replace with compact version
-        compact_text = f"window_state:closed, tool_use_id: {toolu_id}\n"
-        logger.debug(f"    Tool {toolu_id} is closed, replacing with compact format")
-        
-        # Match the structure of the original content
-        original_content = part.get('content')
-        if isinstance(original_content, str):
-            # Simple string format
-            self.state._p_state = RMPState.UPDATE_AND_CONTINUE
-            return compact_text
-        elif isinstance(original_content, dict):
-            # Dict format: {"type": "text", "text": "..."}
-            self.state._p_state = RMPState.UPDATE_AND_CONTINUE
-            return {"type": "text", "text": compact_text}
-        elif isinstance(original_content, list):
-            # List format: [{"type": "text", "text": "..."}]
-            self.state._p_state = RMPState.UPDATE_AND_CONTINUE
-            return [{"type": "text", "text": compact_text}]
-        else:
-            # Unknown format, keep original
-            logger.debug(f"    Unknown content format: {type(original_content)}")
-            self.state._p_state = RMPState.ADD_AND_CONTINUE
-            return None
+            self.__add_tool_view(toolu_id, tool_state.get('tool_output', ''))
+            return [{"type": "text", "text": full_text}] #
+        # Tool is hidden - replace with compact version
+        return f"tool_use_id: {toolu_id} (hidden)"
+
+    def __add_tool_view(self, toolu_id:str, full_text:str):
+        self.visible_tool_results[toolu_id] = full_text
+
+    def get_and_visible_tool_result_views(self) -> str:
+        result_views:List[str] = []
+        for toolu_id in self.visible_tool_results:
+            result_views.append(f"---TOOL_USE({toolu_id})\n{self.visible_tool_results[toolu_id]}\n---TOOL_USE_END({toolu_id})")
+        return "\n".join(result_views)
+
+    def clear_visible_tools(self):
+        self.visible_tool_results = {}
 
     def __process_request_recursive(self, part:dict[Any,Any]|list[Any], modifier_rules:dict[str,Any]|list[Any]) -> Any:
         if RMPState.IDLE == self.state._p_state:
@@ -489,16 +479,16 @@ class RequestModifier:
         
         for tool_id in tool_ids:
             if tool_id in self.state.tool_result_state:
-                # Skip nisaba tools - they shouldn't be closed
+                # Skip nisaba tools - they shouldn't be hidden
                 if self.state.tool_result_state[tool_id].get('is_nisaba', False):
                     not_found.append(tool_id)
                     logger.debug(f"Skipping nisaba tool: {tool_id}")
                     continue
                 
-                self.state.tool_result_state[tool_id]['window_state'] = 'closed'
+                self.state.tool_result_state[tool_id]['window_state'] = 'hidden'
                 # Update the content string for consistency
                 tool_obj = self.state.tool_result_state[tool_id]
-                tool_obj['tool_result_content'] = f"window_state:closed, tool_use_id: {tool_id}\n"
+                tool_obj['tool_result_content'] = f"tool_use_id: {tool_id} (hidden)\n"
                 modified.append(tool_id)
                 logger.debug(f"Closed tool result: {tool_id}")
             else:
@@ -515,7 +505,7 @@ class RequestModifier:
         Open tool results (full view in future requests).
         
         Args:
-            tool_ids: List of tool IDs to open
+            tool_ids: List of tool IDs to visible
             
         Returns:
             Dict with success status and modified tool IDs
@@ -525,20 +515,16 @@ class RequestModifier:
         
         for tool_id in tool_ids:
             if tool_id in self.state.tool_result_state:
-                # Skip nisaba tools - they shouldn't be opened/closed
+                # Skip nisaba tools - they shouldn't be visible/hidden
                 if self.state.tool_result_state[tool_id].get('is_nisaba', False):
                     not_found.append(tool_id)
                     logger.debug(f"Skipping nisaba tool: {tool_id}")
                     continue
                 
-                self.state.tool_result_state[tool_id]['window_state'] = 'open'
+                self.state.tool_result_state[tool_id]['window_state'] = 'visible'
                 # Restore full content format
                 tool_obj = self.state.tool_result_state[tool_id]
-                tool_obj['tool_result_content'] = (
-                    f"window_state:open, tool_use_id: {tool_id}\n"
-                    f"---\n"
-                    f"{tool_obj.get('tool_output', '')}"
-                )
+                tool_obj['tool_result_content'] = f"tool_use_id: {tool_id}\n"
                 modified.append(tool_id)
                 logger.debug(f"Opened tool result: {tool_id}")
             else:
