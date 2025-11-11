@@ -1,12 +1,10 @@
 """Editor tool - unified file editing with persistent windows."""
 
-from abc import abstractmethod
-from nisaba.tools.base_tool import BaseToolResponse
+
 from nisaba.tools.base_operation_tool import BaseOperationTool, Operation
-from nisaba.tui.editor_manager import EditorManager, get_editor_manager
+from nisaba.tui.editor_manager import get_editor_manager
 from pathlib import Path
-from typing import Dict, Any, Optional
-from typing import Any, Dict, TYPE_CHECKING, get_type_hints
+from typing import Dict, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from nisaba.factory import MCPFactory

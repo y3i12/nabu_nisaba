@@ -52,7 +52,7 @@ def get_augment_manager(augments_dir: Path|None = None, composed_file: Path|None
         return _AUGMENT_MANAGER_INSTANCE
 
     if augments_dir is None or composed_file is None:
-        raise Exception("missing augments_dir or composed_file")
+        raise Exception("missing AugmentManager for default getter with None augments_dir and/or composed_file")
 
     _AUGMENT_MANAGER_INSTANCE = AugmentManager(augments_dir=augments_dir, composed_file=composed_file)
     return _AUGMENT_MANAGER_INSTANCE

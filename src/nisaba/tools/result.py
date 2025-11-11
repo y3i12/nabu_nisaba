@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 from nisaba.tools.base_tool import BaseTool, BaseToolResponse
 
 
-class ToolResultTool(BaseTool):
+class ResultTool(BaseTool):
     """Manage tool result window states for compact/expanded display."""
 
     async def execute(self, operation: str, tool_ids: List[str] = None) -> BaseToolResponse:
