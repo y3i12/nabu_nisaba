@@ -1,9 +1,8 @@
 """
 Todo management tool for nisaba workspace.
 """
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, TYPE_CHECKING
 from pathlib import Path
-from nisaba.tools.base_tool import BaseToolResponse
 from nisaba.tools.base_operation_tool import BaseOperationTool, Operation
 from nisaba.structured_file import StructuredFileCache
 
@@ -15,21 +14,9 @@ TODO_FILE_CACHE:StructuredFileCache|None = None
 class TodoTool(BaseOperationTool):
     """Todo list operations in workspace
 
-        Args:
-            operation: Operation type
-                'add' - add todos at position (requires todos, optional position)
-                'remove' - remove by index/indices
-                'mark_done' - mark as done by index/indices
-                'clear' - remove all todos
-            todos: List of todo items with 'content' and optional 'done'
-                   Example: [{"content": "Fix bug", "done": false}]
-            index: Single index for operations (1-based)
-            indices: Multiple indices for batch operations (1-based)
-            position: Position to insert for 'extend' (1-based, None=append)
-        
-        Returns:
-            Dict with success status and message
-        """
+    The todo list is contained in the workspace in the message section, as the last message, wrapped in
+    `<system_reminder></system_reminder>`
+    """
 
     def __init__(self, factory: "MCPFactory"):
         """Initialize the TodoWriteTool with StructuredFileCache."""
@@ -271,3 +258,6 @@ class TodoTool(BaseOperationTool):
         cls.get_todo_file_cache().atomic_update(mark_done)
         
         return f"Marked {len(marked_items)} items as done"
+
+    def _render(self):
+        pass
