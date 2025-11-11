@@ -9,7 +9,7 @@ from nisaba.structured_file import StructuredFileCache
 if TYPE_CHECKING:
     from nisaba.factory import MCPFactory
 
-class TodoWriteTool(BaseTool):
+class TodoTool(BaseTool):
     """Manage todos in persistent workspace file with numbered operations."""
 
     def __init__(self, factory: "MCPFactory"):

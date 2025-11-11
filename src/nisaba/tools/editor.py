@@ -11,9 +11,10 @@ if TYPE_CHECKING:
 
 class EditorTool(BaseOperationTool):
     """
-    Execute editor operation.
+    Execute editor operations for reading, writing, or editing files.
 
-    Unified file editing with workspace persistence for reading, writing, or editing files
+    The editor lives in the workspace in the message section, as the last message, wrapped in
+    `<system_reminder></system_reminder>`.
     """
     
     def __init__(self, factory:"MCPFactory"):

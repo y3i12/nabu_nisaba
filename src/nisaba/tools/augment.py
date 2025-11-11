@@ -1,20 +1,19 @@
-"""
-MCP tools for augments management.
-
-Provides tools to show, activate, deactivate, and learn augments for dynamic
-context management in Claude Code.
-"""
-
-from typing import Dict, Any, List, TYPE_CHECKING
+from typing import Dict, Any, TYPE_CHECKING
 from nisaba.tools.base_operation_tool import BaseOperationTool, Operation
 from nisaba.tools.base_tool import BaseToolResponse
-from nisaba.augments import AugmentManager, get_augment_manager
+from nisaba.augments import get_augment_manager
 
 if TYPE_CHECKING:
     from nisaba.factory import MCPFactory
 
 class AugmentTool(BaseOperationTool):
+    """
+    Operations load, unload, (un)pin, and learn augments. 
     
+    Augments live in the system prompt and they mutate how the entire context is interpreted. Think of
+    augments as 'dynamic context libraries', which can contain theoretical knowledge, practical knowledge,
+    memories, documentation, procedures, references, mindsets... information.
+    """    
     def __init__(self, factory:"MCPFactory"):
         super().__init__(
             factory=factory

@@ -470,8 +470,11 @@ class RequestModifier:
         except Exception as e:
             # Don't crash proxy if logging fails
             logger.error(f"Failed to log context: {e}")
+
+    def collapse_all_tool_results(self) -> Dict[str, Any]:
+        return self.collapse_tool_results(list(self.state.tool_result_state.keys()))
     
-    def close_tool_results(self, tool_ids: List[str]) -> Dict[str, Any]:
+    def collapse_tool_results(self, tool_ids: List[str]) -> Dict[str, Any]:
         """
         Close tool results (compact view in future requests).
         
@@ -507,7 +510,7 @@ class RequestModifier:
             'not_found': not_found
         }
     
-    def open_tool_results(self, tool_ids: List[str]) -> Dict[str, Any]:
+    def expand_tool_results(self, tool_ids: List[str]) -> Dict[str, Any]:
         """
         Open tool results (full view in future requests).
         
@@ -546,20 +549,3 @@ class RequestModifier:
             'modified': modified,
             'not_found': not_found
         }
-    
-    def get_tool_states(self) -> Dict[str, Dict]:
-        """
-        Get all tracked tool states.
-        
-        Returns:
-            Dict of tool_id -> tool state info
-        """
-        return {
-            tool_id: {
-                'window_state': info['window_state'],
-                'status': info['tool_result_status'],
-                'offset': info['block_offset']
-            }
-            for tool_id, info in self.state.tool_result_state.items()
-        }
-        

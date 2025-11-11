@@ -1,102 +1,58 @@
-"""
-Manage tool result visibility states.
-"""
-from typing import Any, Dict, List
-from nisaba.tools.base_tool import BaseTool, BaseToolResponse
+from typing import Any, Dict, TYPE_CHECKING
+from nisaba.tools.base_tool import BaseToolResponse
+from nisaba.tools.base_operation_tool import BaseOperationTool, Operation
+from nisaba.wrapper.proxy import get_request_modifier
 
+if TYPE_CHECKING:
+    from nisaba.factory import MCPFactory
 
-class ResultTool(BaseTool):
-    """Manage tool result window states for compact/expanded display."""
+class ResultTool(BaseOperationTool):
+    """Manage tool result in context.messages, allowing the results to be expanded and collapsed, saving context"""
 
-    async def execute(self, operation: str, tool_ids: List[str] = None) -> BaseToolResponse:
-        """
-        Manage tool result visibility in request timeline.
+    def __init__(self, factory:"MCPFactory"):
+        super().__init__(
+            factory=factory
+        )
 
-        Controls whether tool results appear collapsed or expanded in message history.
-        Changes take effect on next request (not immediately visible).
+    @classmethod
+    def nisaba(cls) -> bool:
+        return True
+    
+    @classmethod
+    def tool_collapse_response(cls, operation:str, result:dict[str,Any]) -> BaseToolResponse:
+        message = f"operation: {operation}, modified: {result['modified']}",
+        return cls.response(success=True, message=message)
+    
+    @classmethod
+    def get_operation_config(cls) -> Dict[str,Operation]:
+        return cls.make_operations([
+                cls.make_operation(
+                    command=get_request_modifier().expand_tool_results,
+                    name='expand',
+                    description='Expand tool results',
+                    result_formatter=cls.tool_collapse_response,
+                    parameters=[
+                        cls.make_parameter(name='tool_ids', required=True, description='List of tool_id')
+                    ]
+                ),
+                cls.make_operation(
+                    command=get_request_modifier().collapse_tool_results,
+                    name='collapse',
+                    description='Collapse tool results',
+                    result_formatter=cls.tool_collapse_response,
+                    parameters=[
+                        cls.make_parameter(name='tool_ids', required=True, description='List of tool_id')
+                    ]
+                ),
+                cls.make_operation(
+                    command=get_request_modifier().collapse_all_tool_results,
+                    name='collapse_all',
+                    description='Collapse ALL tool results',
+                    result_formatter=cls.tool_collapse_response,
+                    parameters=[],
+                    skip_render=True
+                )
+            ])
 
-        :meta pitch: Collapse old tool results to reduce context noise
-        :meta when: After processing tool outputs, to clean up message timeline
-
-        Args:
-            operation: 'open', 'close', or 'close_all'
-            tool_ids: List of tool IDs to modify (e.g., ['toolu_ABC', 'toolu_XYZ'])
-                      Not required for 'close_all' operation
-
-        Returns:
-            Dict with success status and modified tool IDs
-        """
-        try:
-            if operation not in ['open', 'close', 'close_all']:
-                return {
-                    "success": False,
-                    "error": f"Invalid operation '{operation}'. Use 'open', 'close', or 'close_all'.",
-                    "nisaba": True,
-                }
-            
-            # For close_all, we don't need tool_ids
-            if operation != 'close_all' and not tool_ids:
-                return {
-                    "success": False,
-                    "error": "No tool IDs provided",
-                    "nisaba": True,
-                }
-            
-            # Get reference to request_modifier from proxy
-            from nisaba.wrapper.proxy import get_request_modifier
-            
-            request_modifier = get_request_modifier()
-            if not request_modifier:
-                return {
-                    "success": False,
-                    "error": "RequestModifier not available",
-                    "nisaba": True,
-                }
-            
-            # Call the appropriate method
-            if operation == 'close_all':
-                # Get all tool IDs from state and close them
-                all_tool_ids = list(request_modifier.state.tool_result_state.keys())
-                if not all_tool_ids:
-                    return {
-                        "success": True,
-                        "data": {
-                            "operation": "close_all",
-                            "modified": [],
-                            "message": "No tools to close"
-                        },
-                        "nisaba": True,
-                    }
-                result = request_modifier.close_tool_results(all_tool_ids)
-            elif operation == 'close':
-                result = request_modifier.close_tool_results(tool_ids)
-            else:  # open
-                result = request_modifier.open_tool_results(tool_ids)
-            
-            if not result['modified']:
-                return {
-                    "success": False,
-                    "error": "None of the specified tool IDs found in state",
-                    "not_found": result['not_found'],
-                    "nisaba": True,
-                }
-            
-            return_data = {
-                "success": True,
-                "message": f"operation: {operation}, modified: {result['modified']}",
-                "nisaba": True
-            }
-            
-            if result['not_found']:
-                return_data["data"]["not_found"] = result['not_found']
-            
-            return return_data
-            
-        except Exception as e:
-            self.logger.error(f"Failed to {operation} tool results: {e}", exc_info=True)
-            return {
-                "success": False,
-                "error": str(e),
-                "nisaba": True,
-                "error_type": type(e).__name__
-            }
+    def _render(self):
+        pass
