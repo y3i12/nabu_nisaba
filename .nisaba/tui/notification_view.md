@@ -1,2 +1,2 @@
 Recent activity:
-✓ mcp__nisaba__result() → modified: ['toolu_011N3tYqUjsctp5ZcNSC5m7z']
+✓ mcp__nisaba__augment() → affected [__base/001_workspace_paradigm, __base/002_environment_mechanics, __base/003_workspace_operations]

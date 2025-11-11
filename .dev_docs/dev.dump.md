@@ -63,16 +63,14 @@ git submodule update --init test/test_github_projects
                 - [=] augments
                     - [=] augment tools to augment commands
                 ~~- [=] editor~~
-                - [=] result                
+                - [x] result                
                 - [=] todo
         - [-] tool result in end of context, managed
             - [ ] fix tools above
         - [=] to buffer edits and commit to file on proxy intercept (implemented, needs testing and fixes)
+    - [ ] file caches need to become a singleton
     - [ ] unify proxy logic into state machine
-    - [ ] constants (as in filenames) are strings everywhere
-    - [ ] notifications rework
-    - [ ] edit 
-        - [ ] to open the edited range
+    - [ ] notifications rework?
 - [ ] nabu priming
     - [ ] file watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
     - [ ] rethink previously disabled tools

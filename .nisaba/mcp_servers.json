@@ -1,9 +1,9 @@
 {
   "version": "1.0",
   "servers": {
-    "nisaba_1154099": {
+    "nisaba_1157090": {
       "name": "nisaba",
-      "pid": 1154099,
+      "pid": 1157090,
       "stdio_active": true,
       "http": {
         "enabled": true,
@@ -11,7 +11,7 @@
         "port": 9973,
         "url": "http://localhost:9973"
       },
-      "started_at": "2025-11-11T21:28:13.630385Z",
+      "started_at": "2025-11-11T21:35:12.199285Z",
       "cwd": "/home/y3i12/nabu_nisaba"
     }
   }

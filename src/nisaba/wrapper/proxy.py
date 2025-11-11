@@ -298,10 +298,11 @@ class AugmentInjector:
 
         
         if 'messages' in body and len(body["messages"]) > 2:
-            status_bar = f"\n{self._generate_status_bar(body)}"
             visible_tools = self.request_modifier.get_and_visible_tool_result_views()
             if visible_tools:
                 visible_tools = f"\n---RESULTS_END\n{visible_tools}\n---RESULTS_END"
+
+            status_bar = f"\n{self._generate_status_bar(body, visible_tools)}"
 
             body['messages'].append( 
                 {
@@ -518,7 +519,7 @@ class AugmentInjector:
             # Fallback to rough estimate if tiktoken fails
             return len(text) // 4
     
-    def _generate_status_bar(self, body: dict) -> str:
+    def _generate_status_bar(self, body: dict, tool_results:str = "") -> str:
         """
         Generate status bar with segmented token usage.
         
@@ -597,6 +598,7 @@ class AugmentInjector:
                 },
                 "augments": self.augments_cache.token_count,
                 "view": structural_view_tokens,
+                "tool_results": self._estimate_tokens(tool_results),
                 "notifications": self.notifications_cache.line_count - 1,  # header + endl compensation,
                 "todos": self.todos_cache.line_count - 1  # header + endl compensation
             },
@@ -615,6 +617,7 @@ class AugmentInjector:
             f"MSG:{status_data['messages']//1000}k",
             f"WORKPACE({ws['total']//1000}k)",
             f"STVIEW({ws['view']//1000}k)",
+            f"RESULTS({ws['tool_results']//1000}k)",
             f"MODEL({model_name})",
             f"{status_data['total']//1000}k/{status_data['budget']//1000}k"
         ]
