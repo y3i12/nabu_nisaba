@@ -47,8 +47,8 @@ class TodoTool(BaseOperationTool):
                     description='Add todo(s) to the list, optionally at position',
                     result_formatter=cls._format_str,
                     parameters=[
-                        cls.make_parameter(name='todos',    required=True,  type='array', description='list of todos, eg: ["todo1", "todo2"]'),
-                        cls.make_parameter(name='position', required=False, type='int',       description='position to insert the todos (defaults to last)'),
+                        cls.make_parameter(name='todos',    required=True,  type='array',   description='list of todos, eg: ["todo1", "todo2"]'),
+                        cls.make_parameter(name='position', required=False, type='integer', description='position to insert the todos (defaults to last)'),
                     ]
                 ),
                 cls.make_operation(
@@ -57,8 +57,8 @@ class TodoTool(BaseOperationTool):
                     description='Remove todo(s) from the list by index or indices',
                     result_formatter=cls._format_str,
                     parameters=[
-                        cls.make_parameter(name='index',   required_or='indices', type='int', description='Todo item index'),
-                        cls.make_parameter(name='indices', required=True,         type='array', description='List of todo item indices'),
+                        cls.make_parameter(name='index',   required_or='indices', type='integer', description='Todo item index'),
+                        cls.make_parameter(name='indices', required=True,         type='array',   description='List of todo item indices'),
                     ]
                 ),
                 cls.make_operation(
@@ -67,8 +67,8 @@ class TodoTool(BaseOperationTool):
                     description='Marks todo as done by index or indices',
                     result_formatter=cls._format_str,
                     parameters=[
-                        cls.make_parameter(name='index',   required_or='indices', type='int', description='Todo item index'),
-                        cls.make_parameter(name='indices', required=True,         type='array', description='List of todo item indices'),
+                        cls.make_parameter(name='index',   required_or='indices', type='integer', description='Todo item index'),
+                        cls.make_parameter(name='indices', required=True,         type='array',   description='List of todo item indices'),
                     ]
                 ),
                 cls.make_operation(
@@ -185,7 +185,7 @@ class TodoTool(BaseOperationTool):
         # Atomic update
         cls.get_todo_file_cache().atomic_update(extend_todos)
         
-        return f"Extended at position {actual_position[0]} with {len(new_todos)} items"
+        return f"Added {len(new_todos)} items at pos {actual_position[0]}"
             
     
     @classmethod
@@ -221,7 +221,7 @@ class TodoTool(BaseOperationTool):
         # Atomic update
         cls.get_todo_file_cache().atomic_update(remove_items)
         
-        return f"Removed {len(removed_items)}"
+        return f"Removed {len(removed_items)} items"
         
     
     @classmethod
