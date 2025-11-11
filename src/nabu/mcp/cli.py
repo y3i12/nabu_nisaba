@@ -108,8 +108,8 @@ def prompt_show(db_path: str, repo_path: str, context: str, format: str, dev_mod
         )
 
         # Suppress logging during prompt generation
-        logging.getLogger("nabu").setLevel(logging.ERROR)
-        logging.getLogger("nisaba").setLevel(logging.ERROR)
+        #logging.getLogger("nabu").setLevel(logging.ERROR)
+        #logging.getLogger("nisaba").setLevel(logging.ERROR)
 
         # Create factory (but don't start server)
         click.echo("🔄 Generating system prompt...", err=True)
