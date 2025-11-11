@@ -19,9 +19,8 @@ class ResultTool(BaseOperationTool):
         return True
     
     @classmethod
-    def tool_result_response(cls, result:dict[str,Any]) -> BaseToolResponse:
-        message = f"modified: {result['modified']}",
-        return cls.response(success=True, message=message)
+    def tool_result_response(cls, result:dict[str,Any]) -> str:
+        return f"modified: {result['modified']}"
     
     @classmethod
     def get_operation_config(cls) -> Dict[str,Operation]:

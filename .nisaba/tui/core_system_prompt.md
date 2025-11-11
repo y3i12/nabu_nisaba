@@ -148,15 +148,11 @@ M .nisaba/mcp_servers.json
  M .nisaba/tui/notification_state.json
  M .nisaba/tui/notification_view.md
  M .nisaba/tui/status_bar_live.txt
- M src/nabu/mcp/cli.py
  M src/nisaba/tools/base_operation_tool.py
- M src/nisaba/tools/result.py
- M src/nisaba/wrapper/request_modifier.py
- M src/nisaba/wrapper/unified.py
 
 Recent commits:
+7d3d879 fix itr
 85e94f0 fixes in tool naming and some parameter passing
 c5d7b61 moving tool use to workspace
 11e3c63 tool adjustment to include type
 c8e398a removing editor
-72e1c05 types on tool input
