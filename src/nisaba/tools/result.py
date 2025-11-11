@@ -19,7 +19,7 @@ class ResultTool(BaseOperationTool):
         return True
     
     @classmethod
-    def tool_collapse_response(cls, result:dict[str,Any]) -> BaseToolResponse:
+    def tool_result_response(cls, result:dict[str,Any]) -> BaseToolResponse:
         message = f"modified: {result['modified']}",
         return cls.response(success=True, message=message)
     
@@ -27,28 +27,28 @@ class ResultTool(BaseOperationTool):
     def get_operation_config(cls) -> Dict[str,Operation]:
         return cls.make_operations([
                 cls.make_operation(
-                    command=get_request_modifier().expand_tool_results,
+                    command=get_request_modifier().show_tool_results,
                     name='show',
                     description='Show tool results',
-                    result_formatter=cls.tool_collapse_response,
+                    result_formatter=cls.tool_result_response,
                     parameters=[
                         cls.make_parameter(name='tool_ids', required=True, type='list(uuid)', description='List of `tool_use_id`')
                     ]
                 ),
                 cls.make_operation(
-                    command=get_request_modifier().collapse_tool_results,
+                    command=get_request_modifier().hide_tool_results,
                     name='hide',
                     description='Hide tool results',
-                    result_formatter=cls.tool_collapse_response,
+                    result_formatter=cls.tool_result_response,
                     parameters=[
                         cls.make_parameter(name='tool_ids', required=True, type='list(uuid)', description='List of `tool_use_id`')
                     ]
                 ),
                 cls.make_operation(
-                    command=get_request_modifier().collapse_all_tool_results,
+                    command=get_request_modifier().hide_all_tool_results,
                     name='collapse_all',
                     description='Hide ALL tool results',
-                    result_formatter=cls.tool_collapse_response,
+                    result_formatter=cls.tool_result_response,
                     parameters=[],
                     skip_render=True
                 )

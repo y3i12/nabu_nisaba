@@ -145,11 +145,6 @@ class UnifiedNisabaServer:
     async def _run_proxy(self) -> None:
         """Run proxy (async task)."""
         try:
-            # Redirect proxy logs to stderr if not in debug mode
-            if not self.debug_proxy:
-                # Suppress most proxy logging
-                logging.getLogger("mitmproxy").setLevel(logging.WARNING)
-
             await self.proxy_master.run()
         except asyncio.CancelledError:
             # Expected during shutdown - don't re-raise to avoid error logs

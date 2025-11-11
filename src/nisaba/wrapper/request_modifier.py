@@ -461,12 +461,12 @@ class RequestModifier:
             # Don't crash proxy if logging fails
             logger.error(f"Failed to log context: {e}")
 
-    def collapse_all_tool_results(self) -> Dict[str, Any]:
-        return self.collapse_tool_results(list(self.state.tool_result_state.keys()))
+    def hide_all_tool_results(self) -> Dict[str, Any]:
+        return self.hide_tool_results(list(self.state.tool_result_state.keys()))
     
-    def collapse_tool_results(self, tool_ids: List[str]) -> Dict[str, Any]:
+    def hide_tool_results(self, tool_ids: List[str]) -> Dict[str, Any]:
         """
-        Close tool results (compact view in future requests).
+        Hide tool results (compact view in future requests).
         
         Args:
             tool_ids: List of tool IDs to close
@@ -496,13 +496,12 @@ class RequestModifier:
                 logger.debug(f"Tool result not found: {tool_id}")
         
         return {
-            'modified': modified,
-            'not_found': not_found
+            'modified': modified
         }
     
-    def expand_tool_results(self, tool_ids: List[str]) -> Dict[str, Any]:
+    def show_tool_results(self, tool_ids: List[str]) -> Dict[str, Any]:
         """
-        Open tool results (full view in future requests).
+        Show tool results (full view in future requests).
         
         Args:
             tool_ids: List of tool IDs to visible
