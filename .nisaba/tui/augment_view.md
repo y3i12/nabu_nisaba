@@ -1,10 +1,10 @@
 # available augments
   __base/
-    - 000_universal_symbolic_compression 📌
-    - 001_workspace_paradigm 📌
-    - 002_environment_mechanics 📌
-    - 003_workspace_operations 📌
-    - 004_workspace_navigation 📌
+    - 000_universal_symbolic_compression
+    - 001_workspace_paradigm
+    - 002_environment_mechanics
+    - 003_workspace_operations
+    - 004_workspace_navigation
   architecture/
     - boundary_validation
     - coupling_analysis
