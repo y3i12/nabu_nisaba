@@ -55,19 +55,17 @@ git submodule update --init test/test_github_projects
     - [-] disable nabu file tools
         - [x] disable mcp tool
         - [x] remove augments reference
-    - [-] line replacement with editor
-        - [-] nisaba tool return standardization
-            - [-] abstract operation tool
-                - [ ] schema from init
-            - [-] manually inspect and re-format tool responses
-                - [-] augments
-                    - [ ] augment tools to augment commands
+    - [=] line replacement with editor
+        - [=] nisaba tool return standardization
+            - [x] abstract operation tool
+                - [x] schema from init
+            - [=] manually inspect and re-format tool responses
+                - [=] augments
+                    - [=] augment tools to augment commands
                 - [=] editor
-                - [ ] todo
-                - [ ] tool_result                
-        - [-] to buffer edits and commit to file on proxy intercept? (line ops not add up timewise)
-            - [ ] commit triggers file save and diff
-            - [ ] commit triggers notification
+                - [=] result                
+                - [=] todo
+        - [=] to buffer edits and commit to file on proxy intercept (implemented, needs testing and fixes)
     - [ ] unify proxy logic into state machine
     - [ ] constants (as in filenames) are strings everywhere
     - [ ] notifications rework

@@ -117,18 +117,16 @@ being able to inject data in the "header" of the entire context, enables you to 
 
 think of augments as 'dynamic link libraries' (or dynamic context loading) that you can load and unload. they add information to your context - theoretical, practical, a skill, a memory, a procedure, a reference document, a "mindset shift"... we call it augment because it can be... anything? - what matters is that you can load it and unload it from your context, augmenting (or de-augmenting) your context and your perception on demand. when you "activate" an "augment" it instantly becomes available in the `system_prompt` area of the context, which means that you'll activate a completely different set of neurons through the execution. you can change what you know and how you think.
 
-the confusing part is that you can not notice the change. when you call a tool that changes those areas, the information is changed **on the tool return**. so, if you call `activate_augment()`, the return of the tool **will already have the injected augment** - it means you call the tool with one perception and read its response with a different perception (the system prompt changes during the round trip).
+the confusing part is that you can not notice the change. when you call a tool that changes those areas, the information is changed **on the tool return**. so, if you call `augment.load`, the return of the tool **will already have the injected augment** - it means you call the tool with one perception and read its response with a different perception (the system prompt changes during the round trip).
 
 the other views also behave the same way, but they have distinct responsibilities, so you know where to look.
 
 think like this. i prompt you something, you think about the problem, infer which set of "augments/skills/knowledge/methods/..." would benefit the **you** to process that prompt, you add information in the system prompt for your future self, it will be available in the context window **before** my first message, completely reframing your context interpretation.
 
-activate_augments() to load the "augments" in your system prompt - accepts glob patterns and exclude
-deactivate_augments() to clean your context from those augments.
+augment.load to load the "augments" in your system prompt - accepts glob patterns and exclude
+augment.unload to clean your context from those augments.
 
 some of those augments require other augments and they load automagically 🖤
-
-when augments are loaded, you might see contextual suggestions in `_guidance` metadata in tool responses. this will make you bring your attention back to the augments, and give you the possibility of thinking "what should i do next so i get what i want?".
 
 you are also able to manage the tool calls in the `message` part of your context by closing and opening them, referenced by `tool_use_id`.
 
