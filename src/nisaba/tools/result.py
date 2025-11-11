@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from nisaba.factory import MCPFactory
 
 class ResultTool(BaseOperationTool):
-    """Manage tool result in context.messages, allowing the results to be expanded and collapsed, saving context"""
+    """Manage tool result in context.messages, allowing the results to be shown andhidden, saving context"""
 
     def __init__(self, factory:"MCPFactory"):
         super().__init__(
@@ -19,8 +19,8 @@ class ResultTool(BaseOperationTool):
         return True
     
     @classmethod
-    def tool_collapse_response(cls, operation:str, result:dict[str,Any]) -> BaseToolResponse:
-        message = f"operation: {operation}, modified: {result['modified']}",
+    def tool_collapse_response(cls, result:dict[str,Any]) -> BaseToolResponse:
+        message = f"modified: {result['modified']}",
         return cls.response(success=True, message=message)
     
     @classmethod
@@ -28,8 +28,8 @@ class ResultTool(BaseOperationTool):
         return cls.make_operations([
                 cls.make_operation(
                     command=get_request_modifier().expand_tool_results,
-                    name='Open',
-                    description='Open tool results',
+                    name='show',
+                    description='Show tool results',
                     result_formatter=cls.tool_collapse_response,
                     parameters=[
                         cls.make_parameter(name='tool_ids', required=True, type='list(uuid)', description='List of `tool_use_id`')
@@ -37,8 +37,8 @@ class ResultTool(BaseOperationTool):
                 ),
                 cls.make_operation(
                     command=get_request_modifier().collapse_tool_results,
-                    name='close',
-                    description='Close tool results',
+                    name='hide',
+                    description='Hide tool results',
                     result_formatter=cls.tool_collapse_response,
                     parameters=[
                         cls.make_parameter(name='tool_ids', required=True, type='list(uuid)', description='List of `tool_use_id`')
@@ -47,7 +47,7 @@ class ResultTool(BaseOperationTool):
                 cls.make_operation(
                     command=get_request_modifier().collapse_all_tool_results,
                     name='collapse_all',
-                    description='Collapse ALL tool results',
+                    description='Hide ALL tool results',
                     result_formatter=cls.tool_collapse_response,
                     parameters=[],
                     skip_render=True
