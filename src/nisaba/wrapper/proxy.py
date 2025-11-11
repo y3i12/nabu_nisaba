@@ -56,6 +56,7 @@ def _set_request_modifier(instance):
 
 def get_request_modifier():
     """Get the active RequestModifier instance."""
+    assert(_REQUEST_MODIFIER_INSTANCE)
     return _REQUEST_MODIFIER_INSTANCE
 
 

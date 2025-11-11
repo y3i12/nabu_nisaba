@@ -6,7 +6,7 @@ from nisaba.tools.base_operation_tool import BaseOperationTool
 from nisaba.tools.augment import AugmentTool
 from nisaba.tools.editor import EditorTool
 from nisaba.tools.result import ResultTool
-from nisaba.tools.todo_write import TodoWriteTool
+from nisaba.tools.todo import TodoTool
 
 __all__ = [
     "BaseTool",
@@ -15,6 +15,6 @@ __all__ = [
     
     "AugmentTool",
     "EditorTool",
-    "TodoWriteTool",
+    "TodoTool",
     "ResultTool",
 ]
