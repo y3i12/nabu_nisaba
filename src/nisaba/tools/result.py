@@ -28,17 +28,17 @@ class ResultTool(BaseOperationTool):
         return cls.make_operations([
                 cls.make_operation(
                     command=get_request_modifier().expand_tool_results,
-                    name='expand',
-                    description='Expand tool results',
+                    name='Open',
+                    description='Open tool results',
                     result_formatter=cls.tool_collapse_response,
                     parameters=[
-                        cls.make_parameter(name='tool_ids', required=True, type='list(uuid)', description='List of `tool_use_id`')
+                        cls.make_parameter(name='tool_ids', required=True, type='array', description='List of `tool_use_id`')
                     ]
                 ),
                 cls.make_operation(
                     command=get_request_modifier().collapse_tool_results,
-                    name='collapse',
-                    description='Collapse tool results',
+                    name='close',
+                    description='Close tool results',
                     result_formatter=cls.tool_collapse_response,
                     parameters=[
                         cls.make_parameter(name='tool_ids', required=True, type='list(uuid)', description='List of `tool_use_id`')

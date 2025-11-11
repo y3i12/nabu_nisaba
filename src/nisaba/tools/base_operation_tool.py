@@ -119,12 +119,13 @@ class BaseOperationTool(BaseTool):
         for operation in operation_config.values():
             parameter_list:List[str] = []
 
+            # TODO: OR chain
             for parameter_name in operation.parameters.keys():
                 parameter:OperationParameter = operation.parameters[parameter_name]
                 if parameter not in properties:
                     properties[parameter.name] = {'type':parameter.type, 'description':parameter.description}
-          
-                parameter_list.append(parameter.name)
+
+                parameter_list.append(f"{parameter.name}:{parameter.type}")
 
             operation_description = ""
             if len(parameter_list):
