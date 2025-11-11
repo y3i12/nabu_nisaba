@@ -1,1 +1,0 @@
-Recent activity:\n🔄 Reloaded: /home/y3i12/nabu_nisaba/src/nisaba/tools/editor.py\n
