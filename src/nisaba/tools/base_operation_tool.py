@@ -33,7 +33,7 @@ class Operation:
     skip_render:bool=False
   
 class BaseOperationTool(BaseTool):
-    def __init__(self, factory:"MCPFactory", nisaba=False):
+    def __init__(self, factory:"MCPFactory"):
         super().__init__(factory)
         self.operations_and_parameters:dict[str,Operation] = self.get_operation_config()
     

@@ -18,14 +18,6 @@ from nisaba.cli import (
     validate_file_or_exit,
     validate_dir_or_exit,
 )
-from nisaba.tools import (
-    ActivateAugmentsTool,
-    DeactivateAugmentsTool,
-    PinAugmentTool, 
-    UnpinAugmentTool,
-    LearnAugmentTool,
-)
-
 __version__ = "0.1.0"
 
 __all__ = [
@@ -51,11 +43,5 @@ __all__ = [
     "format_tool_list",
     "format_context_list",
     "validate_file_or_exit",
-    "validate_dir_or_exit",
-    "NisabaTool",
-    "ActivateAugmentsTool",
-    "DeactivateAugmentsTool",
-    "PinAugmentTool", 
-    "UnpinAugmentTool",
-    "LearnAugmentTool",
+    "validate_dir_or_exit"
 ]
