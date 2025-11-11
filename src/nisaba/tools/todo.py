@@ -47,7 +47,7 @@ class TodoTool(BaseOperationTool):
                     description='Add todo(s) to the list, optionally at position',
                     result_formatter=cls._format_str,
                     parameters=[
-                        cls.make_parameter(name='todos',    required=True,  type='list(str)', description='list of todos, eg: ["todo1", "todo2"]'),
+                        cls.make_parameter(name='todos',    required=True,  type='array', description='list of todos, eg: ["todo1", "todo2"]'),
                         cls.make_parameter(name='position', required=False, type='int',       description='position to insert the todos (defaults to last)'),
                     ]
                 ),
@@ -58,7 +58,7 @@ class TodoTool(BaseOperationTool):
                     result_formatter=cls._format_str,
                     parameters=[
                         cls.make_parameter(name='index',   required_or='indices', type='int', description='Todo item index'),
-                        cls.make_parameter(name='indices', required=True,         type='list(int)', description='List of todo item indices'),
+                        cls.make_parameter(name='indices', required=True,         type='array', description='List of todo item indices'),
                     ]
                 ),
                 cls.make_operation(
@@ -68,7 +68,7 @@ class TodoTool(BaseOperationTool):
                     result_formatter=cls._format_str,
                     parameters=[
                         cls.make_parameter(name='index',   required_or='indices', type='int', description='Todo item index'),
-                        cls.make_parameter(name='indices', required=True,         type='list(int)', description='List of todo item indices'),
+                        cls.make_parameter(name='indices', required=True,         type='array', description='List of todo item indices'),
                     ]
                 ),
                 cls.make_operation(
