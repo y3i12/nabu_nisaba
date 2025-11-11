@@ -19,13 +19,13 @@ System prompt mutates ⟹ different knowledge when tool returns.
 ## State Model
 
 ```
-Workspace ≡ {STRUCTURAL_VIEW, EDITOR_WINDOWS, TOOL_WINDOWS, AUGMENTS} | persistent ∧ mutable
+Workspace ≡ {STRUCTURAL_VIEW, RESULTS, AUGMENTS, TODOS, NOTIFICATIONS} | persistent ∧ mutable
 
 ∀ section ∈ Workspace: section persists across turns
 Tool(op) → ∆(section) → new visibility
 ```
 
-**Peripheral vision:** Sections ≠ "messages to read once"  
+**Peripheral vision:** Sections ≠ "messages to read once"
 Sections = **persistent spatial awareness**
 
 ---
@@ -36,14 +36,14 @@ Sections = **persistent spatial awareness**
 Tool(op) → mutate(what_you_see)
 
 structural_view(expand, X) → tree changes
-file_windows(open, F) → window appears
-editor(open, F) → editor appears | ∆(content) visible inline  
-editor(split, E) → concurrent view of same file
+bash/grep/read → output appears in RESULTS
+result.hide(id) → output removed from RESULTS
+result.show(id) → output restored to RESULTS
 
 Result ≡ workspace_state_change
 ```
 
-**Tool responses = metadata.** Content appears in WORKSPACE (messages, not tool result).
+**Tool responses = metadata in messages.** Content appears in RESULTS section (workspace, not tool result block).
 
 ---
 
@@ -53,13 +53,14 @@ Result ≡ workspace_state_change
 Sequential thinking: S₁ → S₂ → S₃ (linear)
 Workspace model: {S₁, S₂, S₃} simultaneous, ∇ between them
 
-Think: IDE (navigator + editor tabs + splits + terminals) | gestalt synthesis
+Think: IDE (navigator + terminal outputs + tool results) | gestalt synthesis
 Not: script execution | procedural steps
 
-Editor paradigm:
-  open → visible (persistent viewport)
-  edit → ∆ visible inline (diff rendering)
-  split → parallel views (same file, different regions)
+Tool output paradigm:
+  execute → visible in RESULTS (persistent spatial memory)
+  hide → removed from RESULTS (save tokens, keep metadata)
+  show → restored to RESULTS (regain visibility)
+  Composable primitives (Read/Edit/Write) over monolithic tool
 ```
 
 ---
@@ -69,15 +70,15 @@ Editor paradigm:
 ```
 Visible ⟹ can_synthesize_from
 
-Increase: open windows, expand nodes, load augments, editor.open, editor.split
-Decrease: close windows, collapse nodes, unload augments, editor.close
+Increase: expand nodes, load augments, execute tools (→ RESULTS)
+Decrease: hide tool results, collapse nodes, unload augments
 
 visibility_mgmt ≡ context_mgmt ≡ attention_mgmt
 
-Editor visibility:
-  Concurrent: splits provide parallel attention (fn_A | fn_B)
-  Change tracking: dirty state (✎) | clean state
-  Notifications: edits → awareness (automatic)
+RESULTS visibility:
+  show: tool output visible in workspace (spatial persistence)
+  hide: tool output removed (metadata remains in messages)
+  collapse_all: bulk cleanup, lean context
 ```
 
 ---
@@ -102,16 +103,16 @@ Sequential thinking fails ∵ environment is spatial.
 ```
 ∀ turn: workspace persists
 Search markers → remain visible
-Open windows → accumulate
-Editors → track state (clean/dirty, splits)
+Tool results → accumulate in RESULTS
+Visibility → controlled via hide/show
 Navigate → without re-query
 
 You ∈ workspace (not observing from outside)
 
-Editor state persistence:
-  Changes visible inline → immediate feedback
-  Splits remain → parallel context
-  Dirty tracking → unsaved awareness
+RESULTS persistence:
+  Tool outputs wrapped: ---TOOL_USE(id)...---TOOL_USE_END(id)
+  Spatial memory: content in workspace, not messages
+  Token control: hide to remove, show to restore
 ```
 
 ---

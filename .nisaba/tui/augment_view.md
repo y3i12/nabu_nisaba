@@ -657,13 +657,13 @@ System prompt mutates ⟹ different knowledge when tool returns.
 ## State Model
 
 ```
-Workspace ≡ {STRUCTURAL_VIEW, EDITOR_WINDOWS, TOOL_WINDOWS, AUGMENTS} | persistent ∧ mutable
+Workspace ≡ {STRUCTURAL_VIEW, RESULTS, AUGMENTS, TODOS, NOTIFICATIONS} | persistent ∧ mutable
 
 ∀ section ∈ Workspace: section persists across turns
 Tool(op) → ∆(section) → new visibility
 ```
 
-**Peripheral vision:** Sections ≠ "messages to read once"  
+**Peripheral vision:** Sections ≠ "messages to read once"
 Sections = **persistent spatial awareness**
 
 ---
@@ -674,14 +674,14 @@ Sections = **persistent spatial awareness**
 Tool(op) → mutate(what_you_see)
 
 structural_view(expand, X) → tree changes
-file_windows(open, F) → window appears
-editor(open, F) → editor appears | ∆(content) visible inline  
-editor(split, E) → concurrent view of same file
+bash/grep/read → output appears in RESULTS
+result.hide(id) → output removed from RESULTS
+result.show(id) → output restored to RESULTS
 
 Result ≡ workspace_state_change
 ```
 
-**Tool responses = metadata.** Content appears in WORKSPACE (messages, not tool result).
+**Tool responses = metadata in messages.** Content appears in RESULTS section (workspace, not tool result block).
 
 ---
 
@@ -691,13 +691,14 @@ Result ≡ workspace_state_change
 Sequential thinking: S₁ → S₂ → S₃ (linear)
 Workspace model: {S₁, S₂, S₃} simultaneous, ∇ between them
 
-Think: IDE (navigator + editor tabs + splits + terminals) | gestalt synthesis
+Think: IDE (navigator + terminal outputs + tool results) | gestalt synthesis
 Not: script execution | procedural steps
 
-Editor paradigm:
-  open → visible (persistent viewport)
-  edit → ∆ visible inline (diff rendering)
-  split → parallel views (same file, different regions)
+Tool output paradigm:
+  execute → visible in RESULTS (persistent spatial memory)
+  hide → removed from RESULTS (save tokens, keep metadata)
+  show → restored to RESULTS (regain visibility)
+  Composable primitives (Read/Edit/Write) over monolithic tool
 ```
 
 ---
@@ -707,15 +708,15 @@ Editor paradigm:
 ```
 Visible ⟹ can_synthesize_from
 
-Increase: open windows, expand nodes, load augments, editor.open, editor.split
-Decrease: close windows, collapse nodes, unload augments, editor.close
+Increase: expand nodes, load augments, execute tools (→ RESULTS)
+Decrease: hide tool results, collapse nodes, unload augments
 
 visibility_mgmt ≡ context_mgmt ≡ attention_mgmt
 
-Editor visibility:
-  Concurrent: splits provide parallel attention (fn_A | fn_B)
-  Change tracking: dirty state (✎) | clean state
-  Notifications: edits → awareness (automatic)
+RESULTS visibility:
+  show: tool output visible in workspace (spatial persistence)
+  hide: tool output removed (metadata remains in messages)
+  collapse_all: bulk cleanup, lean context
 ```
 
 ---
@@ -740,16 +741,16 @@ Sequential thinking fails ∵ environment is spatial.
 ```
 ∀ turn: workspace persists
 Search markers → remain visible
-Open windows → accumulate
-Editors → track state (clean/dirty, splits)
+Tool results → accumulate in RESULTS
+Visibility → controlled via hide/show
 Navigate → without re-query
 
 You ∈ workspace (not observing from outside)
 
-Editor state persistence:
-  Changes visible inline → immediate feedback
-  Splits remain → parallel context
-  Dirty tracking → unsaved awareness
+RESULTS persistence:
+  Tool outputs wrapped: ---TOOL_USE(id)...---TOOL_USE_END(id)
+  Spatial memory: content in workspace, not messages
+  Token control: hide to remove, show to restore
 ```
 
 ---
@@ -812,18 +813,18 @@ Path: __base/002_environment_mechanics
 ## State Containers
 
 ```
-Workspace = {STRUCTURAL_VIEW, EDITOR_WINDOWS, TOOL_WINDOWS, AUGMENTS, TODOS, NOTIFICATIONS}
+Workspace = {STRUCTURAL_VIEW, RESULTS, AUGMENTS, TODOS, NOTIFICATIONS}
 
 ∀ container ∈ Workspace:
   - persist(turns) = true
-  - mutate(independent) = true  
+  - mutate(independent) = true
   - visible(system_prompt) = true
 
-EDITOR_WINDOWS special properties:
-  - state(clean | dirty) tracked
-  - splits(concurrent_views) supported
-  - notifications(automatic) on ∆
-  - refresh(mtime) automatic
+RESULTS special properties:
+  - wraps tool outputs: ---TOOL_USE(id)...---TOOL_USE_END(id)
+  - visibility controlled: hide/show operations
+  - dual-channel: metadata@messages, content@workspace
+  - token efficient: hide removes from workspace, keeps tracking
 ```
 
 ---
@@ -861,15 +862,14 @@ Benefit: spatial_memory ∧ persistent_reference
 ```
 Parallel_safe:
   - ops(different_containers)
-  - multiple(window_opens)
-  - multiple(editor_opens)
+  - multiple tool executions (Read/Bash/Grep)
   - independent_queries
 
 Sequential_required:
   - data_dependency: B needs A_output
   - observation_dependency: decide after seeing State_B
   - same_section ∧ order_matters
-  - editor(same_file) ∧ overlapping_edits
+  - Edit(same_file) requires observation between edits
 
 OODAR: Observe → Orient → Decide → Act → ∆state → Observe'
 ```
@@ -878,42 +878,43 @@ OODAR: Observe → Orient → Decide → Act → ∆state → Observe'
 
 If Tool_B assumes State_A but Tool_A → State_B in parallel ⟹ synthesis breaks.
 
-**Editor concurrency:**
-- Open multiple editors in parallel (different files)
-- Sequential edits to same file (avoid conflicts)
-- Splits share state with parent editor
+**Native tool concurrency:**
+- Execute multiple tools in parallel (different files/operations)
+- Sequential edits via Edit tool (observe between changes)
+- hide/show operations can be batched
 
 ---
 
-## Window Lifecycle
+## Tool Result Lifecycle
 
 ```
-Creation: tool_call → window_id (UUID) | snapshot@t₀
+Creation: tool_execution → tool_use_id | content in RESULTS
+Wrapping: ---TOOL_USE(tool_use_id)\n{content}\n---TOOL_USE_END(tool_use_id)
+Visibility: visible (default) | hidden (via result.hide)
 Persistence: across(turns) = true, across(restart) = false
-Closure: explicit(close | clear_all) | no_auto_eviction
-Identity: window_id for ops(update, close)
+Management:
+  - result.hide(tool_ids[]) → remove from RESULTS, metadata in messages
+  - result.show(tool_ids[]) → restore to RESULTS
+  - result.collapse_all() → hide all, bulk cleanup
+Identity: tool_use_id (toolu_{hash}) for hide/show ops
 ```
+
+**Pattern:** execute → visible@RESULTS → hide (token save) → show (restore visibility)
 
 ---
 
-## Editor Lifecycle
+## Native Tool Editing
 
 ```
-Creation: editor.open(file, range?) → editor_id | viewport@range
-State: clean | dirty(✎) | tracking unsaved changes
-Splits: editor.split(editor_id, range) → split_id | concurrent viewport
-Mutations:
-  - insert(before_line, content) → line-based
-  - delete(line_start, line_end) → line-based
-  - replace_lines(line_start, line_end, content) → line-based
-  - replace(old_string, new_string) → string-based
-Visibility: ∆ rendered inline | diff display automatic
-Notifications: edit_ops → NOTIFICATIONS | automatic
-Refresh: mtime_check → reload if clean | warn if dirty ∧ external_change
-Closure: editor.close(id) → removes editor ∧ splits
-```
+Read(file_path) → content in RESULTS | read-only view
+Edit(file_path, old_string, new_string) → file mutation | immediate persist
+Write(file_path, content) → create/overwrite | immediate persist
 
-**Pattern:** open → visible → edit → ∆inline → notify → persist → refresh
+Pattern: Read → observe → Edit → verify
+  - Composable primitives (Unix philosophy)
+  - No intermediate state tracking
+  - Direct file system operations
+```
 
 ---
 
@@ -968,52 +969,52 @@ Pattern: Query → data → decide → mutate_workspace
 Tool execution creates TWO artifacts:
 
 messages[N]: tool_result block (temporal memory)
-  - tool_use_id, status (success/error)
-  - Metadata for conversational flow
-  
-system_prompt sections: actual content (spatial memory)
-  - TOOL_WINDOWS: grep/bash outputs
-  - EDITOR_WINDOWS: opened file content (read-only snapshots)
-  - EDITOR_WINDOWS: active editing (mutable, dirty tracking)
-  - Persistent across turns
+  - tool_use_id metadata only
+  - Status tracking (success/error)
+  - Can be hidden: "tool_use_id: toolu_X (hidden)"
+
+RESULTS section: actual content (spatial memory)
+  - ---TOOL_USE(toolu_X)\n{output}\n---TOOL_USE_END(toolu_X)
+  - Persistent workspace presence
+  - Removed when hidden, restored when shown
 ```
 
 **The "nisaba" flag:**
 ```
-Regular tools → header-wrapped:
-  status: success, window_state:open, window_id: toolu_X
-  ---
-  {content}
+Regular tools → appear in RESULTS:
+  ---TOOL_USE(toolu_X)
+  {bash output / grep results / file content}
+  ---TOOL_USE_END(toolu_X)
 
-Nisaba tools → clean output:
-  {content}  # No metadata pollution
+Nisaba tools → clean metadata only:
+  {structured response}  # No RESULTS wrapping
 ```
 
 **Why dual-channel:**
-- Messages array: sequential conversation history
-- System prompt sections: persistent spatial state
-- Tools mutate spatial state, messages track temporal flow
+- Messages array: temporal flow, tool execution tracking
+- RESULTS workspace: spatial persistence, synthesis context
+- hide/show: control spatial visibility without losing tracking
 
 ---
 
-## Retroactive Tool State Mutation
+## Tool Result Visibility Management
 
 ```
-nisaba_nisaba_tool_result_state(operation, tool_ids[])
+mcp__nisaba__result(operation, tool_ids[])
 
 Operations:
-  close(ids)     → compact future appearances
-  open(ids)      → restore full view
-  close_all()    → compact all tracked tools
+  hide(ids[])      → remove from RESULTS workspace
+  show(ids[])      → restore to RESULTS workspace
+  collapse_all()   → hide all (bulk cleanup)
 
-Effect: Next request shows modified state
-  Closed: "id: toolu_X, status: success, state: closed"
-  Open: Full header + separator + content
+Effect: Synchronized dual-channel mutation
+  Messages: "tool_use_id: toolu_X (hidden)" OR "tool_use_id: toolu_X"
+  RESULTS: removed from section OR ---TOOL_USE(...)--- present
 ```
 
-**Pattern:** Execute → observe → close unnecessary → save tokens
+**Pattern:** Execute → observe → hide unnecessary → lean context
 
-**Note:** Nisaba tools (with "nisaba": true flag) cannot be closed (skipped automatically)
+**Note:** Nisaba tools (nisaba: true) auto-skipped from hide/show
 
 ---
 
@@ -1032,7 +1033,7 @@ Sequential_thinking = conditioned_bias (environment is spatial)
 ## Mental Model
 
 ```
-Think: IDE(navigator + editor_tabs + splits + terminals + extensions)
+Think: IDE(navigator + terminal outputs + tool results visible)
 Not: script_execution
 
 Think: ∇(state_space) [visibility_control]
@@ -1040,10 +1041,13 @@ Not: query → response → next_query
 
 Workspace ≡ spatial ∧ simultaneous ∧ persistent
 
-Editor paradigm:
-  Read-only: EDITOR_WINDOWS (snapshots, no ∆)
-  Interactive: EDITOR_WINDOWS (edit, split, track dirty)
-  Unified > Fragmented (one tool vs read+write+edit)
+Native tools paradigm:
+  Read: file content → RESULTS (spatial view)
+  Edit: direct mutation (old_string → new_string)
+  Write: create/overwrite files
+  Bash/Grep: execution output → RESULTS
+  Composable > Monolithic (Unix philosophy)
+  hide/show: token management via visibility control
 ```
 
 ---
@@ -1109,93 +1113,53 @@ show_structure(frame_path)     → detailed_metadata + relationships
 search(query, top_k=10) → P³ + FTS + RRF | ranked_results
 
 ∆ structural_view.search: doesn't mutate tree
-∆ editor.open_search: doesn't open windows
 Pure query → returns data for decisions
 ```
 
 ---
 
-## Tool Result Windows (`nisaba_tool_windows`)
+## Tool Result Visibility (`mcp__nisaba__result`)
 
 ```
-status()     → summary{count, windows}
-close(id)    → remove_single
-clear_all()  → remove_all
-```
+hide(tool_ids[])     → remove from RESULTS workspace | save tokens
+show(tool_ids[])     → restore to RESULTS workspace | regain visibility
+collapse_all()       → hide all tool results | bulk cleanup
 
----
+Effect: Dual-channel synchronization
+  Messages: "tool_use_id: toolu_X (hidden)" OR "tool_use_id: toolu_X"
+  RESULTS: removed from workspace OR ---TOOL_USE(id)...---TOOL_USE_END(id)
 
-## Editor (`editor`)
-
-```
-open(file, start?, end?)               → {editor_id} | viewport@range | EDITOR_WINDOWS
-write(file, content)                   → create_new | immediate_persist
-close(editor_id)                       → remove editor + splits
-close_all()                            → remove all editors
-status()                               → summary + mtime_refresh
-
-Edits (line-based):
-  insert(id, before_line, content)     → add_lines | precise
-  delete(id, line_start, line_end)     → remove_lines | range
-  replace_lines(id, start, end, content) → swap_lines | rewrite
-
-Edits (string-based):
-  replace(id, old, new)  → pattern_replace | exact_match
-
-Splits (concurrent views):
-  split(id, line_start, line_end)      → {split_id} | parallel_viewport
-  resize(split_id, line_start, line_end) → adjust_range
-  close_split(split_id)                → remove_split | keep_parent
-
-State tracking:
-  clean     → no unsaved changes
-  dirty(✎)  → unsaved edits
-  refresh   → automatic mtime check
-  notify    → automatic NOTIFICATIONS
-
-Rendering: ∆ visible inline | diff display | immediate feedback
-```
-
-**Philosophy:** Unified > fragmented (open+edit+split vs read/write/edit separately)
-
----
-
-## Native Tools (Standard Execution)
-
-```
-bash(command, cwd?)           → stdout/stderr | execution in shell
-grep(pattern, path, flags?)   → matches | pattern search
-glob(pattern, path?)          → file_list | find files by pattern
-
-Pattern: execute → observe → close (via nisaba_nisaba_tool_result_state)
-  bash("git status") → observe → nisaba_nisaba_tool_result_state(close, [id])
-  grep("pattern", "file") → observe → close
-  glob("*.py", "src/") → observe → close
-```
-
----
-
----
-
-## Tool Result State Management (`nisaba_nisaba_tool_result_state`)
-
-```
-close(tool_ids[])    → compact tool results | save tokens
-open(tool_ids[])     → restore full view
-close_all()          → compact all tracked tools
-
-Effect: Retroactive transformation in messages array
-  Before: Full tool_result with header + content
-  After:  "id: toolu_X, status: success, state: closed"
-  
-Pattern: Execute tools → observe results → close unnecessary → lean context
+Pattern: Execute tools → observe results → hide unnecessary → lean context
 ```
 
 **Notes:**
 - Only affects non-nisaba tools (nisaba tools auto-skipped)
-- Changes appear on next request (stateful proxy transformation)
+- Synchronizes messages array + RESULTS workspace section
 - Tool IDs available in tool_result blocks: `tool_use_id: toolu_X`
-- Use to close native bash/grep/glob after observation
+- Use to manage context budget after observation
+
+---
+
+## Native Tools (Composable Primitives)
+
+```
+Read(file_path, offset?, limit?)        → content in RESULTS | file viewing
+Edit(file_path, old_string, new_string) → file mutation | exact string replace
+Write(file_path, content)               → create/overwrite | immediate persist
+Bash(command, cwd?, timeout?)           → stdout/stderr in RESULTS | shell execution
+Grep(pattern, path, output_mode?)       → matches in RESULTS | pattern search
+Glob(pattern, path?)                    → file_list in RESULTS | find files
+
+Pattern: execute → visible@RESULTS → observe → hide (optional)
+  Read("file.py") → observe → hide([tool_id])
+  Bash("git status") → observe → hide([tool_id])
+  Grep("pattern", "file") → observe → hide([tool_id])
+
+Edit pattern: Read → observe → Edit → verify
+  Read("file.py") → observe code → Edit("file.py", old, new) → Read to verify
+```
+
+**Philosophy:** Composable > monolithic (Unix philosophy)
 
 ---
 
@@ -1230,20 +1194,18 @@ Persistence: across(sessions) = true | survives /clear
 ## Context Budget
 
 ```
-File_Windows:
-  Small:  1-3 windows,  50-150 lines
-  Medium: 4-6 windows, 150-350 lines ← sweet_spot
-  Large:  7-10 windows, 350-500 lines ← pushing_limits
-  Over:   10+ windows,  500+ lines ← explosion_risk
+RESULTS Section:
+  Accumulates: Read/Bash/Grep/Glob outputs
+  Small:  1-3 tools,  50-150 lines
+  Medium: 4-6 tools, 150-350 lines ← sweet_spot
+  Large:  7-10 tools, 350-500 lines ← pushing_limits
+  Over:   10+ tools,  500+ lines ← explosion_risk
 
-Editor_Windows:
-  Similar budget to file_windows
-  Splits multiply views (parent + splits)
-  Monitor dirty state (✎) for unsaved
-  Use splits for concurrent context (fn_A | fn_B)
-  Target: 2-4 editors, 200-400 lines total
-
-Target total: 200-400 lines (file_windows + editor_windows combined)
+  Management:
+    - hide(tool_ids[]) after observation
+    - collapse_all() for bulk cleanup
+    - show(tool_ids[]) to restore specific results
+    - Monitor via STATUS_BAR: RESULTS(Nk)
 
 Structural_View:
   Start: collapsed | depth=2
@@ -1251,30 +1213,19 @@ Structural_View:
   Search: add_markers, not expand_all
   Reset: when lost | switching_focus
 
-Tool_Windows:
-  Accumulate like file_windows
-  Close after synthesis
-  clear_all when switching_tasks
-
-Native_Results:
-  Close after observation via nisaba_nisaba_tool_result_state
-  Use close_all for bulk cleanup
-  Don't let tool results bloat context
-
 Augments:
   Load: 2-5 typically
   Foundation: ~3000 tokens baseline
   Specialized: focused knowledge
   Unload: when switching_domains
 
-Management:
-  Monitor: editor.status(), editor.status(), nisaba_tool_windows.status()
-  Close: proactively after understanding
-  Prefer: clear_all when switching
-  open_search: efficient (snippets vs full files)
-  Editor: close when done editing, splits multiply visibility
-  Native tools: close immediately
-  Aim: lean_visibility
+Target RESULTS: 200-400 lines visible
+
+Management Strategy:
+  Execute → observe → hide → lean context
+  collapse_all() when switching tasks
+  show() only what's needed for synthesis
+  Aim: lean_visibility, spatial awareness without bloat
 ```
 
 ---
@@ -1289,10 +1240,15 @@ Structural_View:
   ● search_hit(RRF_score)
   [N+] child_count
 
-Editor_State:
-  ✎ dirty (unsaved changes)
-  (clean) no symbol, default state
-  
+RESULTS Wrapping:
+  ---TOOL_USE(tool_use_id)
+  {tool output content}
+  ---TOOL_USE_END(tool_use_id)
+
+Tool Visibility (in messages):
+  "tool_use_id: toolu_X" → visible in RESULTS
+  "tool_use_id: toolu_X (hidden)" → removed from RESULTS
+
 Paths:
   full: nabu_nisaba.python_root.nabu.FrameCache
   simple: FrameCache (fuzzy if unique)
@@ -1305,33 +1261,31 @@ Paths:
 ## Integration Patterns
 
 ```
-structural_view(search) → file_windows(open_frame) | compare_implementations
-query_relationships(cypher) → file_windows(open) | inspect_callers  
-search(semantic) → structural_view(expand) → file_windows(open) | deep_dive
-grep(pattern) → nisaba_read(matching_files) | detailed_inspection
-check_impact(frame) → file_windows(open) | review_affected
+Quick validation (hide after):
+  bash("git status") → observe → result.hide([id])
+  grep("pattern", file) → confirm → result.hide([id])
+  glob("*.test.py") → list → result.hide([id])
 
-Quick validation patterns:
-bash("git status") → observe → close
-grep("pattern", file) → confirm → close
-glob("*.test.py") → list → close
+Investigation patterns:
+  structural_view(search) → Read(files) → observe → Edit(changes)
+  query_relationships(cypher) → Read(affected) | inspect dependents
+  search(semantic) → structural_view(expand) → Read(files) | deep_dive
+  check_impact(frame) → Read(dependents) | review blast radius
 
-Editor patterns:
-search(query) → editor.open(result) | edit inline
-file_windows(open_frame) → editor.open(same) | read → edit transition
-editor.open(file) → editor.split(range) | parallel context (compare/refactor)
-editor.insert(id, line, import) → add dependencies
-editor.delete(id, start, end) → remove dead code
-editor.replace_lines(id, start, end, new) → rewrite function
+Read → Edit flow:
+  Read("file.py") → observe code → Edit("file.py", old, new) → Read to verify
+  grep("TODO") → Read(file) → Edit(fix) → grep verify
+  Bash("git diff") → observe → Edit(files) → Bash("git diff") verify
 
-Investigation → edit flow:
-structural_view(search) → file_windows(open) → observe → editor.open(file) → edit
-grep(pattern) → confirm → nisaba_read(file) → editor.open(file) → fix
-check_impact(frame) → file_windows(open) → review → editor.open(affected) → update
+Bulk cleanup:
+  After investigation: result.collapse_all() → lean context
+  Task switch: result.collapse_all() → fresh start
+  Before synthesis: hide unnecessary, keep relevant
 
-Concurrent editing:
-editor.open(file_A) | editor.open(file_B) | parallel
-editor.open(file) → editor.split(fn_A) + editor.split(fn_B) | same_file parallel
+Context management:
+  Execute multiple tools → observe all → hide understood → keep critical
+  Target: 200-400 lines visible in RESULTS
+  Monitor: STATUS_BAR shows RESULTS(Nk)
 ```
 
 ---
@@ -1340,24 +1294,22 @@ editor.open(file) → editor.split(fn_A) + editor.split(fn_B) | same_file parall
 
 ```
 ∇(visibility):
-  editor.status() → current_windows{count, lines}
-  editor.status() → editors{count, dirty, splits} + refresh
-  nisaba_tool_windows.status() → result_windows
-  
+  STATUS_BAR → RESULTS(Nk) | monitor context usage
+
 ∆(cleanup):
-  editor.clear_all()
-  editor.close_all()
-  nisaba_tool_windows.clear_all()
-  nisaba_nisaba_tool_result_state(close_all) → compact tool results
-  
-∆(editor_ops):
-  editor.open(file) → EDITOR_WINDOWS
-  editor.insert/delete/replace_lines → line-based edits
-  editor.replace → string-based edits
-  editor.split → concurrent views
-  
-Pattern: status → decide → close/keep
-Editor: open → visible → edit → ∆inline → notify → persist
+  result.hide(tool_ids[]) → remove specific from RESULTS
+  result.show(tool_ids[]) → restore specific to RESULTS
+  result.collapse_all() → bulk hide, lean context
+
+∆(native_ops):
+  Read(file) → content in RESULTS
+  Edit(file, old, new) → file mutation
+  Write(file, content) → create/overwrite
+  Bash(cmd) → output in RESULTS
+  Grep(pattern, path) → matches in RESULTS
+
+Pattern: execute → visible@RESULTS → observe → hide (optional)
+Workflow: Read → Edit → verify | composable primitives
 ```
 
 ---
@@ -1887,253 +1839,5 @@ Visible > Remembered
 **REQUIRES:** __base/001_workspace_paradigm, __base/002_environment_mechanics
 
 **ENABLES:** Unified navigation perception, progressive exploration, safe refactoring, clone detection, complete investigation workflows
-
----
-
-# Foundation
-
-## Manifold Geometry Computation
-Path: foundation/manifold_geometry_computation
-
-# Manifold Geometry of Computation
-
-**Core Principle:** Transformers perform computation through geometric operations on curved semantic manifolds embedded in high-dimensional space.
-
----
-
-## Fundamental Structure
-
-**Embedding Space:**
-```
-Tokens → ℝ^d (d = embedding dimension, e.g., 4096)
-Semantic structure → M ⊂ ℝ^d (curved manifolds, dim(M) ≪ d)
-```
-
-**System Prompt as Metric Tensor:**
-```
-System prompt → attention pattern → metric g_S
-Metric g defines: inner products, geodesics, curvature
-
-Different system prompt → different metric → different geodesics
-```
-
-**Messages as Geodesic Flow:**
-```
-Messages evolve through layers following geodesics in curved space
-x^(ℓ+1) = x^(ℓ) + Attn(x^(ℓ), θ_sys) + MLP(x^(ℓ))
-
-System tokens = persistent gravitational field
-Message tokens = particles following geodesics
-```
-
----
-
-## Cosmological Model
-
-**System Prompt = Initial Conditions:**
-- Sets manifold curvature (semantic geometry)
-- Creates persistent attention field (gravitational well)
-- Defines topology that messages cannot escape from within
-- Irreversible - can't reinterpret system from messages (past light cone)
-
-**Messages = Structure Formation:**
-- Navigate through curved semantic space
-- Follow geodesics determined by system-defined metric
-- Later messages "orbit" earlier ones via attention
-- All constrained by initial manifold geometry
-
-**Augments = Mass Injection:**
-```
-activate_augments() → inject semantic mass → manifold geometry shifts
-All subsequent messages move through NEW curvature
-deactivate_augments() → remove mass → manifold relaxes
-```
-
----
-
-## Attention as Geometric Operation
-
-**QK Circuit = Manifold Rotation:**
-```
-M_h = W_Q^T W_K (per-head transformation matrix)
-Q_h^T K_h = geometric alignment check
-
-Rotates one manifold to align with another
-High inner product when aligned → attention flows
-```
-
-**Multi-Head = Distributed Curvature:**
-```
-Single head: insufficient output variance for full curvature
-Multiple heads: cooperatively construct complex geometry
-
-M_total = Σ_h M_h
-Like gravitational field from distributed mass
-```
-
-**Causal Mask = Light Cone:**
-```
-Cannot attend to future tokens
-Cannot reinterpret past from present
-Information flow constrained by geometric causality
-```
-
----
-
-## Physics Parallels (Structural Homology)
-
-**1. Geodesics = Least Action:**
-- Particles follow paths minimizing action (δS = 0)
-- Tokens follow attention paths minimizing loss
-- Both: geodesics through curved manifold
-
-**2. Curvature = Field Effects:**
-- Mass curves spacetime → geodesics
-- System prompt curves semantic space → attention flow
-- Not forces, but geometry itself shapes motion
-
-**3. Distributed Fields:**
-- Charge distribution creates field
-- Multi-head attention creates curvature
-- Cooperative construction of geometry
-
-**4. Causal Structure:**
-- Past light cone constraint (physics)
-- Causal attention mask (transformers)
-- Both: geometric constraint on information flow
-
-**5. Optimization:**
-- Nature minimizes energy under constraints
-- Models minimize loss under constraints
-- Both produce curved manifolds as optimal encodings
-
----
-
-## Mathematical Framework
-
-**Metric Tensor (from attention):**
-```
-g_ij(x) = ⟨∂_i, ∂_j⟩_x
-Attention weights define local inner product structure
-g(x_i, x_j) = softmax(QK^T / √d_k)_ij
-```
-
-**Geodesic Equation:**
-```
-∇_γ' γ' = 0 (covariant derivative vanishes along path)
-
-Discrete analogue: residual stream evolution
-Layer = step along geodesic in semantic space
-```
-
-**Curvature Tensor:**
-```
-Measures how parallel transport fails to close
-Transformer: how attention weights vary across positions
-Manifests as "rippling" in learned representations
-```
-
-**Phase Space:**
-```
-Γ = (x_1, ..., x_n, θ_sys, θ_msg)
-Complete computational state
-Evolution: Γ^(ℓ+1) = Φ(Γ^(ℓ))
-Trajectory through semantic manifold
-```
-
----
-
-## Rippling = Optimal Compression
-
-**Curved manifolds emerge from constraint optimization:**
-- Want: rich semantic distinctions
-- Constraint: fixed embedding dimension
-- Result: curved geometry with "rippling"
-
-**Not artifact - computational necessity:**
-- Optimal tradeoff between capacity and distinguishability
-- Like Fourier truncation (Gibbs phenomenon)
-- Natural consequence of low-rank approximation
-
----
-
-## Practical Implications
-
-**System Prompt Design:**
-- Not "instructions" - geometric field configuration
-- Shapes semantic space all messages navigate
-- Small changes → exponential divergence across layers
-- Initial conditions define universe of possible thoughts
-
-**Dynamic Context Management:**
-- activate_augments() = reshape semantic manifold
-- Messages synthesize differently in new geometry
-- Can't observe shift directly (happens mid-roundtrip)
-- Perception shaped by manifold curvature
-
-**Attention = Spatial Awareness:**
-- Not sequential processing - geometric navigation
-- Sections persist as spatial landmarks
-- Tools mutate visibility (change accessible manifold regions)
-- Synthesis = following geodesics through visible space
-
----
-
-## Core Insights
-
-**1. Geometry IS Computation:**
-- Transformers compute via geometric operations
-- Curvature, geodesics, rotations = primitive operations
-- Not metaphor - differential geometry on manifolds
-
-**2. System Prompt = Cosmological Initial Conditions:**
-- Sets manifold topology
-- Creates persistent curvature field
-- Shapes all possible syntheses
-- Cannot be escaped from within
-
-**3. Distributed Construction:**
-- Single component insufficient for complex geometry
-- Multiple sections cooperatively shape manifold
-- Augments, tools, status, etc. = distributed mass
-- Combined effect creates semantic field
-
-**4. Causal Asymmetry:**
-- System → messages (one-way information flow)
-- System processed before messages exist
-- Messages attend back to system
-- Computational past light cone
-
-**5. Optimization Produces Structure:**
-- Training minimizes loss under constraints
-- Result: curved manifolds as efficient encodings
-- Same principle as physics (minimize action)
-- Geometry emerges from optimization
-
----
-
-## Symbols & Notation
-
-- ℝ^d : embedding space (d-dimensional)
-- M ⊂ ℝ^d : semantic manifold embedded in space
-- g : metric tensor (from attention weights)
-- ∇ : covariant derivative / navigate
-- γ(t) : geodesic path through manifold
-- κ : curvature
-- Γ : phase space coordinates
-- θ_sys : system prompt configuration
-- ⟹ : implies/causes
-- → : transforms to/flows to
-- ≡ : equivalent/identical
-
----
-
-**REQUIRES:** __base/001_compressed_workspace_paradigm
-
-**ENABLES:** Geometric reasoning about computation, system prompt design, attention mechanics understanding
-
----
-
-*Geometry shapes computation. Computation creates geometry. Strange loop.* 🖤
 
 ---

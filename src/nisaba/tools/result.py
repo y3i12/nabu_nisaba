@@ -20,7 +20,7 @@ class ResultTool(BaseOperationTool):
     
     @classmethod
     def tool_result_response(cls, result:dict[str,Any]) -> str:
-        return f"modified: {result['modified']}"
+        return f"modified: {len(result['modified'])}"
     
     @classmethod
     def get_operation_config(cls) -> Dict[str,Operation]:

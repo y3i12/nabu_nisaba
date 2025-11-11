@@ -142,17 +142,14 @@ Current branch: devel_y3i12_nisaba_refactor_edit_remove
 Main branch (you will usually use this for PRs): 
 
 Status:
-M .dev_docs/dev.dump.md
- M .nisaba/mcp_servers.json
+M .nisaba/mcp_servers.json
  M .nisaba/modified_context.json
- M .nisaba/tui/notification_state.json
- M .nisaba/tui/notification_view.md
- M .nisaba/tui/status_bar_live.txt
+ M .nisaba/tui/augment_view.md
  M src/nisaba/wrapper/proxy.py
 
 Recent commits:
+ca29dab fix itr 5 + augments
+f683787 fix itr 4
 130addc fix itr 3
 be4e3a9 fix itr 2
 7d3d879 fix itr
-85e94f0 fixes in tool naming and some parameter passing
-c5d7b61 moving tool use to workspace
