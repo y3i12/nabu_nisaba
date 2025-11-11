@@ -155,15 +155,6 @@ class AugmentManager:
         
         logger.info(f"Restored {len(self.active_augments)} active augments ({len(self.pinned_augments)} pinned) from state file")
 
-        self.active_augments.update(self.pinned_augments)
-
-        # Rebuild tool associations and compose
-        if self.active_augments:
-            self._rebuild_tool_associations()
-            self._compose_and_write()
-
-        logger.info(f"Restored {len(self.active_augments)} active augments ({len(self.pinned_augments)} pinned) from state file")
-
     def _load_augments_from_dir(self) -> None:
         """Load all augment files from augments directory."""
         if not self.augments_dir.exists():
