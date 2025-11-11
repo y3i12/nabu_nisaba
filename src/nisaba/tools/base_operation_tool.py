@@ -1,4 +1,4 @@
-import inspect
+import json
 
 from abc import abstractmethod
 from dataclasses import dataclass
@@ -214,6 +214,12 @@ class BaseOperationTool(BaseTool):
         if len(missing_parameters):
             return self.response_parameter_missing(operation=operation, parameters=missing_parameters)
         
+        for parameter_name in collected_parameters:
+            try:
+                collected_parameters[parameter_name] = json.dumps(collected_parameters[parameter_name])
+            except:
+                pass
+
         try:
             result = operation_obj.command(**collected_parameters)
 
