@@ -31,9 +31,7 @@ Platform: linux
 OS Version: Linux 6.6.87.2-microsoft-standard-WSL2
 Today's date: 2025-11-11
 </env>
-You are powered by the model named Sonnet 4.5. The exact model ID is claude-sonnet-4-5-20250929.
-
-Assistant knowledge cutoff is January 2025.
+You are powered by the model named Haiku 4.5. The exact model ID is claude-haiku-4-5-20251001.
 
 <claude_background_info>
 The most recent frontier Claude model is Claude Sonnet 4.5 (model ID: 'claude-sonnet-4-5-20250929').
@@ -46,15 +44,11 @@ Main branch (you will usually use this for PRs):
 
 Status:
 M .nisaba/mcp_servers.json
- M src/nabu/mcp/agent.py
- M src/nisaba/augments.py
- M src/nisaba/cli.py
- M src/nisaba/server/factory.py
- M src/nisaba/wrapper/claude.py
+ M src/nisaba/tools/todo.py
 
 Recent commits:
+880d92d first running version after nisaba tool refactor
 4f6fa14 todo refactor finished
 14a2ba2 implementation of result tool into new infra done
 545285f implementation of augment tool into new infra done - result tool started
 24a5449 mid implementation checkpoint
-d85d7f5 basic functioning of base_operation_tool
