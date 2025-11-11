@@ -28,13 +28,13 @@ class AugmentTool(BaseOperationTool):
         return cls.response(success=False, message="ConfigurationError: Augments system not initialized")
     
     @classmethod
-    def augment_manager_result_response(cls, result:dict[str,Any]) -> BaseToolResponse:
+    def augment_manager_result_response(cls, result:dict[str,Any]) -> str:
         message_list:list[str] = []
         for key in ('affected', 'dependencies', 'skipped'):
             message_list = cls._augment_result_append_key(result, key, message_list)
 
         message = ', '.join(message_list)
-        return cls.response(success=True, message=message)
+        return message
     
     @classmethod
     def _augment_result_append_key(cls, result:dict[str,Any], key:str, message_list:list[str]) -> list[str]:
