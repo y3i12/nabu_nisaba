@@ -158,18 +158,6 @@ class AugmentInjector:
             "structural view",
             "STRUCTURAL_VIEW"
         )
-        # self.file_windows_cache = StructuredFileCache(
-        #     Path("./.nisaba/tui/file_window_view.md"),
-        #     "file windows",
-        #     "FILE_WINDOWS",
-        #     section_marker="---FILE_WINDOW_"
-        # )
-        self.editor_windows_cache = StructuredFileCache(
-            Path("./.nisaba/tui/editor_view.md"),
-            "editor windows",
-            "EDITOR_WINDOWS",
-            section_marker="---EDITOR_"
-        )
         self.todos_cache = StructuredFileCache(
             Path("./.nisaba/tui/todo_view.md"),
             "todos",
@@ -203,8 +191,6 @@ class AugmentInjector:
         self.system_prompt_cache.load()
         self.transcript_cache.load()
         self.structural_view_cache.load()
-        # self.file_windows_cache.load()
-        self.editor_windows_cache.load()
         self.todos_cache.load()
         self.notifications_cache.load()
 
@@ -312,19 +298,6 @@ class AugmentInjector:
 
         
         if 'messages' in body and len(body["messages"]) > 2:
-            # Check if last message contains tool results (don't commit during tool roundtrips)
-            last_message = body["messages"][-1]
-            is_tool_result = False
-            if isinstance(last_message.get("content"), list):
-                is_tool_result = any(
-                    isinstance(c, dict) and c.get("type") == "tool_result"
-                    for c in last_message["content"]
-                )
-            
-            # Only commit on user messages, not on tool result roundtrips
-            if not is_tool_result:
-                self._commit_pending_edits()
-            
             status_bar = f"\n{self._generate_status_bar(body)}"
             body['messages'].append( 
                 {
@@ -335,8 +308,6 @@ class AugmentInjector:
                             "text": f"<system-reminder>\n--- WORKSPACE ---\n{(
                                     f"\n{status_bar}"
                                     f"\n{self.structural_view_cache.load()}"
-                                    #f"\n{self.file_windows_cache.load()}"
-                                    f"\n{self.editor_windows_cache.load()}"
                                     f"\n{self.notifications_cache.load()}"
                                     f"\n{self.todos_cache.load()}"
                                 )}\n</system-reminder>"
@@ -542,23 +513,6 @@ class AugmentInjector:
             # Fallback to rough estimate if tiktoken fails
             return len(text) // 4
     
-    def _commit_pending_edits(self) -> None:
-        """
-        Commit any pending editor changes before injecting workspace.
-        
-        This ensures workspace state reflects all queued edits from
-        previous tool executions.
-        """
-        try:
-            from nisaba.tui.editor_manager import get_editor_manager
-            
-            manager = get_editor_manager()
-            if hasattr(manager, 'pending_edits') and manager.pending_edits:
-                manager.commit_all()
-                logger.debug(f"Committed {len(manager.pending_edits)} pending editor queues")
-        except Exception as e:
-            logger.warning(f"Failed to commit pending edits: {e}")
-    
     def _generate_status_bar(self, body: dict) -> str:
         """
         Generate status bar with segmented token usage.
@@ -580,17 +534,13 @@ class AugmentInjector:
         self.system_prompt_cache.load()
         self.todos_cache.load()
         self.notifications_cache.load()
-        self.editor_windows_cache.load()
         self.augments_cache.load()
         self.structural_view_cache.load()
-        #self.file_windows_cache.load()
         self.transcript_cache.load()
         
         # Use cached token counts (no recalculation!)
-        editor_tokens = self.editor_windows_cache.token_count
         structural_view_tokens = self.structural_view_cache.token_count
-        # file_windows_tokens = self.file_windows_cache.token_count
-        workspace_tokens = self.todos_cache.token_count + self.notifications_cache.token_count + structural_view_tokens + editor_tokens # + file_windows_tokens
+        workspace_tokens = self.todos_cache.token_count + self.notifications_cache.token_count + structural_view_tokens
         
         # Count message tokens (properly, without JSON overhead)
         messages = body.get('messages', [])
@@ -642,14 +592,6 @@ class AugmentInjector:
                 },
                 "augments": self.augments_cache.token_count,
                 "view": structural_view_tokens,
-                "editor": {
-                    "count": self.editor_windows_cache.section_count,
-                    "tokens": editor_tokens,
-                },
-                # "files": {
-                #     "count": file_count,
-                #     "tokens": file_windows_tokens
-                # },
                 "notifications": self.notifications_cache.line_count - 1,  # header + endl compensation,
                 "todos": self.todos_cache.line_count - 1  # header + endl compensation
             },
@@ -668,8 +610,6 @@ class AugmentInjector:
             f"MSG:{status_data['messages']//1000}k",
             f"WORKPACE({ws['total']//1000}k)",
             f"STVIEW({ws['view']//1000}k)",
-            f"EDITOR({ws['editor']['count']}, {ws['editor']['tokens']//1000}k)",
-            # f"FILES({ws['files']['count']}, {ws['files']['tokens']//1000}k)",
             f"MODEL({model_name})",
             f"{status_data['total']//1000}k/{status_data['budget']//1000}k"
         ]

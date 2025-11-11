@@ -42,8 +42,8 @@ class StructuredFileCache:
         Args:
             file_path: Path to the file
             name: Human-readable name for logging
-            tag: Optional tag for wrapping content (e.g., "EDITOR_WINDOWS")
-            section_marker: Optional marker for counting sections (e.g., "---EDITOR_")
+            tag: Optional tag for wrapping content (e.g., "---FLOATING_WINDOWS")
+            section_marker: Optional marker for counting sections (e.g., "---WIDGET_")
         """
         self.file_path = Path(file_path)
         self.name = name
