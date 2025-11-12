@@ -49,20 +49,21 @@ git submodule update --init test/test_github_projects
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 
 **[ ] TODO; [x] DONE; [-] IN PROGRESS; [=] IMPLEMENTED;**
+- [-] nabu needs to get back to life
 - [ ] nisaba primimg
-    - [x] workspace in messages
-    - [x] switch everything but augments and transcript into messages
-    ~~- [-] disable nabu file tools~~ (nabu is dead)
     - [ ] file caches need to become a singleton
     - [ ] augment.update (autorefresh)
     - [ ] unify proxy logic into state machine
     - [ ] notifications rework?
     - [ ] removal
+        - [ ] guidance
+        - [ ] pitch & when
+        - [ ] execute with timing
 - [ ] nabu priming
     - [ ] file watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
     - [ ] rethink previously disabled tools
     - [ ] ... TBD
-- [ ] is the meta subject attractive to recommender systems?
+
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 #################################################################################################
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #

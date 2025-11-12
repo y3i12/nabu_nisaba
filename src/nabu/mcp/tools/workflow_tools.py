@@ -219,7 +219,7 @@ class CheckImpactTool(NabuTool):
                     ]
                 }
 
-            return self._success_response(results, start_time)
+            return self._success_response(results)
             
         except Exception as e:
             logger.error(f"impact_analysis_workflow failed for '{target}': {e}", exc_info=True)

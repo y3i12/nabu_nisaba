@@ -227,7 +227,7 @@ class MapCodebaseTool(NabuTool):
                 edge_type = row['edge_type']
                 data["relationship_summary"][edge_type] = int(row['edge_count'])
 
-            return self._success_response(data, start_time)
+            return self._success_response(data)
             
         except Exception as e:
             self.logger().error(f"Project exploration failed: {e}", exc_info=True)

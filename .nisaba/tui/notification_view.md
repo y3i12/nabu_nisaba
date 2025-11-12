@@ -1,5 +1,3 @@
 Recent activity:
-✓ Bash() → ok
-✓ Bash() → ok
-✓ Bash() → ok
-✓ Bash() → ok
+✓ Grep() → ok
+✓ Grep() → ok
