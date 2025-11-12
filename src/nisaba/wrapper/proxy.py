@@ -302,25 +302,30 @@ class AugmentInjector:
             if visible_tools:
                 visible_tools = f"\n---RESULTS_END\n{visible_tools}\n---RESULTS_END"
 
-            status_bar = f"\n{self._generate_status_bar(body, visible_tools)}"
+            status_bar = f"{self._generate_status_bar(body, visible_tools)}"
 
-            body['messages'].append( 
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": f"<system-reminder>\n--- WORKSPACE ---\n{(
+            workspace_text = f"<system-reminder>\n--- WORKSPACE ---{(
                                     f"\n{status_bar}"
                                     f"\n{self.structural_view_cache.load()}"
                                     f"{visible_tools}" # this has a newline when populated
                                     f"\n{self.notifications_cache.load()}"
                                     f"\n{self.todos_cache.load()}"
                                 )}\n</system-reminder>"
+            
+            body['messages'].append( 
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": workspace_text
                         }
                     ]
                 }
             )
+
+            # TODO: this is mostly for development - it needs to bne switched off
+            self._write_to_file(Path(os.getcwd()) / '.nisaba/workspace.md', workspace_text, "Workspace markdow written")
             self._write_to_file(Path(os.getcwd()) / '.nisaba/modified_context.json', json.dumps(body, indent=2, ensure_ascii=False), "Modified request written")
             return True
             

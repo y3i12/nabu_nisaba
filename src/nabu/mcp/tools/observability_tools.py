@@ -172,4 +172,4 @@ class ShowStatusTool(NabuTool):
                     context={"detail_level": detail_level}
                 )
         
-        return self._success_response(response_data, start_time)
+        return self._success_response(response_data)

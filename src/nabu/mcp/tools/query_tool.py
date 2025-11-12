@@ -137,7 +137,7 @@ class QueryRelationshipsTool(NabuTool):
                     "columns": []
                 }
             
-            return self._success_response(data, start_time)
+            return self._success_response(data)
         
         except RuntimeError as e:
             error_str = str(e)

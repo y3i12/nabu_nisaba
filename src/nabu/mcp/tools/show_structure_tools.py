@@ -258,7 +258,7 @@ class ShowStructureTool(NabuTool):
                     "estimated_tokens": total_tokens
                 }
 
-            return self._success_response(data, start_time)
+            return self._success_response(data)
 
         except ValueError as e:
             # Catch service-level validation errors

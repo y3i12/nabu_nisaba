@@ -163,8 +163,7 @@ class FindClonesTool(NabuTool):
             # Validate parameters
             if not 0.0 <= min_similarity <= 1.0:
                 return self._error_response(
-                    ValueError(f"min_similarity must be between 0.0 and 1.0, got {min_similarity}"),
-                    start_time
+                    ValueError(f"min_similarity must be between 0.0 and 1.0, got {min_similarity}")
                 )
 
             warnings = [f"min_similarity={min_similarity} is quite low, may produce false positives"] if min_similarity < 0.60 else None
@@ -184,7 +183,6 @@ class FindClonesTool(NabuTool):
                 if not search_result.get('success', False):
                     return self._error_response(
                         ValueError(f"Search failed: {search_result.get('error', 'Unknown error')}"),
-                        start_time,
                         recovery_hint="Try a different query or check database health"
                     )
 
@@ -192,7 +190,6 @@ class FindClonesTool(NabuTool):
                 if not search_results:
                     return self._success_response(
                         self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size),
-                        start_time,
                         warnings=[f"No frames found matching query: '{query}'"]
                     )
 
@@ -227,11 +224,11 @@ class FindClonesTool(NabuTool):
                 frames_result = self.db_manager.execute(frames_query, {"min_size": min_function_size})
 
             if not frames_result or not hasattr(frames_result, 'get_as_df'):
-                return self._success_response(self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size), start_time, warnings=warnings)
+                return self._success_response(self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size), warnings=warnings)
 
             frames_df = frames_result.get_as_df()
             if frames_df.empty:
-                return self._success_response(self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size), start_time, warnings=warnings)
+                return self._success_response(self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size), warnings=warnings)
 
             # Find clones for each frame
             clone_pairs = []
@@ -356,11 +353,11 @@ class FindClonesTool(NabuTool):
                     "excluded_same_file": exclude_same_file,
                     "min_function_size": min_function_size
                 }
-            }, start_time, warnings=warnings)
+            }, warnings=warnings)
 
         except Exception as e:
             self.logger().error(f"Clone detection failed: {e}", exc_info=True)
-            return self._error_response(e, start_time,
+            return self._error_response(e,
                 context={"min_similarity": min_similarity, "error_type": type(e).__name__}
             )
 

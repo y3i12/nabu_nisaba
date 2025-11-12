@@ -57,14 +57,8 @@ class ResponseBuilder:
         """
         response = {
             "success": True,
-            "data": data
+            "message": data
         }
-
-        if warnings:
-            response["warnings"] = warnings
-
-        if metadata:
-            response["metadata"] = metadata
 
         return ResponseBuilder._round_floats(response)
 
@@ -89,9 +83,7 @@ class ResponseBuilder:
         """
         response = {
             "success": False,
-            "error": str(error),
-            "error_type": type(error).__name__,
-            "severity": severity.value
+            "message": f"[{severity.value}] {type(error).__name__}:{str(error)}"
         }
 
         if recovery_hint:
@@ -99,38 +91,5 @@ class ResponseBuilder:
 
         if context:
             response["error_context"] = context
-
-        return ResponseBuilder._round_floats(response)
-
-    @staticmethod
-    def partial_success(
-        data: Any,
-        errors: List[str],
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """
-        Build response for operations that partially succeeded.
-
-        Use when an operation completes but with some failures (e.g., batch operations
-        where some items succeed and others fail).
-
-        Args:
-            data: Data for successful portion
-            errors: List of error messages for failed portion
-            execution_time_ms: Execution time in milliseconds
-            metadata: Optional metadata (e.g., success_count, failure_count)
-
-        Returns:
-            Partial success response dictionary
-        """
-        response = {
-            "success": True,
-            "partial": True,
-            "data": data,
-            "errors": errors
-        }
-
-        if metadata:
-            response["metadata"] = metadata
 
         return ResponseBuilder._round_floats(response)
