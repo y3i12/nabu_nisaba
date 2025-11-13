@@ -141,8 +141,7 @@ class StructuralViewTool(NabuTool):
             })
 
         except Exception as e:
-            logger.error(f"Structural view operation failed: {e}", exc_info=True)
-            return self.response_exception(e)
+            return self.response_exception(e, "Structural view operation failed")
 
     def _write_state(self, tree_markdown: str):
         """

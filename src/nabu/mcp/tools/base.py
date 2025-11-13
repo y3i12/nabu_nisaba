@@ -839,8 +839,7 @@ class NabuTool(BaseTool):
             return self._success_response(result)
 
         except Exception as e:
-            error_response = self.response_exception(e)
-            return error_response
+            return self.response_exception(e, "Tool execution exception")
 
         finally:
             # ALWAYS restore context (critical for async safety)
