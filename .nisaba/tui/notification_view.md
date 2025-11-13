@@ -1,2 +1,2 @@
 Recent activity:
-✓ mcp__nabu__rebuild_database() → ok
+✓ mcp__nisaba__todo() → ok
