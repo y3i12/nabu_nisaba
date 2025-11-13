@@ -1,10 +1,6 @@
 """Base agent class for MCP lifecycle management."""
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional
-
-if TYPE_CHECKING:
-    from nisaba.guidance import WorkflowGuidance
 
 
 class Agent(ABC):
@@ -17,10 +13,6 @@ class Agent(ABC):
     The factory's server_lifespan() should call:
     1. await agent.initialize() - during startup
     2. await agent.shutdown() - during shutdown
-
-    Attributes:
-        guidance: Optional workflow guidance system for contextual tool suggestions.
-                  Subclasses can set this to enable guidance (e.g., NabuAgent does).
     """
 
     def __init__(self):
@@ -28,10 +20,9 @@ class Agent(ABC):
         Initialize base agent.
 
         Subclasses should call super().__init__() and then initialize their
-        specific resources. Guidance is optional - set to WorkflowGuidance
-        instance if desired.
+        specific resources.
         """
-        self.guidance: Optional["WorkflowGuidance"] = None
+        pass
 
     @abstractmethod
     async def initialize(self) -> None:

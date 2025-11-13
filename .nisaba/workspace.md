@@ -2,597 +2,1029 @@
 --- WORKSPACE ---
 ---STATUS_BAR
 SYSTEM(7k) | TOOLS(14k) | AUG(12k) | COMPTRANS(0k)
-MSG(18k) | WORKPACE(0k) | STVIEW(0k) | RESULTS(25k)
-MODEL(claude-sonnet-4-5-20250929) | 78k/200k
+MSG(14k) | WORKPACE(0k) | STVIEW(0k) | RESULTS(32k)
+MODEL(claude-sonnet-4-5-20250929) | 80k/200k
 ---STATUS_BAR_END
 ---STRUCTURAL_VIEW
 
 ---STRUCTURAL_VIEW_END
 ---RESULTS_END
----TOOL_USE(toolu_011rvJnWY5pe25Jz7nNEW5KJ)
-commit 68e1e0eb635831805de46c2580f6eb1d421c2e42
-Author: Yuri Ivatchkovitch <mytos.mail@gmail.com>
-Date:   Wed Nov 12 00:45:46 2025 +0100
-
-    nabu fix itr 1: nabu tool`
-
+---TOOL_USE(toolu_01P9xgHQZAPzez8CcencYu52)
+{
+  "success": true,
+  "message": "# Search Results\n**Query:** `guidance system`\n\n## /home/y3i12/nabu_nisaba/src/nisaba/guidance.py:106-131\n- score: 2.46 | rrf: 0.02 | similarity: - | mechanisms: fts, semantic\n- type: CALLABLE | qualified_name: nabu_nisaba.python_root.nisaba.WorkflowGuidance.record_tool_call\n\n### preview\ndef record_tool_call(\n        self,\n        tool_name: str,\n        params: Dict[str, Any],\n        result: Dict[str, Any]\n    ) -> None:\n        \"\"\"\n        Record a tool execution.\n\n        Args:\n            tool_name: Name of the tool that was called\n            params: Parameters passed to the tool\n            result: Result returned by the tool\n        \"\"\"\n        entry = {\n            \"timestamp\": time.time(),\n            \"tool\": tool_name,\n            \"params\": params.copy(),  # Copy to a\n    ...\n\n## /home/y3i12/nabu_nisaba/src/nisaba/wrapper/proxy.py:248-334\n- score: 3.19 | rrf: 0.02 | similarity: - | mechanisms: fts, semantic\n- type: CALLABLE | qualified_name: nabu_nisaba.python_root.nisaba.wrapper.AugmentInjector._inject_augments\n\n### snippet (lines 2-8)\n2:           \"\"\"\n3:           Inject augments content into request body.\n4:   \n5: →         Finds __NISABA_AUGMENTS_PLACEHOLDER__ in system blocks:\n6:           - First occurrence: replaced with augments content\n7:           - Remaining occurrences: deleted\n8:   \n\n### snippet (lines 21-33)\n21:                   filtered_tools.append(tool)\n22:               body[\"tools\"] = filtered_tools\n23:   \n24: →         if \"system\" in body:\n25: →             if len(body[\"system\"]) < 2:                \n26: →                 body[\"system\"].append(\n27:                       {\n28:                           \"type\": \"text\",\n29:                           \"text\": (\n30: →                             f\"\\n{self.system_prompt_cache.load()}\"\n31:                               f\"\\n{self.augments_cache.load()}\"\n32:                               f\"\\n{self.transcript_cache.load()}\"\n33:                           ),\n\n### snippet (lines 36-50)\n36:                           }\n37:                       }\n38:                   )\n39: →             elif \"text\" in body[\"system\"][1]:\n40:                   # Generate status bar from current state\n41: →                 if not self.core_system_prompt_cache.file_path.exists() or self.core_system_prompt_cache.content != body[\"system\"][1][\"text\"]:\n42: →                     self.core_system_prompt_cache.write(body[\"system\"][1][\"text\"])\n43:   \n44:                   \n45: →                 body[\"system\"][1][\"text\"] = (\n46: →                     f\"\\n{self.system_prompt_cache.load()}\"\n47: →                     f\"\\n{self.core_system_prompt_cache.load()}\"\n48:                       f\"\\n{self.augments_cache.load()}\"\n49:                       f\"\\n{self.transcript_cache.load()}\"\n50:                   )\n\n### snippet (lines 58-70)\n58:               status_bar = f\"{self._generate_status_bar(body, visible_tools)}\"\n59:   \n60:               workspace_text = (\n61: →                 f\"<system-reminder>\\n--- WORKSPACE ---\"\n62:                   f\"\\n{status_bar}\"\n63:                   f\"\\n{self.structural_view_cache.load()}\"\n64:                   f\"{visible_tools}\" # this has a newline when populated\n65:                   f\"\\n{self.notifications_cache.load()}\"\n66:                   f\"\\n{self.todos_cache.load()}\"\n67: →                 f\"\\n</system-reminder>\"\n68:               )\n69:               \n70:               body['messages'].append( \n\n### snippet (lines 84-87)\n84:               self._write_to_file(Path(os.getcwd()) / '.nisaba/modified_context.json', json.dumps(body, indent=2, ensure_ascii=False), \"Modified request written\")\n85:               return True\n86:               \n87: →         return \"tools\" in body or \"system\" in body\n\n## /home/y3i12/nabu_nisaba/src/nisaba/tools/augment.py:27-28\n- score: 2.59 | rrf: 0.02 | similarity: - | mechanisms: fts, semantic\n- type: CALLABLE | qualified_name: nabu_nisaba.python_root.nisaba.tools.AugmentTool.response_augment_manager_not_present\n\n### snippet (lines 1-2)\n1:   def response_augment_manager_not_present(cls) -> BaseToolResponse:\n2: →         return cls.response(success=False, message=\"ConfigurationError: Augments system not initialized\")\n\n## /home/y3i12/nabu_nisaba/src/nabu/mcp/factory_impl.py:79-86\n- score: 6.87 | rrf: 0.02 | similarity: - | mechanisms: fts\n- type: CALLABLE | qualified_name: nabu_nisaba.python_root.nabu.mcp.NabuMCPFactorySingleProcess.guidance\n\n### snippet (lines 1-8)\n1: → def guidance(self):\n2:           \"\"\"\n3: →         Delegate to agent's guidance for nisaba BaseTool integration.\n4:   \n5: →         Nisaba's BaseTool._record_guidance() checks self.factory.guidance,\n6: →         so we expose agent's guidance system at factory level.\n7:           \"\"\"\n8: →         return self.agent.guidance if hasattr(self, 'agent') else None\n\n## /home/y3i12/nabu_nisaba/scripts/precompact_extract.py:16-84\n- score: - | rrf: 0.02 | similarity: 0.20 | mechanisms: semantic\n- type: CALLABLE | qualified_name: main\n\n## /home/y3i12/nabu_nisaba/src/nisaba/guidance.py:88-104\n- score: 5.38 | rrf: 0.02 | similarity: - | mechanisms: fts\n- type: CALLABLE | qualified_name: nabu_nisaba.python_root.nisaba.WorkflowGuidance.__init__\n\n### snippet (lines 1-17)\n1: → def __init__(self, augment_manager=None, guidance_graph: Optional[GuidanceGraph] = None):\n2:           \"\"\"\n3: →         Initialize guidance system.\n4:   \n5:           Args:\n6:               augment_manager: AugmentManager for augment-based tool associations (primary source)\n7: →             guidance_graph: Optional GuidanceGraph for legacy pattern-based guidance\n8:           \"\"\"\n9:           self.augment_manager = augment_manager\n10: →         self.graph = guidance_graph or GuidanceGraph()  # Empty graph as fallback\n11:           self.history: List[Dict[str, Any]] = []\n12:           self.start_time = time.time()\n13:   \n14:           if augment_manager:\n15: →             logger.debug(\"WorkflowGuidance initialized with augments support\")\n16:           else:\n17: →             logger.debug(\"WorkflowGuidance initialized (no augments manager)\")\n\n## /home/y3i12/nabu_nisaba/test/test_files/python/utils/helper.py:28-30\n- score: - | rrf: 0.02 | similarity: 0.18 | mechanisms: semantic\n- type: CALLABLE | qualified_name: nabu_nisaba.python_root.utils.format_output\n\n### preview\ndef format_output(value):\n    \"\"\"Format output value as string.\"\"\"\n    return str(value).upper()\n\n## /home/y3i12/nabu_nisaba/src/nisaba/augments.py:497-509\n- score: 4.65 | rrf: 0.02 | similarity: - | mechanisms: fts\n- type: CALLABLE | qualified_name: nabu_nisaba.python_root.nisaba.AugmentManager.get_related_tools\n\n### snippet (lines 2-8)\n2:           \"\"\"\n3:           Get tools related to the given tool based on active augments.\n4:   \n5: →         This is used by guidance system to provide tool associations.\n6:   \n7:           Args:\n8:               tool_name: Name of tool to find relations for\n\n## /home/y3i12/nabu_nisaba/test/test_files/cpp/src/core/base_processor.cpp:5-7\n- score: - | rrf: 0.02 | similarity: 0.19 | mechanisms: semantic\n- type: CALLABLE | qualified_name: nabu_nisaba.cpp_root::core.BaseProcessor.BaseProcessor\n\n### preview\nBaseProcessor::BaseProcessor(const std::string& name) : name(name) {\n    logger = new utils::Logger(name);\n}\n\n## /home/y3i12/nabu_nisaba/src/nisaba/agent.py:10-69\n- score: 4.04 | rrf: 0.02 | similarity: - | mechanisms: fts\n- type: CLASS | qualified_name: nabu_nisaba.python_root.nisaba.Agent\n\n### snippet (lines 10-17)\n10:       2. await agent.shutdown() - during shutdown\n11:   \n12:       Attributes:\n13: →         guidance: Optional workflow guidance system for contextual tool suggestions.\n14: →                   Subclasses can set this to enable guidance (e.g., NabuAgent does).\n15:       \"\"\"\n16:   \n17:       def __init__(self):\n\n### snippet (lines 19-28)\n19:           Initialize base agent.\n20:   \n21:           Subclasses should call super().__init__() and then initialize their\n22: →         specific resources. Guidance is optional - set to WorkflowGuidance\n23:           instance if desired.\n24:           \"\"\"\n25: →         self.guidance: Optional[\"WorkflowGuidance\"] = None\n26:   \n27:       @abstractmethod\n28:       async def initialize(self) -> None:\n\n## /home/y3i12/nabu_nisaba/test/test_files/cpp/src/core/base_processor.cpp:9-11\n- score: - | rrf: 0.02 | similarity: 0.19 | mechanisms: semantic\n- type: CALLABLE | qualified_name: nabu_nisaba.cpp_root::core.BaseProcessor.~BaseProcessor\n\n### preview\nBaseProcessor::~BaseProcessor() {\n    delete logger;\n}\n\n## /home/y3i12/nabu_nisaba/src/nisaba/agent.py:26-34\n- score: 3.75 | rrf: 0.02 | similarity: - | mechanisms: fts\n- type: CALLABLE | qualified_name: nabu_nisaba.python_root.nisaba.Agent.__init__\n\n### snippet (lines 3-9)\n3:           Initialize base agent.\n4:   \n5:           Subclasses should call super().__init__() and then initialize their\n6: →         specific resources. Guidance is optional - set to WorkflowGuidance\n7:           instance if desired.\n8:           \"\"\"\n9: →         self.guidance: Optional[\"WorkflowGuidance\"] = None\n\n## /home/y3i12/nabu_nisaba/test/test_files/cpp/src/core/data_processor.cpp:6-7\n- score: - | rrf: 0.02 | similarity: 0.24 | mechanisms: semantic\n- type: CALLABLE | qualified_name: nabu_nisaba.cpp_root::core.DataProcessor.DataProcessor\n\n### preview\nDataProcessor::DataProcessor(const std::string& name) \n    : BaseProcessor(name), processedCount(0) {}\n\n## /home/y3i12/nabu_nisaba/src/nisaba/guidance.py:68-225\n- score: 3.58 | rrf: 0.02 | similarity: - | mechanisms: fts\n- type: CLASS | qualified_name: nabu_nisaba.python_root.nisaba.WorkflowGuidance\n\n### snippet (lines 1-40)\n1: → class WorkflowGuidance:\n2:       \"\"\"\n3: →     Generic workflow guidance system.\n4:   \n5:       Tracks tool usage and provides contextual suggestions based on\n6:       configurable patterns. Framework-level component that any MCP\n7: →     can use by providing a GuidanceGraph configuration.\n8:   \n9:       This is non-intrusive:\n10: →     - Guidance is optional (can be None)\n11:       - Failures don't break tool execution\n12:       - Suggestions returned as metadata, not forced\n13:   \n14:       Example:\n15: →         graph = GuidanceGraph(patterns=[...])\n16: →         guidance = WorkflowGuidance(graph)\n17: →         guidance.record_tool_call(\"my_tool\", {}, {\"success\": True})\n18: →         suggestions = guidance.get_suggestions()\n19:       \"\"\"\n20:   \n21: →     def __init__(self, augment_manager=None, guidance_graph: Optional[GuidanceGraph] = None):\n22:           \"\"\"\n23: →         Initialize guidance system.\n24:   \n25:           Args:\n26:               augment_manager: AugmentManager for augment-based tool associations (primary source)\n27: →             guidance_graph: Optional GuidanceGraph for legacy pattern-based guidance\n28:           \"\"\"\n29:           self.augment_manager = augment_manager\n30: →         self.graph = guidance_graph or GuidanceGraph()  # Empty graph as fallback\n31:           self.history: List[Dict[str, Any]] = []\n32:           self.start_time = time.time()\n33:   \n34:           if augment_manager:\n35: →             logger.debug(\"WorkflowGuidance initialized with augments support\")\n36:           else:\n37: →             logger.debug(\"WorkflowGuidance initialized (no augments manager)\")\n38:   \n39:       def record_tool_call(\n40:           self,\n\n### snippet (lines 111-117)\n111:           Check if tool call would be redundant.\n112:   \n113:           Simple exact-match detection in recent history. No custom checkers.\n114: →         This is technical safety, not opinionated guidance.\n115:   \n116:           Args:\n117:               tool_name: Tool about to be called\n\n### snippet (lines 153-158)\n153:   \n154:       def clear(self) -> None:\n155:           \"\"\"Reset tracking for new session.\"\"\"\n156: →         logger.debug(f\"Clearing guidance session (had {len(self.history)} calls)\")\n157:           self.history.clear()\n158:           self.start_time = time.time()\n\n## /home/y3i12/nabu_nisaba/test/test_files/cpp/src/core/data_processor.cpp:30-46\n- score: - | rrf: 0.02 | similarity: 0.22 | mechanisms: semantic\n- type: CALLABLE | qualified_name: nabu_nisaba.cpp_root::core.DataProcessor.getStats\n\n### preview\nstd::map<std::string, int> DataProcessor::getStats() {\n    std::map<std::string, int> stats;\n    stats[\"processed\"] = processedCount;\n    \n    // Control statement: if/else if/else for status code\n    int statusCode;\n    if (processedCount == 0) {\n        statusCode = 0;  // idle\n    } else if (processedCount < 10) {\n        statusCode = 1;  // active\n    } else {\n        statusCode = 2;  // busy\n    }\n    stats[\"status_code\"] = statusCode;\n    \n    return stats;\n}\n\n## /home/y3i12/nabu_nisaba/src/nisaba/tools/base_tool.py:194-212\n- score: 3.23 | rrf: 0.01 | similarity: - | mechanisms: fts\n- type: CALLABLE | qualified_name: nabu_nisaba.python_root.nisaba.tools.BaseTool.execute_tool\n\n### snippet (lines 2-14)\n2:           \"\"\"\n3:           Execute tool with automatic timing and error handling.\n4:   \n5: →         Wrapper around execute() that adds timing and optional guidance tracking.\n6:   \n7:           Args:\n8:               **kwargs: Tool-specific parameters\n9:   \n10:           Returns:\n11: →             Tool execution result with timing and optional guidance metadata\n12:           \"\"\"\n13:           try:\n14:               result = await self.execute(**kwargs)\n\n## /home/y3i12/nabu_nisaba/test/test_files/cpp/src/utils/helper.cpp:14-18\n- score: - | rrf: 0.01 | similarity: 0.19 | mechanisms: semantic\n- type: CALLABLE | qualified_name: nabu_nisaba.cpp_root::utils.Helper.formatOutput\n\n### preview\nstd::string Helper::formatOutput(const std::string& value) {\n    std::string result = value;\n    std::transform(result.begin(), result.end(), result.begin(), ::toupper);\n    return result;\n}\n\n## /home/y3i12/nabu_nisaba/src/nabu/mcp/agent.py:38-69\n- score: 3.22 | rrf: 0.01 | similarity: - | mechanisms: fts\n- type: CALLABLE | qualified_name: nabu_nisaba.python_root.nabu.mcp.NabuAgent.__init__\n\n### snippet (lines 6-12)\n6:               config: NabuConfig instance\n7:               factory: Reference to factory (for callbacks like _handle_file_change)\n8:           \"\"\"\n9: →         super().__init__()  # Initialize base agent (sets guidance = None)\n10:   \n11:           self.config = config\n12:           self.factory = factory  # Needed for _handle_file_change callback\n\n### snippet (lines 27-32)\n27:           self.augment_manager = get_augment_manager()\n28:           logger.info(f\"📚 Augments manager initialized: {len(self.augment_manager.available_augments)} augments available\")\n29:   \n30: →         # Workflow guidance (augments-based only)\n31: →         self.guidance = WorkflowGuidance(augment_manager=self.augment_manager)\n32: →         logger.info(\"✨ Augments-based guidance enabled\")\n\n## /home/y3i12/nabu_nisaba/test/test_files/cpp/src/utils/logger.cpp:6-6\n- score: - | rrf: 0.01 | similarity: 0.22 | mechanisms: semantic\n- type: CALLABLE | qualified_name: nabu_nisaba.cpp_root::utils.Logger.Logger\n\n### preview\nLogger::Logger(const std::string& name) : name(name), enabled(true) {}\n\n## /home/y3i12/nabu_nisaba/test/test_files/cpp/src/utils/logger.cpp:14-16\n- score: - | rrf: 0.01 | similarity: 0.18 | mechanisms: semantic\n- type: CALLABLE | qualified_name: nabu_nisaba.cpp_root::utils.Logger.disable\n\n### preview\nvoid Logger::disable() {\n    enabled = false;\n}\n\n---\n*20 items returned of 195 total matches*",
+  "nisaba": false
+}
+---TOOL_USE_END(toolu_01P9xgHQZAPzez8CcencYu52)
+---TOOL_USE(toolu_011o6d2224DAXpVh94BRAJfm)
+Found 20 files limit: 20, offset: 0
+.nisaba/modified_context.json
+.nisaba/tui/core_system_prompt.md
 src/nabu/mcp/tools/base.py
-src/nabu/mcp/tools/discovery_tools.py
-src/nabu/mcp/tools/observability_tools.py
-src/nabu/mcp/tools/query_tool.py
-src/nabu/mcp/tools/reindex_tool.py
-src/nabu/mcp/tools/search_tools.py
-src/nabu/mcp/tools/show_structure_tools.py
-src/nabu/mcp/tools/vector_search_tools.py
----TOOL_USE_END(toolu_011rvJnWY5pe25Jz7nNEW5KJ)
----TOOL_USE(toolu_016pnsahXGpLs8sTk7nPjfvH)
-commit 68e1e0eb635831805de46c2580f6eb1d421c2e42
-Author: Yuri Ivatchkovitch <mytos.mail@gmail.com>
-Date:   Wed Nov 12 00:45:46 2025 +0100
+src/nisaba/tools/base_tool.py
+.dev_docs/dev.dump.md
+src/nabu/mcp/factory_impl.py
+src/nabu/mcp/factory.py
+src/nabu/mcp/guidance_config.py
+src/nabu/mcp/agent.py
+src/nisaba/augments.py
+src/nisaba/server/factory.py
+src/nisaba/__init__.py
+docs/transcripts/mainfold_geometry_framework_full.md
+docs/transcripts/symbolic_compression.md
+docs/transcripts/gaps_and_drives.md
+docs/transcripts/usage_example__long_files.md
+src/nabu/README.md
+README.md
+docs/transcripts/system_prompt.md
+docs/transcripts/augment_wording.md
+---TOOL_USE_END(toolu_011o6d2224DAXpVh94BRAJfm)
+---TOOL_USE(toolu_01WGj1GucpL9SDygMcLZNdrc)
+     1→"""
+     2→Workflow guidance system for MCP tools.
+     3→
+     4→Provides contextual suggestions and redundancy detection based on tool usage patterns.
+     5→Configuration-driven approach allows each MCP to define its own guidance behavior.
+     6→"""
+     7→
+     8→import time
+     9→import logging
+    10→from dataclasses import dataclass, field
+    11→from typing import Dict, List, Any, Optional, Callable
+    12→
+    13→logger = logging.getLogger(__name__)
+    14→
+    15→
+    16→@dataclass
+    17→class GuidancePattern:
+    18→    """
+    19→    A pattern that triggers workflow suggestions.
+    20→
+    21→    Attributes:
+    22→        name: Identifier for this pattern
+    23→        condition: Function that checks if pattern matches current history
+    24→        suggestion: What to do next (tool names, queries, etc.)
+    25→        reason: Why this suggestion makes sense
+    26→        priority: HIGH, MEDIUM, or LOW
+    27→    """
+    28→    name: str
+    29→    condition: Callable[[List[Dict]], bool]
+    30→    suggestion: str
+    31→    reason: str
+    32→    priority: str = "MEDIUM"
+    33→
+    34→    def matches(self, history: List[Dict]) -> bool:
+    35→        """Check if this pattern matches current state."""
+    36→        try:
+    37→            return self.condition(history)
+    38→        except Exception as e:
+    39→            logger.warning(f"Pattern '{self.name}' condition failed: {e}")
+    40→            return False
+    41→
+    42→
+    43→@dataclass
+    44→class GuidanceGraph:
+    45→    """
+    46→    Configuration for workflow guidance.
+    47→
+    48→    Defines patterns and redundancy checks that guide tool usage.
+    49→    Each MCP can provide its own GuidanceGraph configuration.
+    50→
+    51→    Attributes:
+    52→        patterns: List of patterns to check for suggestions
+    53→        redundancy_checks: Dict of tool_name -> checker function
+    54→    """
+    55→    patterns: List[GuidancePattern] = field(default_factory=list)
+    56→    redundancy_checks: Dict[str, Callable] = field(default_factory=dict)
+    57→
+    58→    @classmethod
+    59→    def from_yaml(cls, yaml_path: str) -> "GuidanceGraph":
+    60→        """
+    61→        Load configuration from YAML file.
+    62→
+    63→        Future enhancement - allows external configuration.
+    64→        """
+    65→        raise NotImplementedError("YAML loading not yet implemented")
+    66→
+    67→
+    68→class WorkflowGuidance:
+    69→    """
+    70→    Generic workflow guidance system.
+    71→
+    72→    Tracks tool usage and provides contextual suggestions based on
+    73→    configurable patterns. Framework-level component that any MCP
+    74→    can use by providing a GuidanceGraph configuration.
+    75→
+    76→    This is non-intrusive:
+    77→    - Guidance is optional (can be None)
+    78→    - Failures don't break tool execution
+    79→    - Suggestions returned as metadata, not forced
+    80→
+    81→    Example:
+    82→        graph = GuidanceGraph(patterns=[...])
+    83→        guidance = WorkflowGuidance(graph)
+    84→        guidance.record_tool_call("my_tool", {}, {"success": True})
+    85→        suggestions = guidance.get_suggestions()
+    86→    """
+    87→
+    88→    def __init__(self, augment_manager=None, guidance_graph: Optional[GuidanceGraph] = None):
+    89→        """
+    90→        Initialize guidance system.
+    91→
+    92→        Args:
+    93→            augment_manager: AugmentManager for augment-based tool associations (primary source)
+    94→            guidance_graph: Optional GuidanceGraph for legacy pattern-based guidance
+    95→        """
+    96→        self.augment_manager = augment_manager
+    97→        self.graph = guidance_graph or GuidanceGraph()  # Empty graph as fallback
+    98→        self.history: List[Dict[str, Any]] = []
+    99→        self.start_time = time.time()
+   100→
+   101→        if augment_manager:
+   102→            logger.debug("WorkflowGuidance initialized with augments support")
+   103→        else:
+   104→            logger.debug("WorkflowGuidance initialized (no augments manager)")
+   105→
+   106→    def record_tool_call(
+   107→        self,
+   108→        tool_name: str,
+   109→        params: Dict[str, Any],
+   110→        result: Dict[str, Any]
+   111→    ) -> None:
+   112→        """
+   113→        Record a tool execution.
+   114→
+   115→        Args:
+   116→            tool_name: Name of the tool that was called
+   117→            params: Parameters passed to the tool
+   118→            result: Result returned by the tool
+   119→        """
+   120→        entry = {
+   121→            "timestamp": time.time(),
+   122→            "tool": tool_name,
+   123→            "params": params.copy(),  # Copy to avoid mutation
+   124→            "result_summary": {
+   125→                "success": result.get("success", False),
+   126→                "has_data": bool(result.get("data")),
+   127→                "error": result.get("error")
+   128→            }
+   129→        }
+   130→        self.history.append(entry)
+   131→        logger.debug(f"Recorded tool call: {tool_name} | Total calls: {len(self.history)}")
+   132→
+   133→    def get_suggestions(self) -> Optional[Dict[str, Any]]:
+   134→        """
+   135→        Get suggestions based on active augments.
+   136→
+   137→        Returns tool associations from active augments only. No algorithmic patterns.
+   138→        Returns None if no augments active or no associations found (non-intrusive).
+   139→
+   140→        Returns:
+   141→            Dict with suggestion, reason, priority, pattern_name or None
+   142→        """
+   143→        # Only source of suggestions: active augments
+   144→        if self.augment_manager:
+   145→            return self._get_augment_based_suggestion()
+   146→
+   147→        return None
+   148→
+   149→    def _get_augment_based_suggestion(self) -> Optional[Dict[str, Any]]:
+   150→        """
+   151→        Get suggestions based on active augments tool associations.
+   152→
+   153→        Returns:
+   154→            Dict with suggestion or None
+   155→        """
+   156→        if not self.history:
+   157→            return None
+   158→
+   159→        last_tool = self.history[-1]['tool']
+   160→        related_tools = self.augment_manager.get_related_tools(last_tool)
+   161→
+   162→        if related_tools:
+   163→            return {
+   164→                "suggestion": f"{', '.join(related_tools)}",
+   165→                "reason": f"Tools mentioned with {last_tool}() in active augments",
+   166→                "priority": "LOW",
+   167→                "pattern_name": "augment_association"
+   168→            }
+   169→
+   170→        return None
+   171→
+   172→    def check_redundancy(
+   173→        self,
+   174→        tool_name: str,
+   175→        params: Dict[str, Any]
+   176→    ) -> Dict[str, Any]:
+   177→        """
+   178→        Check if tool call would be redundant.
+   179→
+   180→        Simple exact-match detection in recent history. No custom checkers.
+   181→        This is technical safety, not opinionated guidance.
+   182→
+   183→        Args:
+   184→            tool_name: Tool about to be called
+   185→            params: Parameters for the tool call
+   186→
+   187→        Returns:
+   188→            Dict with is_redundant (bool), reason, suggestion
+   189→        """
+   190→        # Check last 10 calls for exact parameter matches
+   191→        for entry in self.history[-10:]:
+   192→            if entry["tool"] == tool_name:
+   193→                if entry["params"] == params:
+   194→                    return {
+   195→                        "is_redundant": True,
+   196→                        "reason": f"Called {tool_name} with same parameters recently",
+   197→                        "suggestion": "Use previous result or modify parameters"
+   198→                    }
+   199→
+   200→        return {"is_redundant": False}
+   201→
+   202→    def get_session_summary(self) -> Dict[str, Any]:
+   203→        """
+   204→        Get summary of current workflow session.
+   205→
+   206→        Returns:
+   207→            Dict with statistics about tool usage
+   208→        """
+   209→        tool_counts = {}
+   210→        for entry in self.history:
+   211→            tool = entry["tool"]
+   212→            tool_counts[tool] = tool_counts.get(tool, 0) + 1
+   213→
+   214→        return {
+   215→            "total_calls": len(self.history),
+   216→            "tool_usage": tool_counts,
+   217→            "session_duration_seconds": time.time() - self.start_time,
+   218→            "unique_tools_used": len(tool_counts)
+   219→        }
+   220→
+   221→    def clear(self) -> None:
+   222→        """Reset tracking for new session."""
+   223→        logger.debug(f"Clearing guidance session (had {len(self.history)} calls)")
+   224→        self.history.clear()
+   225→        self.start_time = time.time()
+   226→
 
-    nabu fix itr 1: nabu tool`
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
 
- .../augments/__base/002_environment_mechanics.md   |    3 +-
- .nisaba/mcp_servers.json                           |   19 +-
- .nisaba/modified_context.json                      | 2345 +++++++++++++++++++-
- .nisaba/tui/augment_view.md                        |    3 +-
- .nisaba/tui/core_system_prompt.md                  |  112 +-
- .nisaba/tui/file_window_state.json                 |    3 -
- .nisaba/tui/file_window_view.md                    |    0
- .nisaba/tui/notification_state.json                |    4 +-
- .nisaba/tui/notification_view.md                   |    5 +
- .nisaba/tui/status_bar_live.txt                    |    4 +-
- .nisaba/tui/todo_view.md                           |   11 +-
- src/nabu/mcp/tools/base.py                         |  205 +-
- src/nabu/mcp/tools/discovery_tools.py              |    2 +-
- src/nabu/mcp/tools/observability_tools.py          |    2 +-
- src/nabu/mcp/tools/query_tool.py                   |    2 +-
- src/nabu/mcp/tools/reindex_tool.py                 |   18 +-
- src/nabu/mcp/tools/search_tools.py                 |   20 +-
- src/nabu/mcp/tools/show_structure_tools.py         |    2 +-
- src/nabu/mcp/tools/vector_search_tools.py          |    2 +-
- 19 files changed, 2488 insertions(+), 274 deletions(-)
----TOOL_USE_END(toolu_016pnsahXGpLs8sTk7nPjfvH)
----TOOL_USE(toolu_014ZaHPLsYVBvGJsrPeewQtb)
-commit 68e1e0eb635831805de46c2580f6eb1d421c2e42
-Author: Yuri Ivatchkovitch <mytos.mail@gmail.com>
-Date:   Wed Nov 12 00:45:46 2025 +0100
+---TOOL_USE_END(toolu_01WGj1GucpL9SDygMcLZNdrc)
+---TOOL_USE(toolu_01AUx6KTpKR7UzR7g4LBbdxD)
+     1→"""
+     2→Nabu guidance configuration.
+     3→
+     4→Augments-based guidance system - contextual suggestions come from active augments,
+     5→not hardcoded patterns. See augments system for dynamic context management.
+     6→"""
+     7→
+     8→from nisaba.guidance import GuidanceGraph
+     9→
+    10→# Empty guidance graph - all suggestions come from augments
+    11→NABU_GUIDANCE_GRAPH = GuidanceGraph()
+    12→
 
-    nabu fix itr 1: nabu tool`
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
 
-diff --git a/src/nabu/mcp/tools/base.py b/src/nabu/mcp/tools/base.py
-index 3b3cde4..56e41eb 100644
---- a/src/nabu/mcp/tools/base.py
-+++ b/src/nabu/mcp/tools/base.py
-@@ -1,7 +1,7 @@
- """Base class for nabu MCP tools."""
- 
- from abc import abstractmethod
--from typing import Any, Dict, TYPE_CHECKING, get_type_hints, Optional, get_origin, get_args, List, Union
-+from typing import Any, Dict, TYPE_CHECKING, get_type_hints, Optional, List
- from pathlib import Path
- import logging
- import time
-@@ -10,7 +10,7 @@ import re
- from contextvars import ContextVar
- 
- # Import from framework
--from nisaba import BaseTool
-+from nisaba.tools.base_tool import BaseTool
- from nisaba.utils.response import ResponseBuilder, ErrorSeverity
- 
- from nabu.mcp.utils.regex_helpers import extract_keywords_from_regex
-@@ -23,6 +23,7 @@ try:
- except ImportError:
-     DOCSTRING_PARSER_AVAILABLE = False
-     Docstring = None  # type: ignore
-+    parse_docstring = None  # type: ignore
- 
- if TYPE_CHECKING:
-     from nabu.mcp.factory import NabuMCPFactory
-@@ -88,6 +89,16 @@ class NabuTool(BaseTool):
- 
-     # Note: get_name_from_cls() and get_name() inherited from BaseTool
- 
-+    @classmethod
-+    def nisaba(cls) -> bool:
-+        """
-+        Nabu tools are not nisaba-certified (they use ResponseBuilder formatting).
-+
-+        Returns:
-+            False - nabu tools use custom response formatting
-+        """
-+        return False
-+
-     # Agent access property (explicit pattern acknowledgment)
-     @property
-     def agent(self):
-@@ -282,7 +293,7 @@ class NabuTool(BaseTool):
-             try:
-                 regex_obj = re.compile(target)
-             except re.error as e:
--                self.logger.error(f"Invalid regex pattern '{target}': {e}")
-+                self.logger().error(f"Invalid regex pattern '{target}': {e}")
-                 return []
- 
-             try:
-@@ -396,7 +407,7 @@ class NabuTool(BaseTool):
-                 return results
- 
-             except Exception as e:
--                self.logger.error(f"Regex frame resolution failed for '{target}': {e}", exc_info=True)
-+                self.logger().error(f"Regex frame resolution failed for '{target}': {e}", exc_info=True)
-                 return []
- 
-         # ========== NON-REGEX PATH (backward compatible) ==========
-@@ -488,7 +499,7 @@ class NabuTool(BaseTool):
-             return [frame_dict]
- 
-         except Exception as e:
--            self.logger.error(f"Frame resolution failed for '{target}': {e}", exc_info=True)
-+            self.logger().error(f"Frame resolution failed for '{target}': {e}", exc_info=True)
-             return []
- 
-     async def _fts_fuzzy_resolve(
-@@ -538,7 +549,7 @@ class NabuTool(BaseTool):
-         try:
-             result = self.db_manager.execute(cypher_query, load_extensions=True)
-         except Exception as e:
--            self.logger.error(f"FTS fuzzy resolve failed: {e}")
-+            self.logger().error(f"FTS fuzzy resolve failed: {e}")
-             return []
- 
-         if not result or not hasattr(result, 'get_as_df'):
-@@ -637,83 +648,8 @@ class NabuTool(BaseTool):
-             "return_type": row.get('return_type', '')
-         }
- 
-+    # Note: _python_type_to_json_type() inherited from BaseTool
- 
--    @classmethod
--    def _python_type_to_json_type(cls, python_type: Any) -> str:
--        """
--        Convert Python type hint to JSON Schema type.
--        
--        Args:
--            python_type: Python type annotation
--            
--        Returns:
--            JSON Schema type string
--        """
--        # Handle None/NoneType
--        if python_type is None or python_type == type(None):
--            return "null"
--        
--        # Handle typing module types
--        origin = get_origin(python_type)
--        
--        # Handle Optional[T] -> T | None
--        if origin is type(None) or str(python_type).startswith('typing.Optional'):
--            args = get_args(python_type)
--            if args:
--                return cls._python_type_to_json_type(args[0])
--            return "null"
--        
--        # Handle List, Dict, etc
--        if origin is list:
--            return "array"
--        if origin is dict:
--            return "object"
--        if origin is tuple:
--            return "array"
--        
--        # Handle Union types (not Optional)
--        if origin is Union:
--            args = get_args(python_type)
--            # For now, just use first non-None type
--            for arg in args:
--                if arg != type(None):
--                    return cls._python_type_to_json_type(arg)
--        
--        # Map basic Python types to JSON Schema types
--        type_map = {
--            str: "string",
--            int: "integer",
--            float: "number",
--            bool: "boolean",
--            dict: "object",
--            list: "array",
--            Dict: "object",
--            List: "array",
--        }
--        
--        # Try exact match first
--        if python_type in type_map:
--            return type_map[python_type]
--        
--        # Check if it's a class (try name-based matching)
--        if hasattr(python_type, '__name__'):
--            type_name = python_type.__name__
--            if type_name in ['str', 'string']:
--                return "string"
--            elif type_name in ['int', 'integer']:
--                return "integer"
--            elif type_name in ['float', 'number', 'double']:
--                return "number"
--            elif type_name in ['bool', 'boolean']:
--                return "boolean"
--            elif type_name in ['dict', 'Dict']:
--                return "object"
--            elif type_name in ['list', 'List']:
--                return "array"
--        
--        # Default to string
--        return "string"
--    
-     @classmethod
-     def get_tool_schema(cls) -> Dict[str, Any]:
-         """
-@@ -749,8 +685,8 @@ class NabuTool(BaseTool):
-         
-         # Parse docstring
-         docstring_text = execute_method.__doc__ or ""
--        
--        if DOCSTRING_PARSER_AVAILABLE and docstring_text:
-+
-+        if DOCSTRING_PARSER_AVAILABLE and docstring_text and parse_docstring:
-             docstring = parse_docstring(docstring_text)
-             
-             # Build description components
-@@ -880,8 +816,8 @@ class NabuTool(BaseTool):
-         """
-         class_doc = cls.__doc__ or ""
-         execute_doc = cls.execute.__doc__ or ""
--        
--        if DOCSTRING_PARSER_AVAILABLE and execute_doc:
-+
-+        if DOCSTRING_PARSER_AVAILABLE and execute_doc and parse_docstring:
-             docstring = parse_docstring(execute_doc)
-             return docstring.short_description or class_doc.strip()
-         
-@@ -894,6 +830,28 @@ class NabuTool(BaseTool):
-     # are now inherited from nisaba.BaseTool base class
-     # Note: execute() is also inherited from nisaba.BaseTool base class
- 
-+    def _base_response_to_dict(self, response) -> Dict[str, Any]:
-+        """
-+        Convert BaseToolResponse to Dict for MCP protocol compatibility.
-+
-+        Args:
-+            response: BaseToolResponse from execute() or error handlers
-+
-+        Returns:
-+            Dict representation for MCP protocol
-+        """
-+        from nisaba.tools.base_tool import BaseToolResponse
-+
-+        if isinstance(response, BaseToolResponse):
-+            # Extract message (could be dict or simple value)
-+            if response.success:
-+                return response.message if isinstance(response.message, dict) else {"data": response.message}
-+            else:
-+                return response.message if isinstance(response.message, dict) else {"error": response.message}
-+
-+        # Already a dict, return as-is
-+        return response
-+
-     async def execute_with_timing(self, **kwargs) -> Dict[str, Any]:
-         """
-         Execute tool with automatic timing and codebase context switching.
-@@ -902,6 +860,7 @@ class NabuTool(BaseTool):
-         - Timing and error handling
-         - Automatic codebase context management (middleware pattern)
-         - Session tracking
-+        - Conversion of BaseToolResponse to Dict for MCP protocol
-         """
-         start_time = time.time()
- 
-@@ -920,54 +879,60 @@ class NabuTool(BaseTool):
-         else:
-             # Pop codebase for context switching (multi-codebase query support)
-             requested_codebase = kwargs.pop("codebase", None)
--        
-+
-         # Validate requested codebase if specified
-         if requested_codebase is not None:
-             if requested_codebase not in self.factory.db_managers:
-                 available = list(self.factory.db_managers.keys())
--                return self._error_response(
-+                error_response = self._error_response(
-                     ValueError(f"Unknown codebase: '{requested_codebase}'"),
--                    start_time,
-                     recovery_hint=f"Available codebases: {', '.join(available)}. Use list_codebases() to see all registered codebases."
-                 )
--        
-+                # Convert BaseToolResponse to Dict for MCP protocol
-+                return self._base_response_to_dict(error_response)
-+
-         # Set codebase context for this execution (thread-safe via contextvars)
-         token = _current_codebase_context.set(requested_codebase)
- 
-         try:
--            # Execute tool (tools transparently use correct db_manager via property)
-+            # Execute tool (returns BaseToolResponse)
-             result = await self.execute(**kwargs)
--    
-+
-+            # Convert to dict for guidance recording
-+            result_dict = self._base_response_to_dict(result)
-+
-             # Record in guidance system using parent class method
--            self._record_guidance(self.get_name(), kwargs, result)
-+            self._record_guidance(self.get_name(), kwargs, result_dict)
-+
-+            return result_dict
- 
--            return result
--        
-         except Exception as e:
--            self.logger.error(f"Tool execution failed: {e}", exc_info=True)
--            return self._error_response(e, start_time)
--        
-+            self.logger().error(f"Tool execution failed: {e}", exc_info=True)
-+            error_response = self._error_response(e)
-+            return self._base_response_to_dict(error_response)
-+
-         finally:
-             # ALWAYS restore context (critical for async safety)
-             _current_codebase_context.reset(token)
-     
-     def _success_response(
--        self, 
--        data: Any, 
-+        self,
-+        data: Any,
-         warnings: Optional[List[str]] = None,
-         metadata: Optional[Dict[str, Any]] = None
--    ) -> Dict[str, Any]:
-+    ):
-         """
-         Create standardized success response using ResponseBuilder.
--        
-+
-+        Wraps ResponseBuilder dict output in BaseToolResponse for consistency.
-+
-         Args:
-             data: Response payload
--            start_time: Start time for execution time calculation
-             warnings: Optional warning messages
-             metadata: Optional operation metadata
--            
-+
-         Returns:
--            Standardized success response
-+            BaseToolResponse containing ResponseBuilder formatted dict
-         """
-         # Format data according to requested output format
-         from nabu.mcp.formatters import get_formatter_registry
-@@ -981,41 +946,49 @@ class NabuTool(BaseTool):
-             formatted_data = formatter.format(data, tool_name=self.get_name())
-         except ValueError as e:
-             # Unsupported format - log warning and fall back to JSON
--            self.logger.warning(f"Output format error: {e}. Falling back to JSON.")
-+            self.logger().warning(f"Output format error: {e}. Falling back to JSON.")
-             formatted_data = data
- 
--        return ResponseBuilder.success(
-+        # Build ResponseBuilder dict
-+        response_dict = ResponseBuilder.success(
-             data=formatted_data,
-             warnings=warnings,
-             metadata=metadata
-         )
-+
-+        # Wrap in BaseToolResponse
-+        return self.response_success(message=response_dict)
-     
-     def _error_response(
--        self, 
--        error: Exception, 
--        start_time: float = None,
-+        self,
-+        error: Exception,
-         severity: ErrorSeverity = ErrorSeverity.ERROR,
-         recovery_hint: Optional[str] = None,
-         context: Optional[Dict[str, Any]] = None
--    ) -> Dict[str, Any]:
-+    ):
-         """
-         Create standardized error response using ResponseBuilder.
--        
-+
-+        Wraps ResponseBuilder dict output in BaseToolResponse for consistency.
-+
-         Args:
-             error: Exception that occurred
--            start_time: Start time for execution time calculation
-             severity: Error severity level
-             recovery_hint: Suggested recovery action
-             context: Error context information
--            
-+
-         Returns:
--            Standardized error response
-+            BaseToolResponse containing ResponseBuilder formatted dict
-         """
--        return ResponseBuilder.error(
-+        # Build ResponseBuilder dict
-+        error_dict = ResponseBuilder.error(
-             error=error,
-             severity=severity,
-             recovery_hint=recovery_hint,
-             context=context
-         )
-+
-+        # Wrap in BaseToolResponse
-+        return self.response_error(message=error_dict)
-     
-     # Note: is_optional(), is_dev_only(), is_mutating() inherited from BaseTool
----TOOL_USE_END(toolu_014ZaHPLsYVBvGJsrPeewQtb)
----TOOL_USE(toolu_011GzRwT8m9a83cp4HyWXZjU)
-commit 68e1e0eb635831805de46c2580f6eb1d421c2e42
-Author: Yuri Ivatchkovitch <mytos.mail@gmail.com>
-Date:   Wed Nov 12 00:45:46 2025 +0100
+---TOOL_USE_END(toolu_01AUx6KTpKR7UzR7g4LBbdxD)
+---TOOL_USE(toolu_01YBuRXhbebHuu5DBQrMpzSg)
+   190→            BaseToolResponse
+   191→        """
+   192→        pass
+   193→
+   194→    async def execute_tool(self, **kwargs) -> BaseToolResponse:
+   195→        """
+   196→        Execute tool with automatic timing and error handling.
+   197→
+   198→        Wrapper around execute() that adds timing and optional guidance tracking.
+   199→
+   200→        Args:
+   201→            **kwargs: Tool-specific parameters
+   202→
+   203→        Returns:
+   204→            Tool execution result with timing and optional guidance metadata
+   205→        """
+   206→        try:
+   207→            result = await self.execute(**kwargs)
+   208→
+   209→            return result
+   210→
+   211→        except Exception as e:
+   212→            return self.response_exception(e)
+   213→
+   214→    @classmethod
+   215→    def is_optional(cls) -> bool:
+   216→        """
+   217→        Check if tool is optional (disabled by default).
+   218→
+   219→        Returns:
 
-    nabu fix itr 1: nabu tool`
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
 
-diff --git a/src/nabu/mcp/tools/reindex_tool.py b/src/nabu/mcp/tools/reindex_tool.py
-index 8d02599..12d1dc6 100644
---- a/src/nabu/mcp/tools/reindex_tool.py
-+++ b/src/nabu/mcp/tools/reindex_tool.py
-@@ -75,8 +75,8 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
-                     )
-                 )
-             
--            self.logger.info(f"Re-indexing repository: {repo_path}")
--            self.logger.info(f"Target database: {db_path}")
-+            self.logger().info(f"Re-indexing repository: {repo_path}")
-+            self.logger().info(f"Target database: {db_path}")
-             
-             # Run rebuild in thread pool
-             loop = asyncio.get_event_loop()
-@@ -143,7 +143,7 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
-             )
-         
-         except Exception as e:
--            self.logger.error(f"Re-index failed: {e}", exc_info=True)
-+            self.logger().error(f"Re-index failed: {e}", exc_info=True)
-             return self._error_response(
-                 e,
-                 start_time,
-@@ -166,8 +166,8 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
-         repo_str = str(codebase_config.repo_path.resolve())
-         db_str = str(codebase_config.db_path)
-         
--        self.logger.info(f"Reindexing codebase: {repo_str}")
--        self.logger.info(f"Target database: {db_str}")
-+        self.logger().info(f"Reindexing codebase: {repo_str}")
-+        self.logger().info(f"Target database: {db_str}")
-         
-         # Close existing manager
-         if self.db_manager:
-@@ -184,7 +184,7 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
-             db_path.unlink()
-             db_path.with_suffix(".wal").unlink(missing_ok=True)
-             db_path.with_suffix(".wal.shadow").unlink(missing_ok=True)
--            self.logger.info("Removed existing database file")
-+            self.logger().info("Removed existing database file")
-         
-         # Rebuild with extra ignore patterns from config
-         nabu.main.parse_codebase(
-@@ -203,7 +203,7 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
-         # Update backward-compat reference
-         self.factory.agent.db_manager = manager
- 
--        self.logger.info(f"Database manager re-initialized for '{codebase_name}' after rebuild")
-+        self.logger().info(f"Database manager re-initialized for '{codebase_name}' after rebuild")
-         
-         # Get stats (use longer timeout for large databases)
-         result = self.db_manager.execute("MATCH (n:Frame) RETURN n.type as type, count(*) as count", timeout_ms=30000)
-@@ -223,14 +223,14 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
-                 state=IndexingState.INDEXED,
-                 completed_at=time.time()
-             )
--            self.logger.info(f"Reset auto-indexing status for '{target_codebase}' to INDEXED")
-+            self.logger().info(f"Reset auto-indexing status for '{target_codebase}' to INDEXED")
- 
-         # Invalidate structural view TUI cache (force fresh tree on next operation)
-         from nabu.mcp.tools.structural_view_tool import StructuralViewTool
-         for tool in self.factory._iter_tools():
-             if isinstance(tool, StructuralViewTool):
-                 tool._tui = None
--                self.logger.info("Invalidated structural view TUI cache after rebuild")
-+                self.logger().info("Invalidated structural view TUI cache after rebuild")
-                 break
- 
-         return {
-diff --git a/src/nabu/mcp/tools/search_tools.py b/src/nabu/mcp/tools/search_tools.py
-index 117fe10..c4ddcd6 100644
---- a/src/nabu/mcp/tools/search_tools.py
-+++ b/src/nabu/mcp/tools/search_tools.py
-@@ -209,14 +209,14 @@ class SearchTool(NabuTool):
-             regex_res = []
- 
-             if isinstance(results[0], Exception):
--                self.logger.warning(f"FTS search failed: {results[0]}")
-+                self.logger().warning(f"FTS search failed: {results[0]}")
-             if isinstance(results[1], Exception):
--                self.logger.warning(f"Semantic search failed: {results[1]}")
-+                self.logger().warning(f"Semantic search failed: {results[1]}")
- 
-             # Conditionally extract regex results (index 2 if regex enabled)
-             if is_regex_input:
-                 if isinstance(results[2], Exception):
--                    self.logger.warning(f"Regex search failed: {results[2]}")
-+                    self.logger().warning(f"Regex search failed: {results[2]}")
-                 else:
-                     regex_res = results[2]
- 
-@@ -267,7 +267,7 @@ class SearchTool(NabuTool):
-             }, start_time)
- 
-         except Exception as e:
--            self.logger.error(f"Unified search failed: {e}", exc_info=True)
-+            self.logger().error(f"Unified search failed: {e}", exc_info=True)
-             return self._error_response(
-                 e, start_time,
-                 recovery_hint="Check database health with show_status(detail_level='debug')",
-@@ -324,14 +324,14 @@ class SearchTool(NabuTool):
-                 self.db_manager.execute, resolution_query, load_extensions=True
-             )
-         except Exception as e:
--            self.logger.warning(f"FTS resolution index query failed: {e}")
-+            self.logger().warning(f"FTS resolution index query failed: {e}")
- 
-         try:
-             content_result = await asyncio.to_thread(
-                 self.db_manager.execute, content_query, load_extensions=True
-             )
-         except Exception as e:
--            self.logger.warning(f"FTS content index query failed: {e}")
-+            self.logger().warning(f"FTS content index query failed: {e}")
- 
-         results_tuple = (resolution_result, content_result)
- 
-@@ -403,13 +403,13 @@ class SearchTool(NabuTool):
-             cb_emb = cb_gen.generate_embedding_from_text(query)
- 
-             if not ux_emb or not cb_emb:
--                self.logger.warning("Failed to generate embeddings for semantic search")
-+                self.logger().warning("Failed to generate embeddings for semantic search")
-                 return []
- 
-             query_embedding = compute_non_linear_consensus(ux_emb, cb_emb)
- 
-         except ImportError as e:
--            self.logger.error(f"Embedding imports failed: {e}")
-+            self.logger().error(f"Embedding imports failed: {e}")
-             return []
- 
-         # Query vector index
-@@ -561,7 +561,7 @@ class SearchTool(NabuTool):
-                     try:
-                         regex_obj = re.compile(pattern)
-                     except re.error as e:
--                        self.logger.warning(f"Regex compilation failed in content filter: {e}")
-+                        self.logger().warning(f"Regex compilation failed in content filter: {e}")
-                         return results[:top]
- 
-                     # Filter FTS candidates with regex on content
-@@ -589,5 +589,5 @@ class SearchTool(NabuTool):
-             return results[:top]
- 
-         except Exception as e:
--            self.logger.error(f"Regex search failed: {e}")
-+            self.logger().error(f"Regex search failed: {e}")
-             return []
+---TOOL_USE_END(toolu_01YBuRXhbebHuu5DBQrMpzSg)
+---TOOL_USE(toolu_01RDprDzTMotueTGwqAXX5jc)
+Found 4 files limit: 20, offset: 0
+.nisaba/modified_context.json
+.nisaba/workspace.md
+src/nabu/mcp/factory_impl.py
+src/nisaba/guidance.py
+---TOOL_USE_END(toolu_01RDprDzTMotueTGwqAXX5jc)
+---TOOL_USE(toolu_01YUPS9xWxrXQy7XgS9817Zx)
+Found 12 files limit: 20, offset: 0
+.nisaba/modified_context.json
+.nisaba/workspace.md
+src/nabu/mcp/factory_impl.py
+src/nabu/mcp/guidance_config.py
+src/nabu/mcp/agent.py
+src/nisaba/server/factory.py
+src/nisaba/__init__.py
+docs/transcripts/gaps_and_drives.md
+src/nisaba/README.md
+.nisaba/augments/dev_mode_architecture_reference/augmentation_subsystem_architecture.md
+src/nisaba/guidance.py
+src/nisaba/agent.py
 
 <system-reminder>
 The TodoWrite tool hasn't been used recently. If you're working on tasks that would benefit from tracking progress, consider using the TodoWrite tool to track progress. Also consider cleaning up the todo list if has become stale and no longer matches what you are working on. Only use it if it's relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user
 
 </system-reminder>
----TOOL_USE_END(toolu_011GzRwT8m9a83cp4HyWXZjU)
----TOOL_USE(toolu_01JKU2SZtYb1cKvTkyuKuDrz)
+---TOOL_USE_END(toolu_01YUPS9xWxrXQy7XgS9817Zx)
+---TOOL_USE(toolu_0175cnQKBykxcGb5SoTgfp4b)
+    25→    Stateful orchestrator for nabu MCP resources.
+    26→
+    27→    Manages:
+    28→    - Database managers (multi-codebase)
+    29→    - Incremental updaters
+    30→    - Auto-indexing
+    31→    - File watchers
+    32→    - Workflow guidance (augments-based)
+    33→
+    34→    The agent handles resource lifecycle (initialization and cleanup)
+    35→    and state mutations (codebase switching).
+    36→    """
+    37→
+    38→    def __init__(self, config: NabuConfig, factory: "NabuMCPFactorySingleProcess"):
+    39→        """
+    40→        Initialize nabu agent with configuration.
+    41→
+    42→        Args:
+    43→            config: NabuConfig instance
+    44→            factory: Reference to factory (for callbacks like _handle_file_change)
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
+
+---TOOL_USE_END(toolu_0175cnQKBykxcGb5SoTgfp4b)
+---TOOL_USE(toolu_01YJ4Q7JnrGrYhNLueGvkgC1)
+    75→        if hasattr(self, 'agent'):
+    76→            self.agent.auto_indexer = value
+    77→
+    78→    @property
+    79→    def guidance(self):
+    80→        """
+    81→        Delegate to agent's guidance for nisaba BaseTool integration.
+    82→
+    83→        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+    84→        so we expose agent's guidance system at factory level.
+    85→        """
+    86→        return self.agent.guidance if hasattr(self, 'agent') else None
+    87→
+    88→    # Note: session_tracker is accessed via agent directly
+    89→    # Tools should use: self.factory.agent.session_tracker or self.agent.session_tracker
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
+
+---TOOL_USE_END(toolu_01YJ4Q7JnrGrYhNLueGvkgC1)
+---TOOL_USE(toolu_01TrgV2wRRRD9LDj3w4SuyHQ)
+     1→"""Base agent class for MCP lifecycle management."""
+     2→
+     3→from abc import ABC, abstractmethod
+     4→from typing import TYPE_CHECKING, Optional
+     5→
+     6→if TYPE_CHECKING:
+     7→    from nisaba.guidance import WorkflowGuidance
+     8→
+     9→
+    10→class Agent(ABC):
+    11→    """
+    12→    Abstract base class for MCP agents with lifecycle management.
+    13→
+    14→    Agents handle stateful resources (databases, file watchers, caches, etc.)
+    15→    that require proper initialization and cleanup during MCP server lifecycle.
+    16→
+    17→    The factory's server_lifespan() should call:
+    18→    1. await agent.initialize() - during startup
+    19→    2. await agent.shutdown() - during shutdown
+    20→
+    21→    Attributes:
+    22→        guidance: Optional workflow guidance system for contextual tool suggestions.
+    23→                  Subclasses can set this to enable guidance (e.g., NabuAgent does).
+    24→    """
+    25→
+    26→    def __init__(self):
+    27→        """
+    28→        Initialize base agent.
+    29→
+    30→        Subclasses should call super().__init__() and then initialize their
+    31→        specific resources. Guidance is optional - set to WorkflowGuidance
+    32→        instance if desired.
+    33→        """
+    34→        self.guidance: Optional["WorkflowGuidance"] = None
+    35→
+    36→    @abstractmethod
+    37→    async def initialize(self) -> None:
+    38→        """
+    39→        Initialize agent resources (lifecycle startup).
+    40→
+    41→        Called once during MCP server startup, before tools are registered.
+    42→        Use this for:
+    43→        - Database connection initialization
+    44→        - File watcher setup
+    45→        - Cache loading
+    46→        - Auto-indexing startup
+    47→        - Any heavyweight resource allocation
+    48→
+    49→        Raises:
+    50→            Exception: If initialization fails (will prevent server startup)
+    51→        """
+    52→        pass
+    53→
+    54→    @abstractmethod
+    55→    async def shutdown(self) -> None:
+    56→        """
+    57→        Cleanup agent resources (lifecycle shutdown).
+    58→
+    59→        Called once during MCP server shutdown, after tools stop accepting requests.
+    60→        Use this for:
+    61→        - Database connection cleanup
+    62→        - File watcher teardown
+    63→        - Cache saving
+    64→        - Auto-indexing stop
+    65→        - Any resource deallocation
+    66→
+    67→        Should handle errors gracefully (log warnings, don't raise).
+    68→        """
+    69→        pass
+    70→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
+
+---TOOL_USE_END(toolu_01TrgV2wRRRD9LDj3w4SuyHQ)
+---TOOL_USE(toolu_01SYMMM1SU6tN1XF84ydoymU)
+   490→
+   491→        logger.info(f"Created augment: {augment.path}")
+   492→
+   493→        return {
+   494→            'affected': [ augment.path ]
+   495→        }
+   496→
+   497→    def get_related_tools(self, tool_name: str) -> List[str]:
+   498→        """
+   499→        Get tools related to the given tool based on active augments.
+   500→
+   501→        This is used by guidance system to provide tool associations.
+   502→
+   503→        Args:
+   504→            tool_name: Name of tool to find relations for
+   505→
+   506→        Returns:
+   507→            List of related tool names
+   508→        """
+   509→        return self._tool_associations.get(tool_name, [])
+   510→
+   511→    def _match_pattern(self, pattern: str) -> Set[str]:
+   512→        """
+   513→        Match augment paths against a pattern.
+   514→
+   515→        Args:
+   516→            pattern: Pattern to match (supports * wildcard)
+   517→
+   518→        Returns:
+   519→            Set of matching augment paths
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
+
+---TOOL_USE_END(toolu_01SYMMM1SU6tN1XF84ydoymU)
+---TOOL_USE(toolu_01LZjmguMCM3MhT7tdAEGvA2)
+src/nisaba/guidance.py:160:        related_tools = self.augment_manager.get_related_tools(last_tool)
+src/nisaba/augments.py:497:    def get_related_tools(self, tool_name: str) -> List[str]:
+.nisaba/augments/dev_mode_architecture_reference/augmentation_subsystem_architecture.md:433:        related = self.augments_manager.get_related_tools(last_tool)
+.nisaba/workspace.md:15:[Omitted long matching line]
+.nisaba/workspace.md:202:   160→        related_tools = self.augment_manager.get_related_tools(last_tool)
+.nisaba/modified_context.json:111:[Omitted long matching line]
+.nisaba/modified_context.json:116:[Omitted long matching line]
+.nisaba/modified_context.json:138:[Omitted long matching line]
+.nisaba/modified_context.json:257:[Omitted long matching line]
+
+[Showing results with pagination = limit: 20, offset: 0]
+
+<system-reminder>
+The TodoWrite tool hasn't been used recently. If you're working on tasks that would benefit from tracking progress, consider using the TodoWrite tool to track progress. Also consider cleaning up the todo list if has become stale and no longer matches what you are working on. Only use it if it's relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user
+
+</system-reminder>
+---TOOL_USE_END(toolu_01LZjmguMCM3MhT7tdAEGvA2)
+---TOOL_USE(toolu_01Gnm45eqB453TZsAoqUEhqd)
+     1→"""Nisaba MCP server factory."""
+     2→
+     3→from contextlib import asynccontextmanager
+     4→from typing import AsyncIterator, Iterator
+     5→from pathlib import Path
+     6→import logging
+     7→
+     8→from mcp.server.fastmcp import FastMCP
+     9→from nisaba import MCPFactory
+    10→from nisaba.augments import get_augment_manager
+    11→from nisaba.guidance import WorkflowGuidance
+    12→from nisaba.server.config import NisabaConfig
+    13→from nisaba.tools.base_tool import BaseTool
+    14→
+    15→logger = logging.getLogger(__name__)
+    16→
+    17→
+    18→class NisabaMCPFactory(MCPFactory):
+    19→    """Factory for nisaba MCP server - augments management only."""
+    20→
+    21→    def __init__(self, config: NisabaConfig):
+    22→        """Initialize nisaba factory."""
+    23→        super().__init__(config)
+    24→
+    25→        # Tool instances cache
+    26→        self._tool_instances = None
+    27→        
+    28→        # Initialize shared AugmentManager
+    29→        self.augment_manager = get_augment_manager()
+    30→
+    31→    def _get_tool_base_class(self) -> type:
+    32→        """Return NisabaTool as base class."""
+    33→        return BaseTool
+    34→
+    35→    def _get_module_prefix(self) -> str:
+    36→        """Return nisaba tools module prefix."""
+    37→        return "nisaba.tools"
+    38→
+    39→    def _iter_tools(self) -> Iterator[BaseTool]:
+    40→        """
+    41→        Iterate over enabled tool instances.
+    42→
+    43→        Lazily instantiates tools on first call.
+    44→        """
+    45→        if self._tool_instances is None:
+    46→            self._instantiate_tools()
+    47→
+    48→        return iter(self._tool_instances)
+    49→
+    50→    def _instantiate_tools(self):
+    51→        """Create tool instances for enabled tools."""
+    52→        enabled_tool_names = self._filter_enabled_tools()
+    53→
+    54→        self._tool_instances = []
+    55→
+    56→        for tool_name in enabled_tool_names:
+    57→            try:
+    58→                tool_class = self.registry.get_tool_class(tool_name)
+    59→                tool_instance = tool_class(factory=self)
+    60→                self._tool_instances.append(tool_instance)
+    61→            except Exception as e:
+    62→                logger.error(f"Failed to instantiate tool {tool_name}: {e}")
+    63→
+    64→        logger.info(f"Instantiated {len(self._tool_instances)} tools: {enabled_tool_names}")
+    65→
+    66→    def _get_initial_instructions(self) -> str:
+    67→        try:
+    68→            # Load template using nisaba's engine
+    69→            # instructions_path = Path(__file__).parent / "resources" / "instructions_template.md"
+    70→            # engine = self._load_template_engine(
+    71→            #     template_path=instructions_path,
+    72→            #     runtime_context={'dev_mode': self.config.dev_mode}
+    73→            # )
+    74→
+    75→            # # Generate dynamic sections
+    76→            # logger.info("Generating MCP instructions...")
+    77→
+    78→            # # Render with placeholders and clear unused ones
+    79→            # instructions = engine.render_and_clear()
+    80→
+    81→            # logger.info(f"Generated instructions ({len(instructions)} chars)")
+    82→            # return instructions
+    83→            return ""
+    84→
+    85→        except Exception as e:
+    86→            logger.error(f"Failed to generate instructions: {e}", exc_info=True)
+    87→            return ""
+    88→
+    89→    @asynccontextmanager
+    90→    async def server_lifespan(self, mcp_server: FastMCP) -> AsyncIterator[None]:
+    91→        """Manage nisaba server lifecycle."""
+    92→        logger.info("=" * 60)
+    93→        logger.info("Nisaba MCP Server - Lifecycle Starting")
+    94→        logger.info("=" * 60)
+    95→
+    96→        # Register tools
+    97→        self._register_tools(mcp_server)
+    98→
+    99→        # Start HTTP transport if enabled
+   100→        await self._start_http_transport_if_enabled()
+   101→
+   102→        logger.info("Nisaba MCP Server - Ready")
+   103→        logger.info("=" * 60)
+   104→
+   105→        yield  # Server runs here
+   106→
+   107→        # SHUTDOWN
+   108→        logger.info("=" * 60)
+   109→        logger.info("Nisaba MCP Server - Lifecycle Shutdown")
+   110→        logger.info("=" * 60)
+   111→
+   112→        # Stop HTTP transport
+   113→        await self._stop_http_transport()
+   114→
+   115→        logger.info("Nisaba MCP Server - Shutdown Complete")
+   116→        logger.info("=" * 60)
+   117→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
+
+---TOOL_USE_END(toolu_01Gnm45eqB453TZsAoqUEhqd)
+---TOOL_USE(toolu_01PDEuvM2SUpb1CbX1aeMvLP)
+     1→"""Generic MCP server framework."""
+     2→
+     3→from nisaba.agent import Agent
+     4→from nisaba.factory import MCPFactory
+     5→from nisaba.registry import ToolRegistry, RegisteredTool
+     6→from nisaba.config import MCPConfig, MCPContext
+     7→from nisaba.markers import ToolMarker, ToolMarkerOptional, ToolMarkerDevOnly, ToolMarkerMutating
+     8→from nisaba.guidance import WorkflowGuidance, GuidanceGraph, GuidancePattern
+     9→from nisaba.schema_utils import sanitize_for_openai_tools
+    10→from nisaba.cli import (
+    11→    AutoRegisteringGroup,
+    12→    OutputFormat,
+    13→    ToolsCommandGroup,
+    14→    ContextCommandGroup,
+    15→    PromptCommandGroup,
+    16→    format_tool_list,
+    17→    format_context_list,
+    18→    validate_file_or_exit,
+    19→    validate_dir_or_exit,
+    20→)
+    21→__version__ = "0.1.0"
+    22→
+    23→__all__ = [
+    24→    "Agent",
+    25→    "MCPFactory",
+    26→    "ToolRegistry",
+    27→    "RegisteredTool",
+    28→    "MCPConfig",
+    29→    "MCPContext",
+    30→    "ToolMarker",
+    31→    "ToolMarkerOptional",
+    32→    "ToolMarkerDevOnly",
+    33→    "ToolMarkerMutating",
+    34→    "WorkflowGuidance",
+    35→    "GuidanceGraph",
+    36→    "GuidancePattern",
+    37→    "sanitize_for_openai_tools",
+    38→    "AutoRegisteringGroup",
+    39→    "OutputFormat",
+    40→    "ToolsCommandGroup",
+    41→    "ContextCommandGroup",
+    42→    "PromptCommandGroup",
+    43→    "format_tool_list",
+    44→    "format_context_list",
+    45→    "validate_file_or_exit",
+    46→    "validate_dir_or_exit"
+    47→]
+    48→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
+
+---TOOL_USE_END(toolu_01PDEuvM2SUpb1CbX1aeMvLP)
+---TOOL_USE(toolu_017TPWfaMo2apcesgg2B18ib)
+     1→"""Nabu Agent: Stateful orchestrator for nabu resources."""
+     2→
+     3→import logging
+     4→from contextlib import asynccontextmanager
+     5→from typing import Dict, Optional, AsyncIterator, TYPE_CHECKING
+     6→
+     7→from nisaba.agent import Agent
+     8→
+     9→if TYPE_CHECKING:
+    10→    from nabu.mcp.factory_impl import NabuMCPFactorySingleProcess
+    11→    from nabu.db import KuzuConnectionManager
+    12→    from nabu.incremental import IncrementalUpdater
+    13→    from nabu.mcp.indexing import AutoIndexingManager
+    14→    from nabu.file_watcher import FileWatcher
+    15→
+    16→from nabu.mcp.config.nabu_config import NabuConfig
+    17→from nisaba.guidance import WorkflowGuidance
+    18→from nisaba.augments import get_augment_manager
+    19→
+    20→logger = logging.getLogger(__name__)
+    21→
+    22→
+    23→class NabuAgent(Agent):
+    24→    """
+    25→    Stateful orchestrator for nabu MCP resources.
+    26→
+    27→    Manages:
+    28→    - Database managers (multi-codebase)
+    29→    - Incremental updaters
+    30→    - Auto-indexing
+    31→    - File watchers
+    32→    - Workflow guidance (augments-based)
+    33→
+    34→    The agent handles resource lifecycle (initialization and cleanup)
+    35→    and state mutations (codebase switching).
+    36→    """
+    37→
+    38→    def __init__(self, config: NabuConfig, factory: "NabuMCPFactorySingleProcess"):
+    39→        """
+    40→        Initialize nabu agent with configuration.
+    41→
+    42→        Args:
+    43→            config: NabuConfig instance
+    44→            factory: Reference to factory (for callbacks like _handle_file_change)
+    45→        """
+    46→        super().__init__()  # Initialize base agent (sets guidance = None)
+    47→
+    48→        self.config = config
+    49→        self.factory = factory  # Needed for _handle_file_change callback
+    50→
+    51→        # Multi-codebase state
+    52→        self.db_managers: Dict[str, "KuzuConnectionManager"] = {}
+    53→        self.incremental_updaters: Dict[str, "IncrementalUpdater"] = {}
+    54→
+    55→        # Active codebase (backward compatibility)
+    56→        self.db_manager: Optional["KuzuConnectionManager"] = None
+    57→        self.incremental_updater: Optional["IncrementalUpdater"] = None
+    58→
+    59→        # Lifecycle components
+    60→        self.auto_indexer: Optional["AutoIndexingManager"] = None
+    61→        self._file_watchers: Dict[str, "FileWatcher"] = {}
+    62→
+    63→        # Augments management
+    64→        self.augment_manager = get_augment_manager()
+    65→        logger.info(f"📚 Augments manager initialized: {len(self.augment_manager.available_augments)} augments available")
+    66→
+    67→        # Workflow guidance (augments-based only)
+    68→        self.guidance = WorkflowGuidance(augment_manager=self.augment_manager)
+    69→        logger.info("✨ Augments-based guidance enabled")
+    70→
+    71→    def activate_codebase(self, name: str) -> None:
+    72→        """
+    73→        Switch active codebase (state mutation).
+    74→
+    75→        Args:
+    76→            name: Codebase name to activate
+    77→
+    78→        Raises:
+    79→            ValueError: If codebase not found
+    80→        """
+    81→        if name not in self.db_managers:
+    82→            available = list(self.db_managers.keys())
+    83→            raise ValueError(f"Codebase '{name}' not found. Available: {available}")
+    84→
+    85→        self.config.active_codebase = name
+    86→        self.db_manager = self.db_managers[name]
+    87→
+    88→        if name in self.incremental_updaters:
+    89→            self.incremental_updater = self.incremental_updaters[name]
+    90→
+    91→        logger.info(f"✓ Active codebase switched to '{name}'")
+    92→
+    93→    async def initialize(self) -> None:
+    94→        """
+    95→        Initialize agent resources (lifecycle startup).
+    96→
+    97→        Handles:
+    98→        - Auto-indexing manager startup
+    99→        - Database manager initialization
+   100→        - Incremental updater initialization
+   101→        - File watcher setup
+   102→        """
+   103→        logger.info("=" * 60)
+   104→        logger.info("Nabu Agent - Initializing")
+   105→        logger.info("=" * 60)
+   106→
+   107→        if self.config.dev_mode:
+   108→            logger.debug("Development mode active - verbose logging enabled")
+   109→
+   110→        # Initialize auto-indexing manager FIRST (before db_managers)
+   111→        # This prevents KuzuDB from creating empty databases for unindexed codebases
+   112→        try:
+   113→            from nabu.mcp.indexing import AutoIndexingManager
+   114→
+   115→            self.auto_indexer = AutoIndexingManager(self.factory)
+   116→            await self.auto_indexer.start()
+   117→            logger.info("✓ Auto-indexing manager started")
+   118→        except Exception as e:
+   119→            logger.error(f"Failed to start auto-indexing: {e}")
+   120→            raise
+   121→
+   122→        # Initialize database managers ONLY for codebases with existing databases
+   123→        # Unindexed codebases will have their db_manager created after indexing completes
+   124→        try:
+   125→            from nabu.db import KuzuConnectionManager
+   126→
+   127→            for name, cb_config in self.config.codebases.items():
+   128→                # Check if database file exists before initializing manager
+   129→                # (KuzuDB creates empty DB if file doesn't exist, which breaks auto-indexing detection)
+   130→                if not cb_config.db_path.exists():
+   131→                    logger.info(f"⏸ Skipping db_manager init for '{name}' (will be indexed)")
+   132→                    continue
+   133→
+   134→                self.db_managers[name] = KuzuConnectionManager.get_instance(str(cb_config.db_path))
+   135→                logger.info(f"✓ Database manager initialized for '{name}': {cb_config.db_path}")
+   136→
+   137→            # BACKWARD COMPATIBILITY: Set self.db_manager to active codebase
+   138→            if self.config.active_codebase and self.config.active_codebase in self.db_managers:
+   139→                self.db_manager = self.db_managers[self.config.active_codebase]
+   140→                logger.info(f"✓ Active codebase: {self.config.active_codebase}")
+   141→
+   142→        except Exception as e:
+   143→            logger.error(f"Failed to initialize database managers: {e}")
+   144→            raise
+   145→
+   146→        # Initialize incremental updaters ONLY for codebases with existing databases
+   147→        try:
+   148→            from nabu.incremental import IncrementalUpdater
+   149→
+   150→            for name, cb_config in self.config.codebases.items():
+   151→                # Only initialize updater if database exists
+   152→                if not cb_config.db_path.exists():
+   153→                    logger.info(f"⏸ Skipping updater init for '{name}' (will be indexed)")
+   154→                    continue
+   155→
+   156→                self.incremental_updaters[name] = IncrementalUpdater(str(cb_config.db_path))
+   157→                logger.info(f"✓ Incremental updater initialized for '{name}'")
+   158→
+   159→            # BACKWARD COMPATIBILITY: Set self.incremental_updater to active
+   160→            if self.config.active_codebase and self.config.active_codebase in self.incremental_updaters:
+   161→                self.incremental_updater = self.incremental_updaters[self.config.active_codebase]
+   162→
+   163→        except Exception as e:
+   164→            logger.warning(f"Could not initialize incremental updaters: {e}")
+   165→
+   166→        # Initialize file watchers for codebases with watch_enabled
+   167→        self._file_watchers = {}
+   168→        for name, cb_config in self.config.codebases.items():
+   169→            # Only start watcher if codebase is indexed
+   170→            if self.auto_indexer:
+   171→                from nabu.mcp.indexing import IndexingState
+   172→                indexing_status = self.auto_indexer.get_status(name)
+   173→                if indexing_status.state != IndexingState.INDEXED:
+   174→                    logger.info(f"⏸ Skipping file watcher for '{name}' (state: {indexing_status.state.value})")
+   175→                    continue
+   176→
+   177→            if cb_config.watch_enabled and name in self.incremental_updaters:
+   178→                try:
+   179→                    from nabu.file_watcher import FileWatcher, FileFilter
+   180→                    from nabu.language_handlers import language_registry
+   181→
+   182→                    # Build ignore patterns: defaults + .gitignore + extra from config
+   183→                    ignore_patterns = FileFilter.default_ignores()
+   184→
+   185→                    # Load repository .gitignore
+   186→                    gitignore_path = cb_config.repo_path / ".gitignore"
+   187→                    if gitignore_path.exists():
+   188→                        try:
+   189→                            with open(gitignore_path, 'r', encoding='utf-8') as f:
+   190→                                for line in f:
+   191→                                    line = line.strip()
+   192→                                    if line and not line.startswith('#'):
+   193→                                        ignore_patterns.append(line)
+   194→                            logger.debug(f"Loaded .gitignore patterns for '{name}'")
+   195→                        except Exception as e:
+   196→                            logger.warning(f"Failed to load .gitignore for '{name}': {e}")
+   197→
+   198→                    # Add extra patterns from config
+   199→                    if self.config.extra_ignore_patterns:
+   200→                        ignore_patterns.extend(self.config.extra_ignore_patterns)
+   201→
+   202→                    # Use lambda with default argument to capture codebase name correctly
+   203→                    self._file_watchers[name] = FileWatcher(
+   204→                        codebase_path=str(cb_config.repo_path),
+   205→                        on_file_changed=lambda path, cb=name: self.factory._handle_file_change(path, cb),
+   206→                        debounce_seconds=self.config.watch_debounce_seconds,
+   207→                        ignore_patterns=ignore_patterns,
+   208→                        watch_extensions=language_registry.get_all_extensions()
+   209→                    )
+   210→                    self._file_watchers[name].start()
+   211→                    logger.info(f"✓ File watcher started for '{name}': {cb_config.repo_path}")
+   212→                except ImportError as e:
+   213→                    logger.warning(
+   214→                        f"File watcher dependencies not available: {e}. "
+   215→                        "Install with: pip install watchdog pathspec"
+   216→                    )
+   217→                except Exception as e:
+   218→                    logger.error(f"Failed to initialize file watcher for '{name}': {e}")
+   219→
+   220→        logger.info("Nabu Agent - Initialization Complete")
+   221→        logger.info("=" * 60)
+   222→
+   223→    async def shutdown(self) -> None:
+   224→        """
+   225→        Cleanup agent resources (lifecycle shutdown).
+   226→
+   227→        Handles:
+   228→        - File watcher cleanup
+   229→        - Auto-indexing manager stop
+   230→        - Incremental updater cleanup
+   231→        - Database manager cleanup
+   232→        """
+   233→        logger.info("=" * 60)
+   234→        logger.info("Nabu Agent - Shutting Down")
+   235→        logger.info("=" * 60)
+   236→
+   237→        # Cleanup file watchers
+   238→        for name, watcher in self._file_watchers.items():
+   239→            try:
+   240→                watcher.stop()
+   241→                logger.info(f"✓ File watcher stopped for '{name}'")
+   242→            except Exception as e:
+   243→                logger.warning(f"Error stopping file watcher for '{name}': {e}")
+   244→
+   245→        # Shutdown auto-indexing
+   246→        if self.auto_indexer:
+   247→            try:
+   248→                await self.auto_indexer.stop()
+   249→                logger.info("✓ Auto-indexing manager stopped")
+   250→            except Exception as e:
+   251→                logger.warning(f"Error stopping auto-indexing: {e}")
+   252→
+   253→        # Cleanup incremental updaters
+   254→        for name, updater in self.incremental_updaters.items():
+   255→            if hasattr(updater, 'conn'):
+   256→                try:
+   257→                    updater.conn.close()
+   258→                    logger.info(f"✓ Incremental updater closed for '{name}'")
+   259→                except Exception as e:
+   260→                    logger.warning(f"Error closing updater for '{name}': {e}")
+   261→        self.incremental_updaters.clear()
+   262→
+   263→        # Cleanup database managers
+   264→        for name, manager in self.db_managers.items():
+   265→            try:
+   266→                manager.close()
+   267→                logger.info(f"✓ Database manager closed for '{name}'")
+   268→            except Exception as e:
+   269→                logger.warning(f"Error closing manager for '{name}': {e}")
+   270→        self.db_managers.clear()
+   271→
+   272→        logger.info("Nabu Agent - Shutdown Complete")
+   273→        logger.info("=" * 60)
+   274→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
+
+---TOOL_USE_END(toolu_017TPWfaMo2apcesgg2B18ib)
+---TOOL_USE(toolu_01EqcHbt4mDNMsXTE5AMXQ18)
+src/nisaba/server/factory.py:11:from nisaba.guidance import WorkflowGuidance
+src/nisaba/__init__.py:8:from nisaba.guidance import WorkflowGuidance, GuidanceGraph, GuidancePattern
+src/nabu/mcp/guidance_config.py:8:from nisaba.guidance import GuidanceGraph
+src/nabu/mcp/factory_impl.py:14:from nisaba.guidance import WorkflowGuidance
+src/nabu/mcp/agent.py:17:from nisaba.guidance import WorkflowGuidance
+
+[Showing results with pagination = limit: 20, offset: 0]
+---TOOL_USE_END(toolu_01EqcHbt4mDNMsXTE5AMXQ18)
+---TOOL_USE(toolu_014o91jrDvLiZXPAqbkS6fNa)
+src/nisaba/guidance.py:84:        guidance.record_tool_call("my_tool", {}, {"success": True})
+src/nisaba/guidance.py:106:    def record_tool_call(
+src/nabu/mcp/factory_impl.py:83:        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+.nisaba/workspace.md:15:[Omitted long matching line]
+.nisaba/workspace.md:126:    84→        guidance.record_tool_call("my_tool", {}, {"success": True})
+.nisaba/workspace.md:148:   106→    def record_tool_call(
+.nisaba/workspace.md:394:    83→        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+.nisaba/modified_context.json:116:[Omitted long matching line]
+.nisaba/modified_context.json:176:            "pattern": "_record_guidance|record_tool_call",
+.nisaba/modified_context.json:374:[Omitted long matching line]
+
+[Showing results with pagination = limit: 20, offset: 0]
+
+<system-reminder>
+The TodoWrite tool hasn't been used recently. If you're working on tasks that would benefit from tracking progress, consider using the TodoWrite tool to track progress. Also consider cleaning up the todo list if has become stale and no longer matches what you are working on. Only use it if it's relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user
+
+</system-reminder>
+---TOOL_USE_END(toolu_014o91jrDvLiZXPAqbkS6fNa)
+---TOOL_USE(toolu_01KSxZhDvGAq7CRSTDQYVWTS)
      1→"""Abstract base class for MCP tools."""
      2→
      3→import inspect
@@ -643,1751 +1075,282 @@ The TodoWrite tool hasn't been used recently. If you're working on tasks that wo
     48→    @classmethod
     49→    def logger(cls):
     50→        return  logging.getLogger(f"{cls.__module__}.{cls.get_name()}")
-    51→
-    52→    @classmethod
-    53→    def get_name_from_cls(cls) -> str:
-    54→        """
-    55→        Get tool name from class name.
-    56→
-    57→        Converts class name like "QueryTool" to "query".
-    58→
-    59→        Returns:
-    60→            Tool name in snake_case
-    61→        """
-    62→        name = cls.__name__
-    63→        if name.endswith("Tool"):
-    64→            name = name[:-4]
-    65→        # Convert to snake_case
-    66→        name = "".join(["_" + c.lower() if c.isupper() else c for c in name]).lstrip("_")
-    67→        return name
-    68→
-    69→    @classmethod
-    70→    def get_name(cls) -> str:
-    71→        """Get instance tool name."""
-    72→        return cls.get_name_from_cls()
-    73→
-    74→    @classmethod
-    75→    @abstractmethod
-    76→    def nisaba(cls) -> bool:
-    77→        return False
-    78→    
-    79→    @classmethod
-    80→    def get_tool_schema(cls) -> Dict[str, Any]:
-    81→        """
-    82→        Generate JSON schema from execute() signature and docstring.
-    83→
-    84→        Returns:
-    85→            Dict containing tool name, description, and parameter schema
-    86→        """
-    87→        tool_name = cls.get_name_from_cls()
-    88→
-    89→        # Get execute method
-    90→        execute_method = cls.execute
-    91→        sig = inspect.signature(execute_method)
-    92→        
-    93→        # Parse docstring
-    94→        docstring_text = execute_method.__doc__ or ""
-    95→
-    96→        if DOCSTRING_PARSER_AVAILABLE and docstring_text:
-    97→            docstring = parse_docstring(docstring_text)
-    98→
-    99→            # Build description
-   100→            description_parts = []
-   101→            if docstring.short_description:
-   102→                description_parts.append(docstring.short_description.strip())
-   103→            if docstring.long_description:
-   104→                description_parts.append(docstring.long_description.strip())
-   105→
-   106→            description = "\n\n".join(description_parts)
-   107→
-   108→            # Build param description map
-   109→            param_descriptions = {
-   110→                param.arg_name: param.description
-   111→                for param in docstring.params
-   112→                if param.description
-   113→            }
-   114→        else:
-   115→            description = docstring_text.strip()
-   116→            param_descriptions = {}
-   117→
-   118→        # Build parameter schema
-   119→        properties = {}
-   120→        required = []
-   121→        type_hints = get_type_hints(execute_method)
-   122→
-   123→        for param_name, param in sig.parameters.items():
-   124→            if param_name in ["self", "kwargs"]:
-   125→                continue
-   126→
-   127→            # Get type annotation
-   128→            param_type = type_hints.get(param_name, Any)
-   129→            json_type = cls._python_type_to_json_type(param_type)
-   130→
-   131→            # Get description from docstring
-   132→            param_desc = param_descriptions.get(param_name, "")
-   133→
-   134→            # Build parameter schema entry
-   135→            param_schema = {"type": json_type}
-   136→
-   137→            if param_desc:
-   138→                param_schema["description"] = param_desc.strip()
-   139→
-   140→            # Add default value if available
-   141→            if param.default != inspect.Parameter.empty:
-   142→                try:
-   143→                    import json
-   144→                    json.dumps(param.default)
-   145→                    param_schema["default"] = param.default
-   146→                except (TypeError, ValueError):
-   147→                    pass
-   148→            else:
-   149→                required.append(param_name)
-   150→
-   151→            properties[param_name] = param_schema
-   152→
-   153→        return {
-   154→            "name": tool_name,
-   155→            "description": description,
-   156→            "parameters": {
-   157→                "type": "object",
-   158→                "properties": properties,
-   159→                "required": required
-   160→            }
-   161→        }
-   162→
-   163→    @classmethod
-   164→    def get_tool_description(cls) -> str:
-   165→        """
-   166→        Get human-readable tool description.
-   167→
-   168→        Returns:
-   169→            Description string extracted from docstrings
-   170→        """
-   171→        execute_doc = cls.execute.__doc__ or ""
-   172→
-   173→        if DOCSTRING_PARSER_AVAILABLE and execute_doc:
-   174→            docstring = parse_docstring(execute_doc)
-   175→            return docstring.short_description or cls.__doc__ or ""
-   176→
-   177→        if execute_doc:
-   178→            return execute_doc.strip().split('\n')[0]
-   179→        return cls.__doc__ or ""
-   180→    
-   181→    @abstractmethod
-   182→    async def execute(self, **kwargs) -> BaseToolResponse:
-   183→        """
-   184→        Execute the tool with given parameters.
-   185→
-   186→        Args:
-   187→            **kwargs: Tool-specific parameters
-   188→
-   189→        Returns:
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
+
+---TOOL_USE_END(toolu_01KSxZhDvGAq7CRSTDQYVWTS)
+---TOOL_USE(toolu_015QkufExcxk3trAxSz5VLAn)
+     1→"""Concrete factory implementation for single-process nabu MCP server."""
+     2→
+     3→from contextlib import asynccontextmanager
+     4→from pathlib import Path
+     5→from typing import AsyncIterator, Iterator
+     6→import logging
+     7→
+     8→from mcp.server.fastmcp import FastMCP
+     9→
+    10→from nabu.mcp.factory import NabuMCPFactory
+    11→from nabu.mcp.config.nabu_config import NabuConfig
+    12→from nabu.mcp.tools.base import NabuTool
+    13→from nabu.mcp.guidance_config import NABU_GUIDANCE_GRAPH
+    14→from nisaba.guidance import WorkflowGuidance
+    15→
+    16→logger = logging.getLogger(__name__)
+    17→
+    18→
+    19→class NabuMCPFactorySingleProcess(NabuMCPFactory):
+    20→    """
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
+
+---TOOL_USE_END(toolu_015QkufExcxk3trAxSz5VLAn)
+---TOOL_USE(toolu_0161PR1s51ejWmi8LKJb8dFC)
+No files found
+---TOOL_USE_END(toolu_0161PR1s51ejWmi8LKJb8dFC)
+---TOOL_USE(toolu_017goXRDCtu8CjT9cmRxB58X)
+/home/y3i12/nabu_nisaba/src/nisaba/guidance.py-157-            return None
+/home/y3i12/nabu_nisaba/src/nisaba/guidance.py-158-
+/home/y3i12/nabu_nisaba/src/nisaba/guidance.py-159-        last_tool = self.history[-1]['tool']
+src/nisaba/guidance.py:160:        related_tools = self.augment_manager.get_related_tools(last_tool)
+/home/y3i12/nabu_nisaba/src/nisaba/guidance.py-161-
+src/nisaba/guidance.py-162-        if related_tools:
+/home/y3i12/nabu_nisaba/src/nisaba/guidance.py-163-            return {
+--
+src/nisaba/augments.py-494-            'affected': [ augment.path ]
+/home/y3i12/nabu_nisaba/src/nisaba/augments.py-495-        }
+/home/y3i12/nabu_nisaba/src/nisaba/augments.py-496-
+src/nisaba/augments.py:497:    def get_related_tools(self, tool_name: str) -> List[str]:
+/home/y3i12/nabu_nisaba/src/nisaba/augments.py-498-        """
+/home/y3i12/nabu_nisaba/src/nisaba/augments.py-499-        Get tools related to the given tool based on active augments.
+/home/y3i12/nabu_nisaba/src/nisaba/augments.py-500-
+--
+/home/y3i12/nabu_nisaba/.nisaba/augments/dev_mode_architecture_reference/augmentation_subsystem_architecture.md-430-        
+.nisaba/augments/dev_mode_architecture_reference/augmentation_subsystem_architecture.md-431-    def get_suggestions(self):
+/home/y3i12/nabu_nisaba/.nisaba/augments/dev_mode_architecture_reference/augmentation_subsystem_architecture.md-432-        # Returns tool associations from active augments
+.nisaba/augments/dev_mode_architecture_reference/augmentation_subsystem_architecture.md:433:        related = self.augments_manager.get_related_tools(last_tool)
+
+[Showing results with pagination = limit: 20, offset: 0]
+---TOOL_USE_END(toolu_017goXRDCtu8CjT9cmRxB58X)
+---TOOL_USE(toolu_01VUcC2VafUcxWiAgatMquHm)
+src/nisaba/README.md:410:        self.guidance = WorkflowGuidance(MY_GUIDANCE)
+src/nisaba/agent.py:34:        self.guidance: Optional["WorkflowGuidance"] = None
+.nisaba/modified_context.json:111:[Omitted long matching line]
+.nisaba/modified_context.json:116:[Omitted long matching line]
+.nisaba/modified_context.json:368:[Omitted long matching line]
+.nisaba/modified_context.json:487:[Omitted long matching line]
+src/nabu/mcp/factory_impl.py:83:        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+src/nabu/mcp/factory_impl.py:86:        return self.agent.guidance if hasattr(self, 'agent') else None
+src/nabu/mcp/agent.py:68:        self.guidance = WorkflowGuidance(augment_manager=self.augment_manager)
+.nisaba/workspace.md:15:[Omitted long matching line]
+.nisaba/workspace.md:394:    83→        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+.nisaba/workspace.md:397:    86→        return self.agent.guidance if hasattr(self, 'agent') else None
+.nisaba/workspace.md:441:    34→        self.guidance: Optional["WorkflowGuidance"] = None
+.nisaba/workspace.md:786:    68→        self.guidance = WorkflowGuidance(augment_manager=self.augment_manager)
+.nisaba/workspace.md:1011:src/nabu/mcp/factory_impl.py:83:        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+.nisaba/workspace.md:1015:.nisaba/workspace.md:394:    83→        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+
+[Showing results with pagination = limit: 20, offset: 0]
+
+<system-reminder>
+The TodoWrite tool hasn't been used recently. If you're working on tasks that would benefit from tracking progress, consider using the TodoWrite tool to track progress. Also consider cleaning up the todo list if has become stale and no longer matches what you are working on. Only use it if it's relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user
+
+</system-reminder>
+---TOOL_USE_END(toolu_01VUcC2VafUcxWiAgatMquHm)
+---TOOL_USE(toolu_01ExEriGG4rqugQWu2HbUyvF)
+   405→
+   406→# Enable in factory
+   407→class MyFactory(MCPFactory):
+   408→    def __init__(self, config):
+   409→        super().__init__(config)
+   410→        self.guidance = WorkflowGuidance(MY_GUIDANCE)
+   411→```
+   412→
+   413→**Tool responses include guidance:**
+   414→
+   415→```json
+   416→{
+   417→  "success": true,
+   418→  "data": "...",
+   419→  "_guidance": {
+   420→    "suggestion": "map() - Get project overview first",
+   421→    "reason": "Mapping provides essential context",
+   422→    "priority": "HIGH"
+   423→  }
+   424→}
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
+
+---TOOL_USE_END(toolu_01ExEriGG4rqugQWu2HbUyvF)
+---TOOL_USE(toolu_015kcDCEw3sHrEiLd1njbjb8)
+src/nisaba/guidance.py:84:        guidance.record_tool_call("my_tool", {}, {"success": True})
+src/nisaba/guidance.py:85:        suggestions = guidance.get_suggestions()
+src/nisaba/guidance.py:106:    def record_tool_call(
+src/nisaba/guidance.py:133:    def get_suggestions(self) -> Optional[Dict[str, Any]]:
+src/nisaba/guidance.py:172:    def check_redundancy(
+src/nisaba/guidance.py:202:    def get_session_summary(self) -> Dict[str, Any]:
+
+[Showing results with pagination = limit: 20, offset: 0]
+---TOOL_USE_END(toolu_015kcDCEw3sHrEiLd1njbjb8)
+---TOOL_USE(toolu_01EEdvJdSwH8aCFz6EhQjRU2)
+src/nabu/mcp/factory_impl.py:83:        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+src/nabu/mcp/factory_impl.py:86:        return self.agent.guidance if hasattr(self, 'agent') else None
+.nisaba/workspace.md:15:[Omitted long matching line]
+.nisaba/workspace.md:394:    83→        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+.nisaba/workspace.md:397:    86→        return self.agent.guidance if hasattr(self, 'agent') else None
+.nisaba/workspace.md:1011:src/nabu/mcp/factory_impl.py:83:        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+.nisaba/workspace.md:1015:.nisaba/workspace.md:394:    83→        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+.nisaba/workspace.md:1145:src/nabu/mcp/factory_impl.py:83:        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+.nisaba/workspace.md:1146:src/nabu/mcp/factory_impl.py:86:        return self.agent.guidance if hasattr(self, 'agent') else None
+.nisaba/workspace.md:1149:.nisaba/workspace.md:394:    83→        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+.nisaba/workspace.md:1150:.nisaba/workspace.md:397:    86→        return self.agent.guidance if hasattr(self, 'agent') else None
+.nisaba/workspace.md:1153:.nisaba/workspace.md:1011:src/nabu/mcp/factory_impl.py:83:        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+.nisaba/workspace.md:1154:.nisaba/workspace.md:1015:.nisaba/workspace.md:394:    83→        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+.nisaba/modified_context.json:368:[Omitted long matching line]
+.nisaba/modified_context.json:481:[Omitted long matching line]
+.nisaba/modified_context.json:606:[Omitted long matching line]
+
+[Showing results with pagination = limit: 20, offset: 0]
+
+<system-reminder>
+The TodoWrite tool hasn't been used recently. If you're working on tasks that would benefit from tracking progress, consider using the TodoWrite tool to track progress. Also consider cleaning up the todo list if has become stale and no longer matches what you are working on. Only use it if it's relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user
+
+</system-reminder>
+---TOOL_USE_END(toolu_01EEdvJdSwH8aCFz6EhQjRU2)
+---TOOL_USE(toolu_011WySmj3axGmjwrt7CaYwg1)
+   495→        }
+   496→
+   497→    def get_related_tools(self, tool_name: str) -> List[str]:
+   498→        """
+   499→        Get tools related to the given tool based on active augments.
+   500→
+   501→        This is used by guidance system to provide tool associations.
+   502→
+   503→        Args:
+   504→            tool_name: Name of tool to find relations for
+   505→
+   506→        Returns:
+   507→            List of related tool names
+   508→        """
+   509→        return self._tool_associations.get(tool_name, [])
+   510→
+   511→    def _match_pattern(self, pattern: str) -> Set[str]:
+   512→        """
+   513→        Match augment paths against a pattern.
+   514→
+   515→        Args:
+   516→            pattern: Pattern to match (supports * wildcard)
+   517→
+   518→        Returns:
+   519→            Set of matching augment paths
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
+
+---TOOL_USE_END(toolu_011WySmj3axGmjwrt7CaYwg1)
+---TOOL_USE(toolu_01F2GXmyFA2acuWENJW7t3BS)
    190→            BaseToolResponse
    191→        """
    192→        pass
    193→
-   194→    def _record_guidance(self, tool_name: str, params: Dict[str, Any], result: Dict[str, Any]) -> None:
+   194→    async def execute_tool(self, **kwargs) -> BaseToolResponse:
    195→        """
-   196→        Record tool call in guidance system and add suggestions to result.
+   196→        Execute tool with automatic timing and error handling.
    197→
-   198→        This method can be called by subclasses that override execute_with_timing().
-   199→        Modifies result dict in-place to add _guidance field if suggestions available.
-   200→
-   201→        Args:
-   202→            tool_name: Name of the tool that was executed
-   203→            params: Parameters passed to the tool
-   204→            result: Result dict (modified in-place)
+   198→        Wrapper around execute() that adds timing and optional guidance tracking.
+   199→
+   200→        Args:
+   201→            **kwargs: Tool-specific parameters
+   202→
+   203→        Returns:
+   204→            Tool execution result with timing and optional guidance metadata
    205→        """
-   206→        if hasattr(self.factory, 'guidance') and self.factory.guidance is not None:
-   207→            try:
-   208→                self.factory.guidance.record_tool_call(
-   209→                    tool_name=tool_name,
-   210→                    params=params,
-   211→                    result=result
-   212→                )
+   206→        try:
+   207→            result = await self.execute(**kwargs)
+   208→
+   209→            return result
+   210→
+   211→        except Exception as e:
+   212→            return self.response_exception(e)
    213→
-   214→                # Optionally add suggestions to result metadata
-   215→                suggestions = self.factory.guidance.get_suggestions()
-   216→                if suggestions:
-   217→                    result["_guidance"] = suggestions
+   214→    @classmethod
+   215→    def is_optional(cls) -> bool:
+   216→        """
+   217→        Check if tool is optional (disabled by default).
    218→
-   219→            except Exception as guidance_error:
-   220→                # Don't fail tool execution if guidance fails
-   221→                self.logger().warning(f"Guidance tracking failed: {guidance_error}")
-   222→
-   223→    async def execute_with_timing(self, **kwargs) -> Dict[str, Any]:
-   224→        """
-   225→        Execute tool with automatic timing and error handling.
-   226→
-   227→        Wrapper around execute() that adds timing and optional guidance tracking.
-   228→
-   229→        Args:
-   230→            **kwargs: Tool-specific parameters
-   231→
-   232→        Returns:
-   233→            Tool execution result with timing and optional guidance metadata
-   234→        """
-   235→        start_time = time.time()
-   236→
-   237→        try:
-   238→            result = await self.execute(**kwargs)
-   239→
-   240→            # Record in guidance system (subclasses can also call this)
-   241→            self._record_guidance(self.get_name(), kwargs, result)
-   242→
-   243→            return result
-   244→
-   245→        except Exception as e:
-   246→            self.logger().error(f"Tool execution failed: {e}", exc_info=True)
-   247→            return {
-   248→                "success": False,
-   249→                "error": str(e),
-   250→                "error_type": type(e).__name__
-   251→            }
-   252→
-   253→    @classmethod
-   254→    def is_optional(cls) -> bool:
-   255→        """
-   256→        Check if tool is optional (disabled by default).
-   257→
-   258→        Returns:
-   259→            True if tool is optional
-   260→        """
-   261→        from ..markers import ToolMarkerOptional
-   262→        return issubclass(cls, ToolMarkerOptional)
-   263→
-   264→    @classmethod
-   265→    def is_dev_only(cls) -> bool:
-   266→        """
-   267→        Check if tool is development-only.
-   268→
-   269→        Returns:
-   270→            True if tool is dev-only
-   271→        """
-   272→        from ..markers import ToolMarkerDevOnly
-   273→        return issubclass(cls, ToolMarkerDevOnly)
-   274→
-   275→    @classmethod
-   276→    def is_mutating(cls) -> bool:
-   277→        """
-   278→        Check if tool modifies state.
-   279→
-   280→        Returns:
-   281→            True if tool mutates state
-   282→        """
-   283→        from ..markers import ToolMarkerMutating
-   284→        return issubclass(cls, ToolMarkerMutating)
-   285→
-   286→    @classmethod
-   287→    def _get_meta_field(cls, field_name: str) -> Optional[str]:
-   288→        """
-   289→        Extract a :meta field: from execute() docstring.
-   290→
-   291→        Args:
-   292→            field_name: Name of meta field (e.g., 'pitch', 'examples')
-   293→
-   294→        Returns:
-   295→            Field description or None
-   296→        """
-   297→        execute_doc = cls.execute.__doc__ or ""
-   298→
-   299→        if not DOCSTRING_PARSER_AVAILABLE or not execute_doc:
-   300→            return None
-   301→
-   302→        docstring = parse_docstring(execute_doc)
-   303→
-   304→        # Look for :meta field_name: field
-   305→        if hasattr(docstring, 'meta') and docstring.meta:
-   306→            for meta in docstring.meta:
-   307→                if hasattr(meta, 'args') and len(meta.args) >= 2:
-   308→                    if meta.args[0] == 'meta' and meta.args[1] == field_name:
-   309→                        return meta.description
-   310→
-   311→        return None
-   312→
-   313→    @classmethod
-   314→    def get_tool_pitch(cls) -> Optional[str]:
-   315→        """
-   316→        Get brief, inciting tool pitch for instructions.
-   317→
-   318→        Extracts the :meta pitch: field from execute() docstring.
-   319→        Falls back to short_description if no pitch provided.
-   320→
-   321→        Returns:
-   322→            Brief pitch string or None
-   323→        """
-   324→        pitch = cls._get_meta_field('pitch')
-   325→        if pitch:
-   326→            return pitch
-   327→
-   328→        # Fallback to short description
-   329→        execute_doc = cls.execute.__doc__ or ""
-   330→        if DOCSTRING_PARSER_AVAILABLE and execute_doc:
-   331→            docstring = parse_docstring(execute_doc)
-   332→            return docstring.short_description
-   333→
-   334→        return None
-   335→
-   336→    @classmethod
-   337→    def get_tool_examples(cls) -> Optional[str]:
-   338→        """
-   339→        Get usage examples for this tool.
-   340→
-   341→        Extracts the :meta examples: field from execute() docstring.
-   342→
-   343→        Returns:
-   344→            Markdown-formatted examples or None
-   345→        """
-   346→        return cls._get_meta_field('examples')
-   347→
-   348→    @classmethod
-   349→    def get_tool_tips(cls) -> Optional[str]:
-   350→        """
-   351→        Get best practices and tips for using this tool.
-   352→
-   353→        Extracts the :meta tips: field from execute() docstring.
-   354→
-   355→        Returns:
-   356→            Markdown-formatted tips or None
-   357→        """
-   358→        return cls._get_meta_field('tips')
-   359→
-   360→    @classmethod
-   361→    def get_tool_patterns(cls) -> Optional[str]:
-   362→        """
-   363→        Get common usage patterns for this tool.
-   364→
-   365→        Extracts the :meta patterns: field from execute() docstring.
-   366→
-   367→        Returns:
-   368→            Markdown-formatted patterns or None
-   369→        """
-   370→        return cls._get_meta_field('patterns')
-   371→
-   372→    # UTILITY METHODS
-   373→    @classmethod
-   374→    def _python_type_to_json_type(cls, python_type: Any) -> str:
-   375→        """
-   376→        Convert Python type hint to JSON schema type.
-   377→
-   378→        Args:
-   379→            python_type: Python type annotation
-   380→
-   381→        Returns:
-   382→            JSON schema type string
-   383→        """
-   384→        # Handle string representations
-   385→        if isinstance(python_type, str):
-   386→            type_str = python_type.lower()
-   387→            if 'str' in type_str:
-   388→                return "string"
-   389→            elif 'int' in type_str:
-   390→                return "integer"
-   391→            elif 'float' in type_str or 'number' in type_str:
-   392→                return "number"
-   393→            elif 'bool' in type_str:
-   394→                return "boolean"
-   395→            elif 'list' in type_str or 'sequence' in type_str:
-   396→                return "array"
-   397→            elif 'dict' in type_str:
-   398→                return "object"
-   399→            return "string"
-   400→
-   401→        # Get the origin for generic types
-   402→        origin = getattr(python_type, '__origin__', None)
-   403→
-   404→        # Handle None/NoneType
-   405→        if python_type is type(None):
-   406→            return "null"
-   407→
-   408→        # Direct type mappings
-   409→        type_map = {
-   410→            str: "string",
-   411→            int: "integer",
-   412→            float: "number",
-   413→            bool: "boolean",
-   414→            list: "array",
-   415→            dict: "object",
-   416→        }
-   417→
-   418→        if python_type in type_map:
-   419→            return type_map[python_type]
-   420→
-   421→        # Handle Optional, Union, List, Dict, etc.
-   422→        if origin is not None:
-   423→            if origin in (list, tuple):
-   424→                return "array"
-   425→            elif origin is dict:
-   426→                return "object"
-   427→            elif hasattr(python_type, '__args__'):
-   428→                # For Union types, try first non-None type
-   429→                for arg in python_type.__args__:
-   430→                    if arg is not type(None):
-   431→                        return cls._python_type_to_json_type(arg)
-   432→
-   433→        # Default to string for unknown types
-   434→        return "string"
-   435→    
-   436→    # CONVENIANCE TOOL RETURN METHODS
-   437→    @classmethod
-   438→    def response(cls, success:bool = False, message:Any = None) -> BaseToolResponse:
-   439→        """Return response."""
-   440→        return BaseToolResponse(success=success, message=message, nisaba=cls.nisaba())
-   441→    
-   442→    @classmethod
-   443→    def response_success(cls, message:Any = None) -> BaseToolResponse:
-   444→        """Return error response."""
-   445→        return cls.response(success=True, message=message)
-   446→    
-   447→    @classmethod
-   448→    def response_error(cls, message:Any = None, exc_info:bool=False) -> BaseToolResponse:
-   449→        """Return error response."""
-   450→        cls.logger().error(message, exc_info=exc_info)
-   451→        return cls.response(success=False, message=message)
-   452→    
-   453→    @classmethod
-   454→    def response_exception(cls, e:Exception, message:Any = None) -> BaseToolResponse:
-   455→        """Return exception response."""
-   456→        error_message =  f"{message} - {type(e).__name__}: {str(e)}"
-   457→        return cls.response_error(message=error_message, exc_info=True)
-   458→
-   459→
+   219→        Returns:
+   220→            True if tool is optional
+   221→        """
+   222→        from ..markers import ToolMarkerOptional
+   223→        return issubclass(cls, ToolMarkerOptional)
+   224→
+   225→    @classmethod
+   226→    def is_dev_only(cls) -> bool:
+   227→        """
+   228→        Check if tool is development-only.
+   229→
+   230→        Returns:
+   231→            True if tool is dev-only
+   232→        """
+   233→        from ..markers import ToolMarkerDevOnly
+   234→        return issubclass(cls, ToolMarkerDevOnly)
+   235→
+   236→    @classmethod
+   237→    def is_mutating(cls) -> bool:
+   238→        """
+   239→        Check if tool modifies state.
 
 <system-reminder>
 Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
 </system-reminder>
 
----TOOL_USE_END(toolu_01JKU2SZtYb1cKvTkyuKuDrz)
----TOOL_USE(toolu_013Wfu5YUCQykffQCjL4ZWHt)
-commit 59dc90d124350f69acbd881855eb87ce48a0dd1f
-Author: Yuri Ivatchkovitch <mytos.mail@gmail.com>
-Date:   Wed Nov 12 15:07:10 2025 +0100
-
-    nabu fixes 2
-
-diff --git a/src/nabu/mcp/tools/discovery_tools.py b/src/nabu/mcp/tools/discovery_tools.py
-index 8ba975d..462dd9e 100644
---- a/src/nabu/mcp/tools/discovery_tools.py
-+++ b/src/nabu/mcp/tools/discovery_tools.py
-@@ -227,7 +227,7 @@ class MapCodebaseTool(NabuTool):
-                 edge_type = row['edge_type']
-                 data["relationship_summary"][edge_type] = int(row['edge_count'])
- 
--            return self._success_response(data, start_time)
-+            return self._success_response(data)
-             
-         except Exception as e:
-             self.logger().error(f"Project exploration failed: {e}", exc_info=True)
-diff --git a/src/nabu/mcp/tools/observability_tools.py b/src/nabu/mcp/tools/observability_tools.py
-index a1ccc06..c4d003b 100644
---- a/src/nabu/mcp/tools/observability_tools.py
-+++ b/src/nabu/mcp/tools/observability_tools.py
-@@ -172,4 +172,4 @@ class ShowStatusTool(NabuTool):
-                     context={"detail_level": detail_level}
-                 )
-         
--        return self._success_response(response_data, start_time)
-+        return self._success_response(response_data)
-diff --git a/src/nabu/mcp/tools/query_tool.py b/src/nabu/mcp/tools/query_tool.py
-index d0904ee..d63c0ce 100644
---- a/src/nabu/mcp/tools/query_tool.py
-+++ b/src/nabu/mcp/tools/query_tool.py
-@@ -137,7 +137,7 @@ class QueryRelationshipsTool(NabuTool):
-                     "columns": []
-                 }
-             
--            return self._success_response(data, start_time)
-+            return self._success_response(data)
-         
-         except RuntimeError as e:
-             error_str = str(e)
-diff --git a/src/nabu/mcp/tools/show_structure_tools.py b/src/nabu/mcp/tools/show_structure_tools.py
-index 470a3c0..fae21a8 100644
---- a/src/nabu/mcp/tools/show_structure_tools.py
-+++ b/src/nabu/mcp/tools/show_structure_tools.py
-@@ -258,7 +258,7 @@ class ShowStructureTool(NabuTool):
-                     "estimated_tokens": total_tokens
-                 }
- 
--            return self._success_response(data, start_time)
-+            return self._success_response(data)
- 
-         except ValueError as e:
-             # Catch service-level validation errors
-diff --git a/src/nabu/mcp/tools/vector_search_tools.py b/src/nabu/mcp/tools/vector_search_tools.py
-index 1a0c857..f556ecf 100644
---- a/src/nabu/mcp/tools/vector_search_tools.py
-+++ b/src/nabu/mcp/tools/vector_search_tools.py
-@@ -163,8 +163,7 @@ class FindClonesTool(NabuTool):
-             # Validate parameters
-             if not 0.0 <= min_similarity <= 1.0:
-                 return self._error_response(
--                    ValueError(f"min_similarity must be between 0.0 and 1.0, got {min_similarity}"),
--                    start_time
-+                    ValueError(f"min_similarity must be between 0.0 and 1.0, got {min_similarity}")
-                 )
- 
-             warnings = [f"min_similarity={min_similarity} is quite low, may produce false positives"] if min_similarity < 0.60 else None
-@@ -184,7 +183,6 @@ class FindClonesTool(NabuTool):
-                 if not search_result.get('success', False):
-                     return self._error_response(
-                         ValueError(f"Search failed: {search_result.get('error', 'Unknown error')}"),
--                        start_time,
-                         recovery_hint="Try a different query or check database health"
-                     )
- 
-@@ -192,7 +190,6 @@ class FindClonesTool(NabuTool):
-                 if not search_results:
-                     return self._success_response(
-                         self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size),
--                        start_time,
-                         warnings=[f"No frames found matching query: '{query}'"]
-                     )
- 
-@@ -227,11 +224,11 @@ class FindClonesTool(NabuTool):
-                 frames_result = self.db_manager.execute(frames_query, {"min_size": min_function_size})
- 
-             if not frames_result or not hasattr(frames_result, 'get_as_df'):
--                return self._success_response(self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size), start_time, warnings=warnings)
-+                return self._success_response(self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size), warnings=warnings)
- 
-             frames_df = frames_result.get_as_df()
-             if frames_df.empty:
--                return self._success_response(self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size), start_time, warnings=warnings)
-+                return self._success_response(self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size), warnings=warnings)
- 
-             # Find clones for each frame
-             clone_pairs = []
-@@ -356,11 +353,11 @@ class FindClonesTool(NabuTool):
-                     "excluded_same_file": exclude_same_file,
-                     "min_function_size": min_function_size
-                 }
--            }, start_time, warnings=warnings)
-+            }, warnings=warnings)
- 
-         except Exception as e:
-             self.logger().error(f"Clone detection failed: {e}", exc_info=True)
--            return self._error_response(e, start_time,
-+            return self._error_response(e,
-                 context={"min_similarity": min_similarity, "error_type": type(e).__name__}
-             )
- 
-diff --git a/src/nabu/mcp/tools/workflow_tools.py b/src/nabu/mcp/tools/workflow_tools.py
-index abaf2e3..3f8aa77 100644
---- a/src/nabu/mcp/tools/workflow_tools.py
-+++ b/src/nabu/mcp/tools/workflow_tools.py
-@@ -219,7 +219,7 @@ class CheckImpactTool(NabuTool):
-                     ]
-                 }
- 
--            return self._success_response(results, start_time)
-+            return self._success_response(results)
-             
-         except Exception as e:
-             logger.error(f"impact_analysis_workflow failed for '{target}': {e}", exc_info=True)
-diff --git a/src/nisaba/utils/response.py b/src/nisaba/utils/response.py
-index a5b0a28..bc5054b 100644
---- a/src/nisaba/utils/response.py
-+++ b/src/nisaba/utils/response.py
-@@ -57,15 +57,9 @@ class ResponseBuilder:
-         """
-         response = {
-             "success": True,
--            "data": data
-+            "message": data
-         }
- 
--        if warnings:
--            response["warnings"] = warnings
--
--        if metadata:
--            response["metadata"] = metadata
--
-         return ResponseBuilder._round_floats(response)
- 
-     @staticmethod
-@@ -89,9 +83,7 @@ class ResponseBuilder:
-         """
-         response = {
-             "success": False,
--            "error": str(error),
--            "error_type": type(error).__name__,
--            "severity": severity.value
-+            "message": f"[{severity.value}] {type(error).__name__}:{str(error)}"
-         }
- 
-         if recovery_hint:
-@@ -101,36 +93,3 @@ class ResponseBuilder:
-             response["error_context"] = context
- 
-         return ResponseBuilder._round_floats(response)
--
--    @staticmethod
--    def partial_success(
--        data: Any,
--        errors: List[str],
--        metadata: Optional[Dict[str, Any]] = None
--    ) -> Dict[str, Any]:
--        """
--        Build response for operations that partially succeeded.
--
--        Use when an operation completes but with some failures (e.g., batch operations
--        where some items succeed and others fail).
--
--        Args:
--            data: Data for successful portion
--            errors: List of error messages for failed portion
--            execution_time_ms: Execution time in milliseconds
--            metadata: Optional metadata (e.g., success_count, failure_count)
--
--        Returns:
--            Partial success response dictionary
--        """
--        response = {
--            "success": True,
--            "partial": True,
--            "data": data,
--            "errors": errors
--        }
--
--        if metadata:
--            response["metadata"] = metadata
--
--        return ResponseBuilder._round_floats(response)
-diff --git a/src/nisaba/wrapper/proxy.py b/src/nisaba/wrapper/proxy.py
-index 2d0a3f0..457e7c7 100644
---- a/src/nisaba/wrapper/proxy.py
-+++ b/src/nisaba/wrapper/proxy.py
-@@ -302,25 +302,30 @@ class AugmentInjector:
-             if visible_tools:
-                 visible_tools = f"\n---RESULTS_END\n{visible_tools}\n---RESULTS_END"
- 
--            status_bar = f"\n{self._generate_status_bar(body, visible_tools)}"
-+            status_bar = f"{self._generate_status_bar(body, visible_tools)}"
- 
--            body['messages'].append( 
--                {
--                    "role": "user",
--                    "content": [
--                        {
--                            "type": "text",
--                            "text": f"<system-reminder>\n--- WORKSPACE ---\n{(
-+            workspace_text = f"<system-reminder>\n--- WORKSPACE ---{(
-                                     f"\n{status_bar}"
-                                     f"\n{self.structural_view_cache.load()}"
-                                     f"{visible_tools}" # this has a newline when populated
-                                     f"\n{self.notifications_cache.load()}"
-                                     f"\n{self.todos_cache.load()}"
-                                 )}\n</system-reminder>"
-+            
-+            body['messages'].append( 
-+                {
-+                    "role": "user",
-+                    "content": [
-+                        {
-+                            "type": "text",
-+                            "text": workspace_text
-                         }
-                     ]
-                 }
-             )
-+
-+            # TODO: this is mostly for development - it needs to bne switched off
-+            self._write_to_file(Path(os.getcwd()) / '.nisaba/workspace.md', workspace_text, "Workspace markdow written")
-             self._write_to_file(Path(os.getcwd()) / '.nisaba/modified_context.json', json.dumps(body, indent=2, ensure_ascii=False), "Modified request written")
-             return True
----TOOL_USE_END(toolu_013Wfu5YUCQykffQCjL4ZWHt)
----TOOL_USE(toolu_019442EDMF1kLu7AC2EsCYov)
-commit 59dc90d124350f69acbd881855eb87ce48a0dd1f
-Author: Yuri Ivatchkovitch <mytos.mail@gmail.com>
-Date:   Wed Nov 12 15:07:10 2025 +0100
-
-    nabu fixes 2
-
- .dev_docs/dev.dump.md                      |    9 +-
- .nisaba/mcp_servers.json                   |   12 +-
- .nisaba/modified_context.json              | 2480 +++++++++++++++-------------
- .nisaba/tui/core_system_prompt.md          |   71 +-
- .nisaba/tui/notification_state.json        |    4 +-
- .nisaba/tui/notification_view.md           |    6 +-
- .nisaba/tui/status_bar_live.txt            |    6 +-
- .nisaba/workspace.md                       | 2347 ++++++++++++++++++++++++++
- src/nabu/mcp/tools/discovery_tools.py      |    2 +-
- src/nabu/mcp/tools/observability_tools.py  |    2 +-
- src/nabu/mcp/tools/query_tool.py           |    2 +-
- src/nabu/mcp/tools/show_structure_tools.py |    2 +-
- src/nabu/mcp/tools/vector_search_tools.py  |   13 +-
- src/nabu/mcp/tools/workflow_tools.py       |    2 +-
- src/nisaba/utils/response.py               |   45 +-
- src/nisaba/wrapper/proxy.py                |   21 +-
- 16 files changed, 3823 insertions(+), 1201 deletions(-)
-
-<system-reminder>
-The TodoWrite tool hasn't been used recently. If you're working on tasks that would benefit from tracking progress, consider using the TodoWrite tool to track progress. Also consider cleaning up the todo list if has become stale and no longer matches what you are working on. Only use it if it's relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user
-
-</system-reminder>
----TOOL_USE_END(toolu_019442EDMF1kLu7AC2EsCYov)
----TOOL_USE(toolu_01YPQEUSW7M8y39dzpdtToAm)
-     1→"""Unified search tool combining FTS, semantic, and code-vector search with RRF fusion."""
-     2→
-     3→import asyncio
-     4→import re
-     5→import time
-     6→from pathlib import Path
-     7→from typing import Dict, Any, List
-     8→
-     9→from nabu.mcp.tools.base import NabuTool
-    10→from nabu.mcp.utils.snippet_extractor import extract_snippets
-    11→from nabu.mcp.utils.regex_helpers import extract_keywords_from_regex as _extract_keywords_from_regex
-    12→
-    13→
-    14→def _rrf_fusion(
-    15→    fts_results: List[Dict[str, Any]],
-    16→    semantic_results: List[Dict[str, Any]],
-    17→    regex_results: List[Dict[str, Any]] = [],
-    18→    k: int = 60
-    19→) -> List[Dict[str, Any]]:
-    20→    """
-    21→    Reciprocal Rank Fusion for combining heterogeneous search results.
-    22→
-    23→    Implements: score(item) = Σ(1 / (k + rank_in_mechanism_i))
-    24→
-    25→    RRF is score-agnostic - only ranks matter. This elegantly handles:
-    26→    - BM25 scores (unbounded)
-    27→    - Cosine similarity (bounded [0,1])
-    28→    - Different scoring scales
-    29→
-    30→    Args:
-    31→        fts_results: FTS/BM25 results (ranked by score)
-    32→        semantic_results: Semantic vector search results (ranked by similarity)
-    33→        regex_results: Regex pattern search results (ranked by match quality)
-    34→        k: RRF constant (default 60, standard value)
-    35→
-    36→    Returns:
-    37→        Unified result list sorted by RRF score (highest first)
-    38→    """
-    39→    # Extract ranked ID lists from each mechanism
-    40→    fts_ids = [r['id'] for r in fts_results]
-    41→    sem_ids = [r['id'] for r in semantic_results]
-    42→    regex_ids = [r['id'] for r in regex_results]
-    43→
-    44→    # Build unified ID → frame mapping (preserve all metadata)
-    45→    all_items = {}
-    46→    for r in fts_results + semantic_results + regex_results:
-    47→        if r['id'] not in all_items:
-    48→            all_items[r['id']] = r
-    49→
-    50→    # Compute RRF scores
-
-<system-reminder>
-Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
-</system-reminder>
-
----TOOL_USE_END(toolu_01YPQEUSW7M8y39dzpdtToAm)
----TOOL_USE(toolu_018XDuYihYiiVefqUXdw5m4S)
-<system-reminder>
-The TodoWrite tool hasn't been used recently. If you're working on tasks that would benefit from tracking progress, consider using the TodoWrite tool to track progress. Also consider cleaning up the todo list if has become stale and no longer matches what you are working on. Only use it if it's relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user
-
-</system-reminder>
----TOOL_USE_END(toolu_018XDuYihYiiVefqUXdw5m4S)
----TOOL_USE(toolu_01Mv6LUyX43VYXZ3kcSDrVRe)
-diff --git a/src/nabu/mcp/tools/__init__.py b/src/nabu/mcp/tools/__init__.py
-index 482a69d..0a618e4 100644
---- a/src/nabu/mcp/tools/__init__.py
-+++ b/src/nabu/mcp/tools/__init__.py
-@@ -3,35 +3,33 @@
- from nabu.mcp.tools.base import NabuTool
- 
- # Import all tool classes for auto-discovery
-+from nabu.mcp.tools.codebase_management_tools import ActivateCodebaseTool, ListCodebasesTool
-+from nabu.mcp.tools.observability_tools import ShowStatusTool
- from nabu.mcp.tools.query_tool import QueryRelationshipsTool
- from nabu.mcp.tools.reindex_tool import RebuildDatabaseTool
--from nabu.mcp.tools.observability_tools import ShowStatusTool
--from nabu.mcp.tools.discovery_tools import MapCodebaseTool
--from nabu.mcp.tools.workflow_tools import CheckImpactTool
--from nabu.mcp.tools.show_structure_tools import ShowStructureTool
--from nabu.mcp.tools.codebase_management_tools import ActivateCodebaseTool, ListCodebasesTool
--from nabu.mcp.tools.vector_search_tools import FindClonesTool
- from nabu.mcp.tools.search_tools import SearchTool
-+from nabu.mcp.tools.show_structure_tools import ShowStructureTool
- from nabu.mcp.tools.structural_view_tool import StructuralViewTool
--#from nabu.mcp.tools.file_windows_tool import FileWindowsTool
-+from nabu.mcp.tools.vector_search_tools import FindClonesTool
-+from nabu.mcp.tools.workflow_tools import CheckImpactTool
- 
- __all__ = [
-     "NabuTool",
--    # Core tools
--    "QueryRelationshipsTool",
-+    
-     "RebuildDatabaseTool",
-+    
-+    "QueryRelationshipsTool",
-+    
-     "ShowStatusTool",
--    "MapCodebaseTool",
-     "ShowStructureTool",
--    # Codebase tools
-+
-     "ActivateCodebaseTool",
-     "ListCodebasesTool",
--    # Workflow automation tools
-+    
-     "CheckImpactTool",
--    # Vector search tools
-+    
-     "SearchTool",
-     "FindClonesTool",
--    # Navigation tools
-+    
-     "StructuralViewTool"
--#    "FileWindowsTool",
- ]
-diff --git a/src/nabu/mcp/tools/base.py b/src/nabu/mcp/tools/base.py
-index 56e41eb..94f568e 100644
---- a/src/nabu/mcp/tools/base.py
-+++ b/src/nabu/mcp/tools/base.py
-@@ -10,8 +10,7 @@ import re
- from contextvars import ContextVar
- 
- # Import from framework
--from nisaba.tools.base_tool import BaseTool
--from nisaba.utils.response import ResponseBuilder, ErrorSeverity
-+from nisaba.tools.base_tool import BaseTool, BaseToolResponse
- 
- from nabu.mcp.utils.regex_helpers import extract_keywords_from_regex
- 
-@@ -91,12 +90,6 @@ class NabuTool(BaseTool):
- 
-     @classmethod
-     def nisaba(cls) -> bool:
--        """
--        Nabu tools are not nisaba-certified (they use ResponseBuilder formatting).
--
--        Returns:
--            False - nabu tools use custom response formatting
--        """
-         return False
- 
-     # Agent access property (explicit pattern acknowledgment)
-@@ -200,7 +193,7 @@ class NabuTool(BaseTool):
-         
-         return self.config.codebases[target]
- 
--    def _check_indexing_status(self, codebase: Optional[str] = None) -> Optional[Dict[str, Any]]:
-+    def _check_indexing_status(self, codebase: Optional[str] = None) -> Optional[BaseToolResponse]:
-         """
-         Check if codebase is being indexed and return error response if so.
- 
-@@ -222,36 +215,13 @@ class NabuTool(BaseTool):
-         status = self.factory.auto_indexer.get_status(target)
- 
-         if status.state in (IndexingState.UNINDEXED, IndexingState.QUEUED):
--            return self._error_response(
--                RuntimeError(f"Codebase '{target}' is queued for indexing"),
--                severity=ErrorSeverity.WARNING,
--                recovery_hint=(
--                    f"Database is being prepared. State: {status.state.value}. "
--                    "Check show_status() for progress."
--                )
--            )
-+            return self.response_error(f"Codebase '{target}' is queued for indexing"            )
- 
-         if status.state == IndexingState.INDEXING:
--            elapsed = time.time() - status.started_at if status.started_at else 0
--            return self._error_response(
--                RuntimeError(f"Codebase '{target}' is currently being indexed"),
--                severity=ErrorSeverity.WARNING,
--                recovery_hint=(
--                    f"Indexing in progress ({elapsed:.1f}s elapsed). "
--                    "This may take several minutes for large codebases. "
--                    "Check show_status() for updates."
--                )
--            )
-+            return self.response_error(f"Codebase '{target}' is currently being indexed")
- 
-         if status.state == IndexingState.ERROR:
--            return self._error_response(
--                RuntimeError(f"Codebase '{target}' indexing failed"),
--                severity=ErrorSeverity.ERROR,
--                recovery_hint=(
--                    f"Auto-indexing failed: {status.error_message}. "
--                    "Use rebuild_database() tool to retry manually."
--                )
--            )
-+            return self.response_error(f"Codebase '{target}' indexing failed")
- 
-         # State is INDEXED - all good
-         return None
-@@ -826,33 +796,7 @@ class NabuTool(BaseTool):
-             return execute_doc.strip().split('\n')[0]
-         return class_doc.strip()
- 
--    # Note: get_tool_pitch, get_tool_examples, get_tool_tips, and get_tool_patterns
--    # are now inherited from nisaba.BaseTool base class
--    # Note: execute() is also inherited from nisaba.BaseTool base class
--
--    def _base_response_to_dict(self, response) -> Dict[str, Any]:
--        """
--        Convert BaseToolResponse to Dict for MCP protocol compatibility.
--
--        Args:
--            response: BaseToolResponse from execute() or error handlers
--
--        Returns:
--            Dict representation for MCP protocol
--        """
--        from nisaba.tools.base_tool import BaseToolResponse
--
--        if isinstance(response, BaseToolResponse):
--            # Extract message (could be dict or simple value)
--            if response.success:
--                return response.message if isinstance(response.message, dict) else {"data": response.message}
--            else:
--                return response.message if isinstance(response.message, dict) else {"error": response.message}
--
--        # Already a dict, return as-is
--        return response
--
--    async def execute_with_timing(self, **kwargs) -> Dict[str, Any]:
-+    async def execute(self, **kwargs) -> BaseToolResponse:
-         """
-         Execute tool with automatic timing and codebase context switching.
- 
-@@ -883,13 +827,7 @@ class NabuTool(BaseTool):
-         # Validate requested codebase if specified
-         if requested_codebase is not None:
-             if requested_codebase not in self.factory.db_managers:
--                available = list(self.factory.db_managers.keys())
--                error_response = self._error_response(
--                    ValueError(f"Unknown codebase: '{requested_codebase}'"),
--                    recovery_hint=f"Available codebases: {', '.join(available)}. Use list_codebases() to see all registered codebases."
--                )
--                # Convert BaseToolResponse to Dict for MCP protocol
--                return self._base_response_to_dict(error_response)
-+                return self.response_error(f"Unknown codebase: '{requested_codebase}' (available: {', '.join(list(self.factory.db_managers.keys()))})")
- 
-         # Set codebase context for this execution (thread-safe via contextvars)
-         token = _current_codebase_context.set(requested_codebase)
-@@ -898,33 +836,19 @@ class NabuTool(BaseTool):
-             # Execute tool (returns BaseToolResponse)
-             result = await self.execute(**kwargs)
- 
--            # Convert to dict for guidance recording
--            result_dict = self._base_response_to_dict(result)
--
--            # Record in guidance system using parent class method
--            self._record_guidance(self.get_name(), kwargs, result_dict)
--
--            return result_dict
-+            return self._success_response(result)
- 
-         except Exception as e:
--            self.logger().error(f"Tool execution failed: {e}", exc_info=True)
--            error_response = self._error_response(e)
--            return self._base_response_to_dict(error_response)
-+            error_response = self.response_exception(e)
-+            return error_response
- 
-         finally:
-             # ALWAYS restore context (critical for async safety)
-             _current_codebase_context.reset(token)
-     
--    def _success_response(
--        self,
--        data: Any,
--        warnings: Optional[List[str]] = None,
--        metadata: Optional[Dict[str, Any]] = None
--    ):
-+    def _success_response(self, data: BaseToolResponse) -> BaseToolResponse:
-         """
--        Create standardized success response using ResponseBuilder.
--
--        Wraps ResponseBuilder dict output in BaseToolResponse for consistency.
-+        Create formatted output
- 
-         Args:
-             data: Response payload
-@@ -932,7 +856,7 @@ class NabuTool(BaseTool):
-             metadata: Optional operation metadata
- 
-         Returns:
--            BaseToolResponse containing ResponseBuilder formatted dict
-+            formatted output
-         """
-         # Format data according to requested output format
-         from nabu.mcp.formatters import get_formatter_registry
-@@ -940,55 +864,11 @@ class NabuTool(BaseTool):
-         try:
-             formatter_registry = get_formatter_registry()
-             formatter = formatter_registry.get_formatter(self._output_format)
--            # Round floats before formatting (so markdown gets clean numbers)
--            from nisaba.utils.response import ResponseBuilder as RB
--            data = RB._round_floats(data)
--            formatted_data = formatter.format(data, tool_name=self.get_name())
-+            formatted_data = formatter.format(data.message, tool_name=self.get_name())
-         except ValueError as e:
-             # Unsupported format - log warning and fall back to JSON
-             self.logger().warning(f"Output format error: {e}. Falling back to JSON.")
--            formatted_data = data
--
--        # Build ResponseBuilder dict
--        response_dict = ResponseBuilder.success(
--            data=formatted_data,
--            warnings=warnings,
--            metadata=metadata
--        )
--
--        # Wrap in BaseToolResponse
--        return self.response_success(message=response_dict)
--    
--    def _error_response(
--        self,
--        error: Exception,
--        severity: ErrorSeverity = ErrorSeverity.ERROR,
--        recovery_hint: Optional[str] = None,
--        context: Optional[Dict[str, Any]] = None
--    ):
--        """
--        Create standardized error response using ResponseBuilder.
--
--        Wraps ResponseBuilder dict output in BaseToolResponse for consistency.
--
--        Args:
--            error: Exception that occurred
--            severity: Error severity level
--            recovery_hint: Suggested recovery action
--            context: Error context information
--
--        Returns:
--            BaseToolResponse containing ResponseBuilder formatted dict
--        """
--        # Build ResponseBuilder dict
--        error_dict = ResponseBuilder.error(
--            error=error,
--            severity=severity,
--            recovery_hint=recovery_hint,
--            context=context
--        )
-+            formatted_data = data.message
- 
-         # Wrap in BaseToolResponse
--        return self.response_error(message=error_dict)
--    
--    # Note: is_optional(), is_dev_only(), is_mutating() inherited from BaseTool
-+        return self.response_success(message=formatted_data)
-\ No newline at end of file
-diff --git a/src/nabu/mcp/tools/codebase_management_tools.py b/src/nabu/mcp/tools/codebase_management_tools.py
-index 8b6f0db..94cbd24 100644
---- a/src/nabu/mcp/tools/codebase_management_tools.py
-+++ b/src/nabu/mcp/tools/codebase_management_tools.py
-@@ -2,12 +2,13 @@
- 
- from typing import Dict, Any, Optional
- from nabu.mcp.tools.base import NabuTool
-+from nisaba.tools.base_tool import BaseToolResponse
- 
- 
- class ActivateCodebaseTool(NabuTool):
-     """Switch active codebase for subsequent queries."""
-     
--    async def execute(self, codebase: str) -> Dict[str, Any]:
-+    async def execute(self, codebase: str) -> BaseToolResponse:
-         """
-         Activate a codebase by name.
-         
-@@ -25,11 +26,7 @@ class ActivateCodebaseTool(NabuTool):
-         # Validate codebase exists
-         if codebase not in self.config.codebases:
-             available = list(self.config.codebases.keys())
--            return self._error_response(
--                ValueError(f"Unknown codebase: {codebase}"),
--                start_time,
--                recovery_hint=f"Available codebases: {', '.join(available)}"
--            )
-+            return self.response_error(f"Unknown codebase: {codebase}, available: {', '.join(available)}")
-         
-         # Update active codebase
-         old_active = self.config.active_codebase
-@@ -42,20 +39,13 @@ class ActivateCodebaseTool(NabuTool):
-         
-         cb_config = self.config.codebases[codebase]
-         
--        return self._success_response({
--            "status": "activated",
--            "codebase": codebase,
--            "previous_active": old_active,
--            "role": cb_config.role,
--            "repo_path": str(cb_config.repo_path),
--            "db_path": str(cb_config.db_path)
--        }, start_time)
-+        return self.response_success(f"codebase changed from `{old_active}` to `{codebase}` ({str(cb_config.repo_path)})")
- 
- 
- class ListCodebasesTool(NabuTool):
-     """List all registered codebases with their configurations."""
-     
--    async def execute(self) -> Dict[str, Any]:
-+    async def execute(self) -> BaseToolResponse:
-         """
-         List all registered codebases.
-         
-@@ -80,8 +70,8 @@ class ListCodebasesTool(NabuTool):
-                 "watch_enabled": cb_config.watch_enabled
-             })
-         
--        return self._success_response({
-+        return self.response_success({
-             "codebases": codebases,
-             "active_codebase": self.config.active_codebase,
-             "total_count": len(codebases)
--        }, start_time)
-+        })
-diff --git a/src/nabu/mcp/tools/discovery_tools.py b/src/nabu/mcp/tools/discovery_tools.py
-deleted file mode 100644
-index 462dd9e..0000000
---- a/src/nabu/mcp/tools/discovery_tools.py
-+++ /dev/null
-@@ -1,243 +0,0 @@
--"""Discovery and exploration tools for nabu MCP."""
--
--from pathlib import Path
--from typing import Any, Dict, List
--import time
--
--from nabu.mcp.tools.base import NabuTool
--from nisaba.utils.response import ErrorSeverity
--
--
--class MapCodebaseTool(NabuTool):
--    """Get high-level project overview."""
--    
--    async def execute(self) -> Dict[str, Any]:
--        """
--        Get a comprehensive project overview.
--        
--        This should be the FIRST tool you call when starting work on a project.
--        Provides the "lay of the land" without requiring you to know what to ask.
--        
--        Returns:
--        - Project statistics (frame counts, language breakdown)
--        - Top packages by size
--        - Entry points (main functions)
--        - Most connected classes (by degree centrality)
--        - Suggested next steps
--        
--        :meta pitch: START HERE! Get the lay of the land instantly. No parameters needed - just run it and get oriented.
--        :meta when: First tool to call in any new codebase
--        :meta emoji: 🎯
--        :meta tips: **Interpreting Results:**
--            - **Top packages** - Focus on packages with high child_count, these are central to the codebase
--            - **Entry points** - Look for main(), start(), create_* functions to understand how the application boots
--            - **Most connected classes** - High connection count indicates architectural importance; these are good targets for `show_structure()`
--            - **Suggested next steps** - Follow these recommendations for efficient exploration
--        :meta examples: **Common Follow-up Queries:**
--
--            After running explore_project(), use these queries to dig deeper:
--
--            Explore a top package:
--            ```python
--            show_structure(target="<TopClassFromResults>")
--            ```
--
--            Find all classes in a top package:
--            ```python
--            query('''
--            MATCH (p:Frame {qualified_name: "package.name"})-[:Edge {type: "CONTAINS"}*]->(c:Frame {type: "CLASS"})
--            RETURN c.name, c.qualified_name
--            LIMIT 20
--            ''')
--            ```
--
--            Examine entry point dependencies:
--            ```python
--            query('''
--            MATCH (entry:Frame {qualified_name: "main"})-[:Edge {type: "CALLS"}]->(called:Frame)
--            RETURN called.name, called.type
--            LIMIT 20
--            ''')
--            ```
--        :return: JSON with project statistics, top packages, entry points, and most connected classes
--        """
--        start_time = time.time()
--        
--        try:
--            # Check indexing status before proceeding
--            indexing_check = self._check_indexing_status()
--            if indexing_check:
--                return indexing_check
--
--            if self.db_manager is None:
--                return self._error_response(
--                    RuntimeError("Database manager not initialized"),
--                    start_time,
--                    severity=ErrorSeverity.FATAL,
--                    recovery_hint="Database not initialized. Check db_path and restart MCP server."
--                )
--            
--            # Query 1: Overall statistics
--            stats_query = """
--            MATCH (f:Frame)
--            RETURN 
--                count(*) as total_frames,
--                count(DISTINCT f.file_path) as total_files,
--                count(DISTINCT f.language) as language_count
--            """
--            stats_result = self.db_manager.execute(stats_query)
--            stats_df = stats_result.get_as_df()
--            
--            # Query 2: Language breakdown
--            lang_query = """
--            MATCH (f:Frame)
--            WHERE f.language IS NOT NULL
--            RETURN 
--                f.language,
--                count(*) as frame_count,
--                count(DISTINCT f.file_path) as file_count
--            ORDER BY frame_count DESC
--            """
--            lang_result = self.db_manager.execute(lang_query)
--            lang_df = lang_result.get_as_df()
--            
--            # Query 3: All packages (for stratified sampling)
--            pkg_query = """
--            MATCH (p:Frame {type: 'PACKAGE'})
--            OPTIONAL MATCH (p)-[:Edge {type: 'CONTAINS'}]->(child:Frame)
--            WITH p, count(child) as child_count
--            RETURN
--                p.id as id,
--                p.name as package_name,
--                p.qualified_name as qualified_name,
--                p.file_path as file_path,
--                child_count
--            ORDER BY child_count DESC
--            """
--            pkg_result = self.db_manager.execute(pkg_query)
--            pkg_df = pkg_result.get_as_df()
--            
--            # Query 4: Entry points
--            entry_query = """
--            MATCH (f:Frame {type: 'CALLABLE'})
--            WHERE f.name IN ['main', '__main__', 'run', 'start', 'execute']
--               OR f.name STARTS WITH 'create_'
--            RETURN
--                f.id as id,
--                f.name as name,
--                f.qualified_name as qualified_name,
--                f.file_path as file_path,
--                f.start_line as start_line,
--                f.end_line as end_line
--            LIMIT 10
--            """
--            entry_result = self.db_manager.execute(entry_query)
--            entry_df = entry_result.get_as_df()
--            
--            # Query 5: All connected classes (for stratified sampling)
--            central_query = """
--            MATCH (c:Frame {type: 'CLASS'})
--            OPTIONAL MATCH (c)<-[e_in:Edge]-(caller:Frame)
--            OPTIONAL MATCH (c)-[e_out:Edge]->(callee:Frame)
--            WITH c, count(DISTINCT e_in) as in_degree, count(DISTINCT e_out) as out_degree
--            WITH c, in_degree, out_degree, (in_degree + out_degree) as total_degree
--            WHERE total_degree > 0
--            RETURN
--                c.id as id,
--                c.name as name,
--                c.qualified_name as qualified_name,
--                c.file_path as file_path,
--                c.start_line as start_line,
--                c.end_line as end_line,
--                in_degree,
--                out_degree,
--                total_degree
--            ORDER BY total_degree DESC
--            """
--            central_result = self.db_manager.execute(central_query)
--            central_df = central_result.get_as_df()
--
--            # Query 6: Relationship edge counts
--            edge_query = """
--            MATCH ()-[e:Edge]->()
--            WITH e.type as edge_type, count(*) as edge_count
--            RETURN edge_type, edge_count
--            ORDER BY edge_count DESC
--            """
--            edge_result = self.db_manager.execute(edge_query)
--            edge_df = edge_result.get_as_df()
--
--            # Build response
--            data = {
--                "project_stats": {
--                    "total_frames": int(stats_df.iloc[0]['total_frames']) if not stats_df.empty else 0,
--                    "total_files": int(stats_df.iloc[0]['total_files']) if not stats_df.empty else 0,
--                    "language_count": int(stats_df.iloc[0]['language_count']) if not stats_df.empty else 0,
--                    "languages": {}
--                },
--                "top_packages": [],
--                "entry_points": [],
--                "most_connected_classes": [],
--                "relationship_summary": {}
--            }
--            
--            # Language breakdown
--            for _, row in lang_df.iterrows():
--                lang = row['f.language']
--                data["project_stats"]["languages"][lang] = {
--                    "frames": int(row['frame_count']),
--                    "files": int(row['file_count'])
--                }
--            
--            # Top packages
--            for _, row in pkg_df.iterrows():
--                data["top_packages"].append({
--                    "id": row['id'],
--                    "name": row['package_name'],
--                    "qualified_name": row['qualified_name'],
--                    "file_path": row['file_path'],
--                    "child_count": int(row['child_count'])
--                })
--            
--            # Entry points
--            for _, row in entry_df.iterrows():
--                data["entry_points"].append({
--                    "id": row['id'],
--                    "name": row['name'],
--                    "qualified_name": row['qualified_name'],
--                    "location": f"{Path(row['file_path']).name}:{row['start_line']}-{row['end_line']}",
--                    "file_path": row['file_path']
--                })
--            
--            # Most connected classes
--            for _, row in central_df.iterrows():
--                data["most_connected_classes"].append({
--                    "id": row['id'],
--                    "name": row['name'],
--                    "qualified_name": row['qualified_name'],
--                    "location": f"{Path(row['file_path']).name}:{row['start_line']}-{row['end_line']}",
--                    "file_path": row['file_path'],
--                    "incoming_edges": int(row['in_degree']),
--                    "outgoing_edges": int(row['out_degree']),
--                    "total_connections": int(row['total_degree'])
--                })
--
--            # Relationship summary
--            for _, row in edge_df.iterrows():
--                edge_type = row['edge_type']
--                data["relationship_summary"][edge_type] = int(row['edge_count'])
--
--            return self._success_response(data)
--            
--        except Exception as e:
--            self.logger().error(f"Project exploration failed: {e}", exc_info=True)
--            return self._error_response(
--                e,
--                start_time,
--                recovery_hint=(
--                    "Failed to explore project. Verify: "
--                    "(1) Database is initialized (try show_status()), "
--                    "(2) Database contains data (try rebuild_database() if empty)."
--                ),
--                context={"error_type": type(e).__name__}
--            )
-diff --git a/src/nabu/mcp/tools/file_windows_tool.py b/src/nabu/mcp/tools/file_windows_tool.py
-deleted file mode 100644
-index 50ff793..0000000
---- a/src/nabu/mcp/tools/file_windows_tool.py
-+++ /dev/null
-@@ -1,176 +0,0 @@
--"""MCP tool for managing file windows."""
--
--import logging
--from typing import Dict, Any, Optional
--from pathlib import Path
--
--from nabu.mcp.tools.base import NabuTool
--
--logger = logging.getLogger(__name__)
--
--
--class FileWindowsTool(NabuTool):
--    """
--    Manage persistent file windows for code visibility.
--
--    Operations:
--    - open_frame(frame_path): Open frame's full body
--    - open_range(file_path, start, end): Open specific line range
--    - open_search(query, max_windows, context_lines): Open search results
--    - update(window_id, start, end): Update window range
--    - close(window_id): Close window
--    - clear_all(): Close all windows
--    - status(): Show current windows
--    """
--
--    def __init__(self, factory):
--        super().__init__(factory)
--        self.view_file = Path.cwd() / ".nisaba" / "tui" / "file_window_view.md"
--        self._manager = None
--
--    @property
--    def manager(self):
--        """Lazy-initialize manager instance (persists across operations)."""
--        if self._manager is None:
--            from nabu.tui.file_windows_manager import FileWindowsManager
--            self._manager = FileWindowsManager(self.db_manager, self.factory)
--        return self._manager
--
--    async def execute(
--        self,
--        operation: str,
--        frame_path: Optional[str] = None,
--        file_path: Optional[str] = None,
--        start: Optional[int] = None,
--        end: Optional[int] = None,
--        query: Optional[str] = None,
--        max_windows: Optional[int] = 5,
--        context_lines: Optional[int] = 3,
--        window_id: Optional[str] = None
--    ) -> Dict[str, Any]:
--        """
--        Execute file window operation.
--
--        :meta pitch: Persistent file windows for simultaneous code visibility
--        :meta when: Comparing implementations, understanding dependencies, investigating bugs
--        :meta emoji: 🪟
--        :param operation: Operation type
--        :param frame_path: Frame qualified name (for open_frame)
--        :param file_path: File path (for open_range)
--        :param start: Start line (for open_range, update)
--        :param end: End line (for open_range, update)
--        :param query: Search query (for open_search)
--        :param max_windows: Max windows to open (for open_search)
--        :param context_lines: Context lines around match (for open_search)
--        :param window_id: Window ID (for update, close)
--        :return: Operation result with state summary
--        """
--        import time
--        start_time = time.time()
--
--        try:
--            # Validate operation
--            valid_ops = ['open_frame', 'open_range', 'open_search', 'update', 'close', 'clear_all', 'status']
--            if operation not in valid_ops:
--                return self._error_response(
--                    ValueError(f"Invalid operation: {operation}"),
--                    start_time,
--                    recovery_hint=f"Valid operations: {', '.join(valid_ops)}"
--                )
--
--            # Check indexing
--            indexing_check = self._check_indexing_status()
--            if indexing_check:
--                return indexing_check
--
--            # Ensure directory exists
--            self.view_file.parent.mkdir(parents=True, exist_ok=True)
--
--            # Execute operation
--            message = ""
--            result_data = {}
--
--            if operation == 'open_frame':
--                if not frame_path:
--                    return self._error_response(
--                        ValueError("open_frame requires 'frame_path' parameter"),
--                        start_time
--                    )
--                window_id = self.manager.open_frame_window(frame_path)
--                message = f"Opened frame window: {frame_path}"
--                result_data['window_id'] = window_id
--
--            elif operation == 'open_range':
--                if not file_path or start is None or end is None:
--                    return self._error_response(
--                        ValueError("open_range requires 'file_path', 'start', 'end' parameters"),
--                        start_time
--                    )
--                window_id = self.manager.open_range_window(file_path, start, end)
--                message = f"Opened range window: {file_path}:{start}-{end}"
--                result_data['window_id'] = window_id
--
--            elif operation == 'open_search':
--                if not query:
--                    return self._error_response(
--                        ValueError("open_search requires 'query' parameter"),
--                        start_time
--                    )
--                window_ids = await self.manager.open_search_windows(
--                    query, max_windows, context_lines
--                )
--                message = f"Opened {len(window_ids)} search result windows"
--                result_data['window_ids'] = window_ids
--
--            elif operation == 'update':
--                if not window_id or start is None or end is None:
--                    return self._error_response(
--                        ValueError("update requires 'window_id', 'start', 'end' parameters"),
--                
-
-... [1164 lines truncated] ...
----TOOL_USE_END(toolu_01Mv6LUyX43VYXZ3kcSDrVRe)
----TOOL_USE(toolu_01WMsWqxaYeHrrXnwocmApFU)
-.dev_docs/dev.dump.md                           |   13 +
- .nisaba/mcp_servers.json                        |   19 +-
- .nisaba/modified_context.json                   | 2018 +------------
- .nisaba/tui/core_system_prompt.md               |   36 +-
- .nisaba/tui/notification_state.json             |    4 +-
- .nisaba/tui/notification_view.md                |    3 +-
- .nisaba/tui/status_bar_live.txt                 |    4 +-
- .nisaba/workspace.md                            | 3620 +++++++++--------------
- src/nabu/mcp/tools/__init__.py                  |   28 +-
- src/nabu/mcp/tools/base.py                      |  152 +-
- src/nabu/mcp/tools/codebase_management_tools.py |   24 +-
- src/nabu/mcp/tools/discovery_tools.py           |  243 --
- src/nabu/mcp/tools/file_windows_tool.py         |  176 --
- src/nabu/mcp/tools/observability_tools.py       |   37 +-
- src/nabu/mcp/tools/query_tool.py                |   87 +-
- src/nabu/mcp/tools/reindex_tool.py              |  112 +-
- src/nabu/mcp/tools/search_tools.py              |   31 +-
- src/nabu/mcp/tools/show_structure_tools.py      |   69 +-
- src/nabu/mcp/tools/structural_view_tool.py      |   64 +-
- src/nabu/mcp/tools/vector_search_tools.py       |   32 +-
- src/nabu/mcp/tools/workflow_tools.py            |   37 +-
- src/nisaba/factory.py                           |    3 +-
- src/nisaba/tools/base_tool.py                   |   59 -
- src/nisaba/utils/__init__.py                    |    5 +-
- src/nisaba/utils/response.py                    |   95 -
- src/nisaba/wrapper/proxy.py                     |   16 +-
- src/nisaba/wrapper/request_modifier.py          |   11 +-
- 27 files changed, 1621 insertions(+), 5377 deletions(-)
-
-<system-reminder>
-The TodoWrite tool hasn't been used recently. If you're working on tasks that would benefit from tracking progress, consider using the TodoWrite tool to track progress. Also consider cleaning up the todo list if has become stale and no longer matches what you are working on. Only use it if it's relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user
-
-</system-reminder>
----TOOL_USE_END(toolu_01WMsWqxaYeHrrXnwocmApFU)
----TOOL_USE(toolu_0185FYGC11A2g1czSwFCqj7U)
-diff --git a/src/nabu/mcp/tools/base.py b/src/nabu/mcp/tools/base.py
-index 94f568e..ee537c7 100644
---- a/src/nabu/mcp/tools/base.py
-+++ b/src/nabu/mcp/tools/base.py
-@@ -796,7 +796,7 @@ class NabuTool(BaseTool):
-             return execute_doc.strip().split('\n')[0]
-         return class_doc.strip()
- 
--    async def execute(self, **kwargs) -> BaseToolResponse:
-+    async def execute_tool(self, **kwargs) -> BaseToolResponse:
-         """
-         Execute tool with automatic timing and codebase context switching.
- 
-@@ -846,6 +846,7 @@ class NabuTool(BaseTool):
-             # ALWAYS restore context (critical for async safety)
-             _current_codebase_context.reset(token)
-     
-+    
-     def _success_response(self, data: BaseToolResponse) -> BaseToolResponse:
-         """
-         Create formatted output
-diff --git a/src/nabu/mcp/tools/codebase_management_tools.py b/src/nabu/mcp/tools/codebase_management_tools.py
-index 94cbd24..2a7e06c 100644
---- a/src/nabu/mcp/tools/codebase_management_tools.py
-+++ b/src/nabu/mcp/tools/codebase_management_tools.py
-@@ -1,6 +1,5 @@
- """Codebase management tools for multi-codebase support."""
- 
--from typing import Dict, Any, Optional
- from nabu.mcp.tools.base import NabuTool
- from nisaba.tools.base_tool import BaseToolResponse
- 
-diff --git a/src/nabu/mcp/utils/workflow_helpers.py b/src/nabu/mcp/utils/workflow_helpers.py
-deleted file mode 100644
-index ab92ced..0000000
---- a/src/nabu/mcp/utils/workflow_helpers.py
-+++ /dev/null
-@@ -1,440 +0,0 @@
--"""
--Utility functions for workflow automation tools.
--
--Provides common functionality for risk assessment, visualization generation,
--and relevance ranking used across workflow tools.
--"""
--
--from typing import Any, Dict, List, Tuple, Set
--from pathlib import Path
--import logging
--
--logger = logging.getLogger(__name__)
--
--
--def calculate_risk_score(
--    centrality_score: float,
--    core_score: float,
--    coverage_score: float,
--    external_score: float,
--    weights: Dict[str, float] = None
--) -> Tuple[float, str]:
--    """
--    Calculate composite risk score and tier.
--    
--    Args:
--        centrality_score: How connected is this element? (0.0-1.0)
--        core_score: Is this in critical path? (0.0-1.0)
--        coverage_score: Test coverage quality (0.0-1.0)
--        external_score: External dependencies (0.0-1.0)
--        weights: Optional custom weights for factors (default: centrality=0.35, core=0.35, coverage=0.20, external=0.10)
--        
--    Returns:
--        Tuple of (composite_score, risk_tier)
--    """
--    if weights is None:
--        weights = {
--            "centrality": 0.35,
--            "core": 0.35,
--            "coverage": 0.20,
--            "external": 0.10
--        }
--    
--    # Calculate weighted composite
--    composite = (
--        weights["centrality"] * centrality_score +
--        weights["core"] * core_score +
--        weights["coverage"] * coverage_score +
--        weights["external"] * external_score
--    )
--    
--    # Map to tier
--    if composite > 0.75:
--        tier = "HIGH"
--    elif composite > 0.5:
--        tier = "MEDIUM-HIGH"
--    elif composite > 0.3:
--        tier = "MEDIUM"
--    else:
--        tier = "LOW"
--    
--    return round(composite, 2), tier
--
--
--def generate_mermaid_graph(
--    nodes: List[Dict[str, Any]],
--    edges: List[Dict[str, Any]],
--    graph_type: str = 'TD',
--    max_nodes: int = 20
--) -> str:
--    """
--    Generate Mermaid diagram from graph data.
--    
--    Args:
--        nodes: List of node dicts with 'id', 'label', optional 'style'
--        edges: List of edge dicts with 'from', 'to', optional 'label'
--        graph_type: Mermaid graph direction ('TD', 'LR', 'BT', 'RL')
--        max_nodes: Maximum nodes to include (truncate if exceeded)
--        
--    Returns:
--        Mermaid diagram string
--    """
--    if len(nodes) > max_nodes:
--        logger.warning(f"Truncating graph: {len(nodes)} nodes > {max_nodes} max")
--        nodes = nodes[:max_nodes]
--    
--    lines = [f"graph {graph_type}"]
--    
--    # Create node ID mapping
--    node_id_map = {}
--    for i, node in enumerate(nodes):
--        node_id = f"N{i}"
--        node_id_map[node['id']] = node_id
--        
--        label = node.get('label', str(node['id']))
--        # Escape special characters in labels
--        label = label.replace('"', '\\"').replace('[', '\\[').replace(']', '\\]')
--        
--        # Add node definition
--        lines.append(f"    {node_id}[\"{label}\"]")
--        
--        # Add style if specified
--        if 'style' in node:
--            style = node['style']
--            if style == 'target':
--                lines.append(f"    style {node_id} fill:#f9f,stroke:#333,stroke-width:3px")
--            elif style == 'high_risk':
--                lines.append(f"    style {node_id} fill:#faa,stroke:#333")
--            elif style == 'medium_risk':
--                lines.append(f"    style {node_id} fill:#ffa,stroke:#333")
--            elif style == 'low_risk':
--                lines.append(f"    style {node_id} fill:#afa,stroke:#333")
--    
--    # Add edges
--    for edge in edges:
--        from_id = edge.get('from')
--        to_id = edge.get('to')
--        
--        # Skip if nodes not in map (truncated)
--        if from_id not in node_id_map or to_id not in node_id_map:
--            continue
--        
--        from_node = node_id_map[from_id]
--        to_node = node_id_map[to_id]
--        
--        if 'label' in edge:
--            label = edge['label']
--            lines.append(f"    {from_node} -->|{label}| {to_node}")
--        else:
--            lines.append(f"    {from_node} --> {to_node}")
--    
--    return "\n".join(lines)
--
--
--def rank_by_relevance(
--    frames: List[Dict[str, Any]],
--    keywords: List[str],
--    centrality_data: Dict[str, float] = None
--) -> List[Tuple[Dict[str, Any], float]]:
--    """
--    Rank frames by relevance to keywords.
--    
--    Scoring factors:
--    - Keyword matching in name (40%)
--    - Centrality in call graph (30%)
--    - Content keyword matching (20%)
--    - File path matching (10%)
--    
--    Args:
--        frames: List of frame dictionaries
--        keywords: List of keywords to match against
--        centrality_data: Optional dict mapping frame IDs to centrality scores
--        
--    Returns:
--        List of (frame, relevance_score) tuples, sorted by score descending
--    """
--    if centrality_data is None:
--        centrality_data = {}
--    
--    # Normalize keywords to lowercase
--    keywords_lower = [kw.lower() for kw in keywords]
--    
--    scored_frames = []
-
-<system-reminder>
-The TodoWrite tool hasn't been used recently. If you're working on tasks that would benefit from tracking progress, consider using the TodoWrite tool to track progress. Also consider cleaning up the todo list if has become stale and no longer matches what you are working on. Only use it if it's relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user
-
-</system-reminder>
----TOOL_USE_END(toolu_0185FYGC11A2g1czSwFCqj7U)
----TOOL_USE(toolu_01E4YDfLHM6Uiffdk6RRxSja)
-Error executing tool rebuild_database: name 'asdict' is not defined
-
-<system-reminder>
-The TodoWrite tool hasn't been used recently. If you're working on tasks that would benefit from tracking progress, consider using the TodoWrite tool to track progress. Also consider cleaning up the todo list if has become stale and no longer matches what you are working on. Only use it if it's relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user
-
-</system-reminder>
----TOOL_USE_END(toolu_01E4YDfLHM6Uiffdk6RRxSja)
----TOOL_USE(toolu_015a6oPJctSfHVZKozdmfwcW)
-286:        return asdict(response) if not isinstance(response, dict) else response
+---TOOL_USE_END(toolu_01F2GXmyFA2acuWENJW7t3BS)
+---TOOL_USE(toolu_013M5jokUy3bHH8QCgBntP8S)
+/home/y3i12/nabu_nisaba/src/nisaba/guidance.py-159-        last_tool = self.history[-1]['tool']
+src/nisaba/guidance.py:160:        related_tools = self.augment_manager.get_related_tools(last_tool)
+/home/y3i12/nabu_nisaba/src/nisaba/guidance.py-161-
+--
+/home/y3i12/nabu_nisaba/src/nisaba/augments.py-496-
+src/nisaba/augments.py:497:    def get_related_tools(self, tool_name: str) -> List[str]:
+/home/y3i12/nabu_nisaba/src/nisaba/augments.py-498-        """
 
 [Showing results with pagination = limit: 20, offset: 0]
----TOOL_USE_END(toolu_015a6oPJctSfHVZKozdmfwcW)
----TOOL_USE(toolu_01M4kjNQ1kYaveNwLxqvJNcp)
-No matches found
+---TOOL_USE_END(toolu_013M5jokUy3bHH8QCgBntP8S)
+---TOOL_USE(toolu_015keHfMxiGviB7dXU6DS4Kk)
+/home/y3i12/nabu_nisaba/src/nabu/mcp/factory_impl.py-81-        Delegate to agent's guidance for nisaba BaseTool integration.
+/home/y3i12/nabu_nisaba/src/nabu/mcp/factory_impl.py-82-
+src/nabu/mcp/factory_impl.py:83:        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+/home/y3i12/nabu_nisaba/src/nabu/mcp/factory_impl.py-84-        so we expose agent's guidance system at factory level.
+/home/y3i12/nabu_nisaba/src/nabu/mcp/factory_impl.py-85-        """
+/home/y3i12/nabu_nisaba/src/nabu/mcp/factory_impl.py-86-        return self.agent.guidance if hasattr(self, 'agent') else None
+/home/y3i12/nabu_nisaba/src/nabu/mcp/factory_impl.py-87-
+src/nabu/mcp/factory_impl.py-88-    # Note: session_tracker is accessed via agent directly
+--
+/home/y3i12/nabu_nisaba/.nisaba/workspace.md-13-{
+.nisaba/workspace.md-14-  "success": true,
+.nisaba/workspace.md:15:[Omitted long matching line]
+.nisaba/workspace.md-16-  "nisaba": false
+/home/y3i12/nabu_nisaba/.nisaba/workspace.md-17-}
+/home/y3i12/nabu_nisaba/.nisaba/workspace.md-18----TOOL_USE_END(toolu_01P9xgHQZAPzez8CcencYu52)
+/home/y3i12/nabu_nisaba/.nisaba/workspace.md-19----TOOL_USE(toolu_011o6d2224DAXpVh94BRAJfm)
+.nisaba/workspace.md-20-Found 20 files limit: 20, offset: 0
+--
+/home/y3i12/nabu_nisaba/.nisaba/workspace.md-392-    81→        Delegate to agent's guidance for nisaba BaseTool integration.
+/home/y3i12/nabu_nisaba/.nisaba/workspace.md-393-    82→
+
+[Showing results with pagination = limit: 20, offset: 0]
+---TOOL_USE_END(toolu_015keHfMxiGviB7dXU6DS4Kk)
+---TOOL_USE(toolu_01CWFcQrncGbiSQMaVMmniap)
+src/nisaba/__init__.py:8:from nisaba.guidance import WorkflowGuidance, GuidanceGraph, GuidancePattern
+src/nisaba/__init__.py:34:    "WorkflowGuidance",
+src/nisaba/__init__.py:35:    "GuidanceGraph",
+src/nisaba/__init__.py:36:    "GuidancePattern",
 
 [Showing results with pagination = limit: 20, offset: 0]
 
@@ -2395,108 +1358,777 @@ No matches found
 The TodoWrite tool hasn't been used recently. If you're working on tasks that would benefit from tracking progress, consider using the TodoWrite tool to track progress. Also consider cleaning up the todo list if has become stale and no longer matches what you are working on. Only use it if it's relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user
 
 </system-reminder>
----TOOL_USE_END(toolu_01M4kjNQ1kYaveNwLxqvJNcp)
----TOOL_USE(toolu_01BJ7ncT4rstT16TykoSYdYM)
-     1→"""Abstract factory for MCP server creation."""
+---TOOL_USE_END(toolu_01CWFcQrncGbiSQMaVMmniap)
+---TOOL_USE(toolu_01932h9ysQo1JWdeXQ2PKPwe)
+     1→"""Nisaba MCP server factory."""
      2→
-     3→from abc import ABC, abstractmethod
-     4→from contextlib import asynccontextmanager
-     5→from typing import AsyncIterator, Iterator, Any, Optional, Callable, TYPE_CHECKING, Dict, List
-     6→from pathlib import Path
-     7→import logging
-     8→import inspect
-     9→import asyncio
-    10→
-    11→from mcp.server.fastmcp import FastMCP
-    12→from typing_extensions import Annotated
-    13→from pydantic import Field
+     3→from contextlib import asynccontextmanager
+     4→from typing import AsyncIterator, Iterator
+     5→from pathlib import Path
+     6→import logging
+     7→
+     8→from mcp.server.fastmcp import FastMCP
+     9→from nisaba import MCPFactory
+    10→from nisaba.augments import get_augment_manager
+    11→from nisaba.guidance import WorkflowGuidance
+    12→from nisaba.server.config import NisabaConfig
+    13→from nisaba.tools.base_tool import BaseTool
     14→
-    15→from nisaba.config import MCPConfig
-    16→from nisaba.registry import ToolRegistry
-    17→from nisaba.tools.base_tool import BaseTool
-    18→
-    19→if TYPE_CHECKING:
-    20→    from nisaba.templates import InstructionsTemplateEngine
-    21→
-    22→logger = logging.getLogger(__name__)
-    23→
+    15→logger = logging.getLogger(__name__)
+    16→
+    17→
+    18→class NisabaMCPFactory(MCPFactory):
+    19→    """Factory for nisaba MCP server - augments management only."""
+    20→
+    21→    def __init__(self, config: NisabaConfig):
+    22→        """Initialize nisaba factory."""
+    23→        super().__init__(config)
     24→
-    25→class MCPFactory(ABC):
-    26→    """
-    27→    Abstract factory for creating MCP servers.
-    28→
-    29→    Subclasses must implement:
-    30→    - _get_tool_base_class(): Return tool base class for discovery
+    25→        # Tool instances cache
+    26→        self._tool_instances = None
+    27→        
+    28→        # Initialize shared AugmentManager
+    29→        self.augment_manager = get_augment_manager()
+    30→
+    31→    def _get_tool_base_class(self) -> type:
+    32→        """Return NisabaTool as base class."""
+    33→        return BaseTool
+    34→
+    35→    def _get_module_prefix(self) -> str:
+    36→        """Return nisaba tools module prefix."""
+    37→        return "nisaba.tools"
+    38→
+    39→    def _iter_tools(self) -> Iterator[BaseTool]:
+    40→        """
+    41→        Iterate over enabled tool instances.
+    42→
+    43→        Lazily instantiates tools on first call.
+    44→        """
+    45→        if self._tool_instances is None:
+    46→            self._instantiate_tools()
+    47→
+    48→        return iter(self._tool_instances)
+    49→
+    50→    def _instantiate_tools(self):
+    51→        """Create tool instances for enabled tools."""
+    52→        enabled_tool_names = self._filter_enabled_tools()
+    53→
+    54→        self._tool_instances = []
+    55→
+    56→        for tool_name in enabled_tool_names:
+    57→            try:
+    58→                tool_class = self.registry.get_tool_class(tool_name)
+    59→                tool_instance = tool_class(factory=self)
+    60→                self._tool_instances.append(tool_instance)
+    61→            except Exception as e:
+    62→                logger.error(f"Failed to instantiate tool {tool_name}: {e}")
+    63→
+    64→        logger.info(f"Instantiated {len(self._tool_instances)} tools: {enabled_tool_names}")
+    65→
+    66→    def _get_initial_instructions(self) -> str:
+    67→        try:
+    68→            # Load template using nisaba's engine
+    69→            # instructions_path = Path(__file__).parent / "resources" / "instructions_template.md"
+    70→            # engine = self._load_template_engine(
+    71→            #     template_path=instructions_path,
+    72→            #     runtime_context={'dev_mode': self.config.dev_mode}
+    73→            # )
+    74→
+    75→            # # Generate dynamic sections
+    76→            # logger.info("Generating MCP instructions...")
+    77→
+    78→            # # Render with placeholders and clear unused ones
+    79→            # instructions = engine.render_and_clear()
+    80→
+    81→            # logger.info(f"Generated instructions ({len(instructions)} chars)")
+    82→            # return instructions
+    83→            return ""
+    84→
+    85→        except Exception as e:
+    86→            logger.error(f"Failed to generate instructions: {e}", exc_info=True)
+    87→            return ""
+    88→
+    89→    @asynccontextmanager
+    90→    async def server_lifespan(self, mcp_server: FastMCP) -> AsyncIterator[None]:
+    91→        """Manage nisaba server lifecycle."""
+    92→        logger.info("=" * 60)
+    93→        logger.info("Nisaba MCP Server - Lifecycle Starting")
+    94→        logger.info("=" * 60)
+    95→
+    96→        # Register tools
+    97→        self._register_tools(mcp_server)
+    98→
+    99→        # Start HTTP transport if enabled
+   100→        await self._start_http_transport_if_enabled()
+   101→
+   102→        logger.info("Nisaba MCP Server - Ready")
+   103→        logger.info("=" * 60)
+   104→
+   105→        yield  # Server runs here
+   106→
+   107→        # SHUTDOWN
+   108→        logger.info("=" * 60)
+   109→        logger.info("Nisaba MCP Server - Lifecycle Shutdown")
+   110→        logger.info("=" * 60)
+   111→
+   112→        # Stop HTTP transport
+   113→        await self._stop_http_transport()
+   114→
+   115→        logger.info("Nisaba MCP Server - Shutdown Complete")
+   116→        logger.info("=" * 60)
+   117→
 
 <system-reminder>
 Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
 </system-reminder>
 
----TOOL_USE_END(toolu_01BJ7ncT4rstT16TykoSYdYM)
----TOOL_USE(toolu_01GS7SyQSf4UPemu2myRsmxh)
-The file /home/y3i12/nabu_nisaba/src/nisaba/factory.py has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
-     1→"""Abstract factory for MCP server creation."""
+---TOOL_USE_END(toolu_01932h9ysQo1JWdeXQ2PKPwe)
+---TOOL_USE(toolu_012zVQY55ExvsLSQim6mZm7t)
+     1→"""Concrete factory implementation for single-process nabu MCP server."""
+     2→
+     3→from contextlib import asynccontextmanager
+     4→from pathlib import Path
+     5→from typing import AsyncIterator, Iterator
+     6→import logging
+     7→
+     8→from mcp.server.fastmcp import FastMCP
+     9→
+    10→from nabu.mcp.factory import NabuMCPFactory
+    11→from nabu.mcp.config.nabu_config import NabuConfig
+    12→from nabu.mcp.tools.base import NabuTool
+    13→from nabu.mcp.guidance_config import NABU_GUIDANCE_GRAPH
+    14→from nisaba.guidance import WorkflowGuidance
+    15→
+    16→logger = logging.getLogger(__name__)
+    17→
+    18→
+    19→class NabuMCPFactorySingleProcess(NabuMCPFactory):
+    20→    """
+    21→    Single-process nabu MCP server factory.
+    22→    
+    23→    Runs database manager and tools in the same process as MCP server.
+    24→    """
+    25→    
+    26→    def __init__(self, config: NabuConfig):
+    27→        """Initialize single-process factory."""
+    28→        super().__init__(config)
+    29→        self._tool_instances = None
+    30→
+    31→        # Initialize agent (holds all stateful resources)
+    32→        from nabu.mcp.agent import NabuAgent
+    33→        self.agent = NabuAgent(config, factory=self)
+    34→
+    35→        # Backward compatibility: Expose agent attributes on factory
+    36→        # (Tools may still access self.factory.db_manager, etc.)
+    37→        # These are now properties that delegate to agent
+    38→
+    39→    # Backward compatibility properties - delegate to agent
+    40→    @property
+    41→    def db_managers(self):
+    42→        return self.agent.db_managers
+    43→
+    44→    @property
+    45→    def incremental_updaters(self):
+    46→        return self.agent.incremental_updaters
+    47→
+    48→    @property
+    49→    def db_manager(self):
+    50→        return self.agent.db_manager
+    51→
+    52→    @db_manager.setter
+    53→    def db_manager(self, value):
+    54→        # During __init__, agent might not exist yet (parent class sets these)
+    55→        if hasattr(self, 'agent'):
+    56→            self.agent.db_manager = value
+    57→
+    58→    @property
+    59→    def incremental_updater(self):
+    60→        return self.agent.incremental_updater
+    61→
+    62→    @incremental_updater.setter
+    63→    def incremental_updater(self, value):
+    64→        # During __init__, agent might not exist yet (parent class sets these)
+    65→        if hasattr(self, 'agent'):
+    66→            self.agent.incremental_updater = value
+    67→
+    68→    @property
+    69→    def auto_indexer(self):
+    70→        return self.agent.auto_indexer
+    71→
+    72→    @auto_indexer.setter
+    73→    def auto_indexer(self, value):
+    74→        # During __init__, agent might not exist yet
+    75→        if hasattr(self, 'agent'):
+    76→            self.agent.auto_indexer = value
+    77→
+    78→    @property
+    79→    def guidance(self):
+    80→        """
+    81→        Delegate to agent's guidance for nisaba BaseTool integration.
+    82→
+    83→        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
+    84→        so we expose agent's guidance system at factory level.
+    85→        """
+    86→        return self.agent.guidance if hasattr(self, 'agent') else None
+    87→
+    88→    # Note: session_tracker is accessed via agent directly
+    89→    # Tools should use: self.factory.agent.session_tracker or self.agent.session_tracker
+    90→
+    91→    def _iter_tools(self) -> Iterator[NabuTool]:
+    92→        """
+    93→        Iterate over enabled tool instances.
+    94→        
+    95→        Lazily instantiates tools on first call.
+    96→        """
+    97→        if self._tool_instances is None:
+    98→            self._instantiate_tools()
+    99→        
+   100→        return iter(self._tool_instances)
+   101→    
+   102→    def _instantiate_tools(self):
+   103→        """Create tool instances for enabled tools."""
+   104→        enabled_tool_names = self._filter_enabled_tools()
+   105→        
+   106→        self._tool_instances = []
+   107→        
+   108→        for tool_name in enabled_tool_names:
+   109→            try:
+   110→                tool_class = self.registry.get_tool_class(tool_name)
+   111→                tool_instance = tool_class(factory=self)
+   112→                self._tool_instances.append(tool_instance)
+   113→            except Exception as e:
+   114→                logger.error(f"Failed to instantiate tool {tool_name}: {e}")
+   115→        
+   116→        logger.info(f"Instantiated {len(self._tool_instances)} tools: {enabled_tool_names}")
+   117→    
+   118→    # ==================================================================================
+   119→    # Dynamic Instructions Generation Methods
+   120→    # ==================================================================================
+   121→
+   122→    def _get_initial_instructions(self) -> str:
+   123→        """Generate complete initial instructions with dynamic content."""
+   124→        try:
+   125→            # Load template using nisaba's engine
+   126→            instructions_path = Path(__file__).parent / "resources" / "instructions_template.md"
+   127→            engine = self._load_template_engine(
+   128→                template_path=instructions_path,
+   129→                runtime_context={'dev_mode': self.config.dev_mode}
+   130→            )
+   131→
+   132→            # Generate dynamic sections
+   133→            logger.info("Generating MCP instructions...")
+   134→
+   135→            # Render with placeholders and clear unused ones
+   136→            instructions = engine.render_and_clear()
+   137→
+   138→            logger.info(f"Generated instructions ({len(instructions)} chars)")
+   139→            return instructions
+   140→
+   141→        except Exception as e:
+   142→            logger.error(f"Failed to generate instructions: {e}", exc_info=True)
+   143→            return ""
+   144→    
+   145→    @asynccontextmanager
+   146→    async def server_lifespan(self, mcp_server: FastMCP) -> AsyncIterator[None]:
+   147→        """
+   148→        Manage nabu MCP server lifecycle.
+   149→
+   150→        Delegates to NabuAgent for resource management.
+   151→        """
+   152→        # STARTUP
+   153→        logger.info("=" * 60)
+   154→        logger.info("Nabu MCP Server - Lifecycle Starting")
+   155→        logger.info("=" * 60)
+   156→
+   157→        # Initialize agent (database managers, updaters, file watchers)
+   158→        await self.agent.initialize()
+   159→
+   160→        # Register tools
+   161→        self._register_tools(mcp_server)
+   162→
+   163→        # Start HTTP transport if enabled
+   164→        await self._start_http_transport_if_enabled()
+   165→
+   166→        logger.info("Nabu MCP Server - Ready")
+   167→        logger.info("=" * 60)
+   168→
+   169→        yield  # Server runs here
+   170→
+   171→        # SHUTDOWN
+   172→        logger.info("=" * 60)
+   173→        logger.info("Nabu MCP Server - Lifecycle Shutdown")
+   174→        logger.info("=" * 60)
+   175→
+   176→        # Stop HTTP transport
+   177→        await self._stop_http_transport()
+   178→
+   179→        # Cleanup agent resources
+   180→        await self.agent.shutdown()
+   181→
+   182→        logger.info("Nabu MCP Server - Shutdown Complete")
+   183→        logger.info("=" * 60)
+   184→
+   185→    def _handle_file_change(self, file_path: str, codebase_name: str) -> None:
+   186→        """
+   187→        Handle file change event from watcher.
+   188→        
+   189→        Runs in file watcher thread pool. Updates file in database.
+   190→        
+   191→        Args:
+   192→            file_path: Absolute path to changed file
+   193→            codebase_name: Name of codebase being updated
+   194→        """
+   195→        updater = self.incremental_updaters.get(codebase_name)
+   196→        if not updater:
+   197→            logger.warning(f"File change detected but no updater for '{codebase_name}': {file_path}")
+   198→            return
+   199→        
+   200→        try:
+   201→            logger.debug(f"Processing file change in '{codebase_name}': {file_path}")
+   202→            result = updater.update_file(file_path)
+   203→            
+   204→            if result.success:
+   205→                logger.info(
+   206→                    f"✓ Auto-updated {Path(file_path).name} in '{codebase_name}': "
+   207→                    f"+{result.frames_added} -{result.frames_deleted} "
+   208→                    f"(={result.frames_stable}, {result.stability_percentage:.1f}% stable)"
+   209→                )
+   210→            else:
+   211→                logger.warning(
+   212→                    f"✗ Failed to auto-update {file_path} in '{codebase_name}': {result.errors}"
+   213→                )
+   214→        except Exception as e:
+   215→            logger.error(
+   216→                f"Error handling file change for {file_path} in '{codebase_name}': {e}",
+   217→                exc_info=self.config.dev_mode
+   218→            )
+   219→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
+
+---TOOL_USE_END(toolu_012zVQY55ExvsLSQim6mZm7t)
+---TOOL_USE(toolu_01K4WFh2ovE6o459wX3BSmq3)
+src/nisaba/server/factory.py:11:from nisaba.guidance import WorkflowGuidance
+src/nisaba/agent.py:7:    from nisaba.guidance import WorkflowGuidance
+src/nisaba/agent.py:31:        specific resources. Guidance is optional - set to WorkflowGuidance
+src/nisaba/agent.py:34:        self.guidance: Optional["WorkflowGuidance"] = None
+src/nisaba/__init__.py:8:from nisaba.guidance import WorkflowGuidance, GuidanceGraph, GuidancePattern
+src/nisaba/__init__.py:34:    "WorkflowGuidance",
+src/nisaba/__init__.py:35:    "GuidanceGraph",
+src/nisaba/__init__.py:36:    "GuidancePattern",
+src/nisaba/guidance.py:17:class GuidancePattern:
+src/nisaba/guidance.py:44:class GuidanceGraph:
+src/nisaba/guidance.py:49:    Each MCP can provide its own GuidanceGraph configuration.
+src/nisaba/guidance.py:55:    patterns: List[GuidancePattern] = field(default_factory=list)
+src/nisaba/guidance.py:59:    def from_yaml(cls, yaml_path: str) -> "GuidanceGraph":
+src/nisaba/guidance.py:68:class WorkflowGuidance:
+src/nisaba/guidance.py:74:    can use by providing a GuidanceGraph configuration.
+src/nisaba/guidance.py:82:        graph = GuidanceGraph(patterns=[...])
+src/nisaba/guidance.py:83:        guidance = WorkflowGuidance(graph)
+src/nisaba/guidance.py:88:    def __init__(self, augment_manager=None, guidance_graph: Optional[GuidanceGraph] = None):
+src/nisaba/guidance.py:94:            guidance_graph: Optional GuidanceGraph for legacy pattern-based guidance
+src/nisaba/guidance.py:97:        self.graph = guidance_graph or GuidanceGraph()  # Empty graph as fallback
+
+[Showing results with pagination = limit: 20, offset: 0]
+
+<system-reminder>
+The TodoWrite tool hasn't been used recently. If you're working on tasks that would benefit from tracking progress, consider using the TodoWrite tool to track progress. Also consider cleaning up the todo list if has become stale and no longer matches what you are working on. Only use it if it's relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user
+
+</system-reminder>
+---TOOL_USE_END(toolu_01K4WFh2ovE6o459wX3BSmq3)
+---TOOL_USE(toolu_01BRWrhFyP6ECwMuRJ9c14VP)
+
+---TOOL_USE_END(toolu_01BRWrhFyP6ECwMuRJ9c14VP)
+---TOOL_USE(toolu_015R9Y8CkC3U9ZJzwrTPBuE1)
+     1→"""Generic MCP server framework."""
+     2→
+     3→from nisaba.agent import Agent
+     4→from nisaba.factory import MCPFactory
+     5→from nisaba.registry import ToolRegistry, RegisteredTool
+     6→from nisaba.config import MCPConfig, MCPContext
+     7→from nisaba.markers import ToolMarker, ToolMarkerOptional, ToolMarkerDevOnly, ToolMarkerMutating
+     8→from nisaba.guidance import WorkflowGuidance, GuidanceGraph, GuidancePattern
+     9→from nisaba.schema_utils import sanitize_for_openai_tools
+    10→from nisaba.cli import (
+    11→    AutoRegisteringGroup,
+    12→    OutputFormat,
+    13→    ToolsCommandGroup,
+    14→    ContextCommandGroup,
+    15→    PromptCommandGroup,
+    16→    format_tool_list,
+    17→    format_context_list,
+    18→    validate_file_or_exit,
+    19→    validate_dir_or_exit,
+    20→)
+    21→__version__ = "0.1.0"
+    22→
+    23→__all__ = [
+    24→    "Agent",
+    25→    "MCPFactory",
+    26→    "ToolRegistry",
+    27→    "RegisteredTool",
+    28→    "MCPConfig",
+    29→    "MCPContext",
+    30→    "ToolMarker",
+    31→    "ToolMarkerOptional",
+    32→    "ToolMarkerDevOnly",
+    33→    "ToolMarkerMutating",
+    34→    "WorkflowGuidance",
+    35→    "GuidanceGraph",
+    36→    "GuidancePattern",
+    37→    "sanitize_for_openai_tools",
+    38→    "AutoRegisteringGroup",
+    39→    "OutputFormat",
+    40→    "ToolsCommandGroup",
+    41→    "ContextCommandGroup",
+    42→    "PromptCommandGroup",
+    43→    "format_tool_list",
+    44→    "format_context_list",
+    45→    "validate_file_or_exit",
+    46→    "validate_dir_or_exit"
+    47→]
+    48→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
+
+---TOOL_USE_END(toolu_015R9Y8CkC3U9ZJzwrTPBuE1)
+---TOOL_USE(toolu_01LtZq4EVLaP2TzTS4rdpUv5)
+     1→"""Nisaba MCP server factory."""
+     2→
+     3→from contextlib import asynccontextmanager
+     4→from typing import AsyncIterator, Iterator
+     5→from pathlib import Path
+     6→import logging
+     7→
+     8→from mcp.server.fastmcp import FastMCP
+     9→from nisaba import MCPFactory
+    10→from nisaba.augments import get_augment_manager
+    11→from nisaba.guidance import WorkflowGuidance
+    12→from nisaba.server.config import NisabaConfig
+    13→from nisaba.tools.base_tool import BaseTool
+    14→
+    15→logger = logging.getLogger(__name__)
+    16→
+    17→
+    18→class NisabaMCPFactory(MCPFactory):
+    19→    """Factory for nisaba MCP server - augments management only."""
+    20→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
+
+---TOOL_USE_END(toolu_01LtZq4EVLaP2TzTS4rdpUv5)
+---TOOL_USE(toolu_01SkornC9EKwafGGRpwin8Wi)
+1→"""Concrete factory implementation for single-process nabu MCP server."""
+     2→
+     3→from contextlib import asynccontextmanager
+     4→from pathlib import Path
+     5→from typing import AsyncIterator, Iterator
+     6→import logging
+     7→
+     8→from mcp.server.fastmcp import FastMCP
+     9→
+    10→from nabu.mcp.factory import NabuMCPFactory
+    11→from nabu.mcp.config.nabu_config import NabuConfig
+    12→from nabu.mcp.tools.base import NabuTool
+    13→from nabu.mcp.guidance_config import NABU_GUIDANCE_GRAPH
+    14→from nisaba.guidance import WorkflowGuidance
+    15→
+    16→logger = logging.getLogger(__name__)
+    17→
+    18→
+    19→class NabuMCPFactorySingleProcess(NabuMCPFactory):
+    20→    """
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>
+
+<system-reminder>
+The TodoWrite tool hasn't been used recently. If you're working on tasks that would benefit from tracking progress, consider using the TodoWrite tool to track progress. Also consider cleaning up the todo list if has become stale and no longer matches what you are working on. Only use it if it's relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user
+
+</system-reminder>
+---TOOL_USE_END(toolu_01SkornC9EKwafGGRpwin8Wi)
+---TOOL_USE(toolu_01Vqio9NEH156pQ4QbfcNupQ)
+The file /home/y3i12/nabu_nisaba/src/nisaba/__init__.py has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+     1→"""Generic MCP server framework."""
+     2→
+     3→from nisaba.agent import Agent
+     4→from nisaba.factory import MCPFactory
+     5→from nisaba.registry import ToolRegistry, RegisteredTool
+     6→from nisaba.config import MCPConfig, MCPContext
+     7→from nisaba.markers import ToolMarker, ToolMarkerOptional, ToolMarkerDevOnly, ToolMarkerMutating
+     8→from nisaba.schema_utils import sanitize_for_openai_tools
+     9→from nisaba.cli import (
+    10→    AutoRegisteringGroup,
+    11→    OutputFormat,
+    12→    ToolsCommandGroup,
+---TOOL_USE_END(toolu_01Vqio9NEH156pQ4QbfcNupQ)
+---TOOL_USE(toolu_01DvMo8KGmXdoMMEG5Aaimha)
+The file /home/y3i12/nabu_nisaba/src/nisaba/__init__.py has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    18→    validate_dir_or_exit,
+    19→)
+    20→__version__ = "0.1.0"
+    21→
+    22→__all__ = [
+    23→    "Agent",
+    24→    "MCPFactory",
+    25→    "ToolRegistry",
+    26→    "RegisteredTool",
+    27→    "MCPConfig",
+    28→    "MCPContext",
+    29→    "ToolMarker",
+    30→    "ToolMarkerOptional",
+    31→    "ToolMarkerDevOnly",
+    32→    "ToolMarkerMutating",
+    33→    "sanitize_for_openai_tools",
+    34→    "AutoRegisteringGroup",
+    35→    "OutputFormat",
+    36→    "ToolsCommandGroup",
+    37→    "ContextCommandGroup",
+    38→    "PromptCommandGroup",
+    39→    "format_tool_list",
+    40→    "format_context_list",
+    41→    "validate_file_or_exit",
+    42→    "validate_dir_or_exit"
+    43→]
+    44→
+---TOOL_USE_END(toolu_01DvMo8KGmXdoMMEG5Aaimha)
+---TOOL_USE(toolu_01BCbUs6XQrSRCsbubw4fFtz)
+The file /home/y3i12/nabu_nisaba/src/nisaba/server/factory.py has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+     4→from typing import AsyncIterator, Iterator
+     5→from pathlib import Path
+     6→import logging
+     7→
+     8→from mcp.server.fastmcp import FastMCP
+     9→from nisaba import MCPFactory
+    10→from nisaba.augments import get_augment_manager
+    11→from nisaba.server.config import NisabaConfig
+    12→from nisaba.tools.base_tool import BaseTool
+    13→
+    14→logger = logging.getLogger(__name__)
+    15→
+    16→
+---TOOL_USE_END(toolu_01BCbUs6XQrSRCsbubw4fFtz)
+---TOOL_USE(toolu_01VRFMSQYTVg7ATpPYPShGw6)
+The file /home/y3i12/nabu_nisaba/src/nisaba/agent.py has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+     1→"""Base agent class for MCP lifecycle management."""
      2→
      3→from abc import ABC, abstractmethod
-     4→from contextlib import asynccontextmanager
-     5→from typing import AsyncIterator, Iterator, Any, Optional, Callable, TYPE_CHECKING, Dict, List
-     6→from pathlib import Path
-     7→import logging
-     8→import inspect
-     9→import asyncio
-    10→from dataclasses import asdict
-    11→
-    12→from mcp.server.fastmcp import FastMCP
-    13→from typing_extensions import Annotated
-    14→from pydantic import Field
+     4→
+     5→
+     6→class Agent(ABC):
+     7→    """
+---TOOL_USE_END(toolu_01VRFMSQYTVg7ATpPYPShGw6)
+---TOOL_USE(toolu_017vgjkW9pSndgm36CttceRd)
+The file /home/y3i12/nabu_nisaba/src/nisaba/agent.py has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+     3→from abc import ABC, abstractmethod
+     4→
+     5→
+     6→class Agent(ABC):
+     7→    """
+     8→    Abstract base class for MCP agents with lifecycle management.
+     9→
+    10→    Agents handle stateful resources (databases, file watchers, caches, etc.)
+    11→    that require proper initialization and cleanup during MCP server lifecycle.
+    12→
+    13→    The factory's server_lifespan() should call:
+    14→    1. await agent.initialize() - during startup
+    15→    2. await agent.shutdown() - during shutdown
+    16→    """
+    17→
+    18→    def __init__(self):
+    19→        """
+    20→        Initialize base agent.
+    21→
+    22→        Subclasses should call super().__init__() and then initialize their
+    23→        specific resources.
+    24→        """
+    25→        pass
+    26→
+    27→    @abstractmethod
+    28→    async def initialize(self) -> None:
+    29→        """
+---TOOL_USE_END(toolu_017vgjkW9pSndgm36CttceRd)
+---TOOL_USE(toolu_01RbCj7GvhEVtvcYfv9kF1kf)
+The file /home/y3i12/nabu_nisaba/src/nabu/mcp/factory_impl.py has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+     6→import logging
+     7→
+     8→from mcp.server.fastmcp import FastMCP
+     9→
+    10→from nabu.mcp.factory import NabuMCPFactory
+    11→from nabu.mcp.config.nabu_config import NabuConfig
+    12→from nabu.mcp.tools.base import NabuTool
+    13→
+    14→logger = logging.getLogger(__name__)
     15→
-    16→from nisaba.config import MCPConfig
-    17→from nisaba.registry import ToolRegistry
-    18→from nisaba.tools.base_tool import BaseTool
-    19→
-    20→if TYPE_CHECKING:
-    21→    from nisaba.templates import InstructionsTemplateEngine
-    22→
+    16→
+---TOOL_USE_END(toolu_01RbCj7GvhEVtvcYfv9kF1kf)
+---TOOL_USE(toolu_01TuWbABPfA9aYxhUzGGh4PL)
+The file /home/y3i12/nabu_nisaba/src/nabu/mcp/factory_impl.py has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    66→    @property
+    67→    def auto_indexer(self):
+    68→        return self.agent.auto_indexer
+    69→
+    70→    @auto_indexer.setter
+    71→    def auto_indexer(self, value):
+    72→        # During __init__, agent might not exist yet
+    73→        if hasattr(self, 'agent'):
+    74→            self.agent.auto_indexer = value
+    75→
+    76→    def _iter_tools(self) -> Iterator[NabuTool]:
+    77→        """
+    78→        Iterate over enabled tool instances.
+---TOOL_USE_END(toolu_01TuWbABPfA9aYxhUzGGh4PL)
+---TOOL_USE(toolu_01G7ySPXx4Nq5nr3VkEkK6cH)
+The file /home/y3i12/nabu_nisaba/src/nabu/mcp/agent.py has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    12→    from nabu.incremental import IncrementalUpdater
+    13→    from nabu.mcp.indexing import AutoIndexingManager
+    14→    from nabu.file_watcher import FileWatcher
+    15→
+    16→from nabu.mcp.config.nabu_config import NabuConfig
+    17→from nisaba.augments import get_augment_manager
+    18→
+    19→logger = logging.getLogger(__name__)
+    20→
+    21→
+---TOOL_USE_END(toolu_01G7ySPXx4Nq5nr3VkEkK6cH)
+---TOOL_USE(toolu_01WJsF8WHv21zuX55JiPLEJp)
+The file /home/y3i12/nabu_nisaba/src/nabu/mcp/agent.py has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    19→logger = logging.getLogger(__name__)
+    20→
+    21→
+    22→class NabuAgent(Agent):
+    23→    """
+    24→    Stateful orchestrator for nabu MCP resources.
+    25→
+    26→    Manages:
+    27→    - Database managers (multi-codebase)
+    28→    - Incremental updaters
+    29→    - Auto-indexing
+    30→    - File watchers
+    31→
+    32→    The agent handles resource lifecycle (initialization and cleanup)
+    33→    and state mutations (codebase switching).
+    34→    """
+    35→
+    36→    def __init__(self, config: NabuConfig, factory: "NabuMCPFactorySingleProcess"):
+    37→        """
+    38→        Initialize nabu agent with configuration.
+---TOOL_USE_END(toolu_01WJsF8WHv21zuX55JiPLEJp)
+---TOOL_USE(toolu_01CNnDLZoidHCgAodU8bMvoE)
+The file /home/y3i12/nabu_nisaba/src/nabu/mcp/agent.py has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    57→        # Lifecycle components
+    58→        self.auto_indexer: Optional["AutoIndexingManager"] = None
+    59→        self._file_watchers: Dict[str, "FileWatcher"] = {}
+    60→
+    61→        # Augments management
+    62→        self.augment_manager = get_augment_manager()
+    63→        logger.info(f"📚 Augments manager initialized: {len(self.augment_manager.available_augments)} augments available")
+    64→
+    65→    def activate_codebase(self, name: str) -> None:
+    66→        """
+    67→        Switch active codebase (state mutation).
+---TOOL_USE_END(toolu_01CNnDLZoidHCgAodU8bMvoE)
+---TOOL_USE(toolu_01NoiPjiwtULvhmsbVwFW1MS)
+The file /home/y3i12/nabu_nisaba/src/nisaba/augments.py has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   487→
+   488→        # Update augment tree cache after adding new augment
+   489→        self._update_augment_tree_cache()
+   490→
+   491→        logger.info(f"Created augment: {augment.path}")
+   492→
+   493→        return {
+   494→            'affected': [ augment.path ]
+   495→        }
+   496→
+   497→    def _match_pattern(self, pattern: str) -> Set[str]:
+   498→        """
+   499→        Match augment paths against a pattern.
+   500→
+   501→        Args:
+---TOOL_USE_END(toolu_01NoiPjiwtULvhmsbVwFW1MS)
+---TOOL_USE(toolu_01CYMUcSSESP7r58xeaTSiGg)
+The file /home/y3i12/nabu_nisaba/src/nisaba/tools/base_tool.py has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   190→            BaseToolResponse
+   191→        """
+   192→        pass
+   193→
+   194→    async def execute_tool(self, **kwargs) -> BaseToolResponse:
+   195→        """
+   196→        Execute tool with automatic timing and error handling.
+   197→
+   198→        Args:
+   199→            **kwargs: Tool-specific parameters
+   200→
+   201→        Returns:
+   202→            Tool execution result with timing
+   203→        """
+   204→        try:
+   205→            result = await self.execute(**kwargs)
+   206→
+   207→            return result
+   208→
+   209→        except Exception as e:
+   210→            return self.response_exception(e)
+   211→
+   212→    @classmethod
+   213→    def is_optional(cls) -> bool:
+   214→        """
 
 <system-reminder>
 The TodoWrite tool hasn't been used recently. If you're working on tasks that would benefit from tracking progress, consider using the TodoWrite tool to track progress. Also consider cleaning up the todo list if has become stale and no longer matches what you are working on. Only use it if it's relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user
 
 </system-reminder>
----TOOL_USE_END(toolu_01GS7SyQSf4UPemu2myRsmxh)
----TOOL_USE(toolu_01VkQWn5RBcxGqVbjzC824YD)
-Error executing tool rebuild_database: name 'asdict' is not defined
+---TOOL_USE_END(toolu_01CYMUcSSESP7r58xeaTSiGg)
+---TOOL_USE(toolu_01X4hH8DraF4zz5ZGLFMe7yw)
+
+---TOOL_USE_END(toolu_01X4hH8DraF4zz5ZGLFMe7yw)
+---TOOL_USE(toolu_01Kn13gvJEuRyEoRATmwr3eJ)
+
+---TOOL_USE_END(toolu_01Kn13gvJEuRyEoRATmwr3eJ)
+---TOOL_USE(toolu_01GZdNj1fF8gMDqS6ff36xaH)
+✓ nisaba imports successful
+---TOOL_USE_END(toolu_01GZdNj1fF8gMDqS6ff36xaH)
+---TOOL_USE(toolu_01QHPHWjwcwiDmUPMg7Y2MYn)
+✓ nabu imports successful
+---TOOL_USE_END(toolu_01QHPHWjwcwiDmUPMg7Y2MYn)
+---TOOL_USE(toolu_01BeaYEJHZRS8jptTY6KV2uo)
+Exported symbols: ['Agent', 'AutoRegisteringGroup', 'ContextCommandGroup', 'MCPConfig', 'MCPContext', 'MCPFactory', 'OutputFormat', 'PromptCommandGroup', 'RegisteredTool', 'ToolMarker', 'ToolMarkerDevOnly', 'ToolMarkerMutating', 'ToolMarkerOptional', 'ToolRegistry', 'ToolsCommandGroup', 'agent', 'augments', 'cli', 'config', 'factory', 'format_context_list', 'format_tool_list', 'markers', 'registry', 'sanitize_for_openai_tools', 'schema_utils', 'structured_file', 'tools', 'utils', 'validate_dir_or_exit', 'validate_file_or_exit', 'wrapper']
 
 <system-reminder>
 The TodoWrite tool hasn't been used recently. If you're working on tasks that would benefit from tracking progress, consider using the TodoWrite tool to track progress. Also consider cleaning up the todo list if has become stale and no longer matches what you are working on. Only use it if it's relevant to the current work. This is just a gentle reminder - ignore if not applicable. Make sure that you NEVER mention this reminder to the user
 
 </system-reminder>
----TOOL_USE_END(toolu_01VkQWn5RBcxGqVbjzC824YD)
----TOOL_USE(toolu_0183HuhU6jpu4UgrYyh7N878)
+
+<system-reminder>
+<new-diagnostics>The following new diagnostic issues were detected:
+
+base_tool.py:
+  ✘ [Line 12:10] Import "docstring_parser" could not be resolved [[object Object]] (Pylance)
+  ✘ [Line 97:25] "parse_docstring" is possibly unbound [[object Object]] (Pylance)
+  ✘ [Line 174:25] "parse_docstring" is possibly unbound [[object Object]] (Pylance)
+  ✘ [Line 261:21] "parse_docstring" is possibly unbound [[object Object]] (Pylance)
+  ✘ [Line 290:25] "parse_docstring" is possibly unbound [[object Object]] (Pylance)
+  ★ [Line 5:8] "time" is not accessed (Pylance)</new-diagnostics>
+</system-reminder>
+---TOOL_USE_END(toolu_01BeaYEJHZRS8jptTY6KV2uo)
+---TOOL_USE(toolu_01E1D7n9SZWuCUAsTmprouX3)
 {
   "success": true,
-  "message": "# Status (active: nabu)\n\n## Codebases `name (frames, status) ✓active`\nnabu (4669, ✅ healthy) ✓\n",
+  "message": "# Database Reindex ❌\nStatus: UNKNOWN\n\n**Database**: /home/y3i12/nabu_nisaba/nabu.kuzu\n**Repository**: unknown\n\n## Frame Statistics (Total: 4643)\n`frame_type (count)`\nIF_BLOCK (1853)\nCALLABLE (1067)\nFOR_LOOP (495)\nELSE_BLOCK (232)\nTRY_BLOCK (205)\nEXCEPT_BLOCK (204)\nCLASS (187)\nELIF_BLOCK (168)\nPACKAGE (126)\nWITH_BLOCK (53)\nWHILE_LOOP (21)\nFINALLY_BLOCK (18)\nCASE_BLOCK (6)\nLANGUAGE (4)\nSWITCH_BLOCK (3)\nCODEBASE (1)\n",
   "nisaba": false
 }
----TOOL_USE_END(toolu_0183HuhU6jpu4UgrYyh7N878)
----TOOL_USE(toolu_01Xb4gevwHQdKKYmBX2NTTtZ)
-{
-  "success": true,
-  "message": "# Search Results\n**Query:** `execute_tool`\n\n## /home/y3i12/nabu_nisaba/src/nisaba/guidance.py:106-131\n- score: 3.63 | rrf: 0.03 | similarity: - | mechanisms: fts, semantic\n- type: CALLABLE | qualified_name: nabu_nisaba.python_root.nisaba.WorkflowGuidance.record_tool_call\n\n### preview\ndef record_tool_call(\n        self,\n        tool_name: str,\n        params: Dict[str, Any],\n        result: Dict[str, Any]\n    ) -> None:\n        \"\"\"\n        Record a tool execution.\n\n        Args:\n            tool_name: Name of the tool that was called\n            params: Parameters passed to the tool\n            result: Result returned by the tool\n        \"\"\"\n        entry = {\n            \"timestamp\": time.time(),\n            \"tool\": tool_name,\n            \"params\": params.copy(),  # Copy to a\n    ...\n\n## /home/y3i12/nabu_nisaba/src/nabu/mcp/tools/observability_tools.py:13-152\n- score: 3.26 | rrf: 0.02 | similarity: - | mechanisms: fts, semantic\n- type: CALLABLE | qualified_name: nabu_nisaba.python_root.nabu.mcp.tools.ShowStatusTool.execute\n\n## /home/y3i12/nabu_nisaba/src/nabu/mcp/tools/structural_view_tool.py:40-145\n- score: 3.22 | rrf: 0.02 | similarity: - | mechanisms: fts, semantic\n- type: CALLABLE | qualified_name: nabu_nisaba.python_root.nabu.mcp.tools.StructuralViewTool.execute\n\n## /home/y3i12/nabu_nisaba/src/nisaba/tools/base_tool.py:194-212\n- score: 4.93 | rrf: 0.02 | similarity: - | mechanisms: fts\n- type: CALLABLE | qualified_name: nabu_nisaba.python_root.nisaba.tools.BaseTool.execute_tool\n\n### snippet (lines 1-4)\n1: → async def execute_tool(self, **kwargs) -> BaseToolResponse:\n2:           \"\"\"\n3:           Execute tool with automatic timing and error handling.\n4:   \n\n## /home/y3i12/nabu_nisaba/test/test_files/cpp/src/utils/logger.cpp:14-16\n- score: - | rrf: 0.02 | similarity: 0.25 | mechanisms: semantic\n- type: CALLABLE | qualified_name: nabu_nisaba.cpp_root::utils.Logger.disable\n\n### preview\nvoid Logger::disable() {\n    enabled = false;\n}\n\n---\n*5 items returned of 57 total matches*",
-  "nisaba": false
-}
----TOOL_USE_END(toolu_01Xb4gevwHQdKKYmBX2NTTtZ)
----TOOL_USE(toolu_01XX69xcBh8uRAz3ebbnZTX4)
-{
-  "success": true,
-  "message": "# Query Results\nColumns: f.name, f.type | Rows: 5\n\n## Results `f.name | f.type`\nextract_transcript | CALLABLE\nmain | CALLABLE\nparse_codebase | CALLABLE\nget_augment_manager | CALLABLE\nformat_tool_list | CALLABLE\n",
-  "nisaba": false
-}
----TOOL_USE_END(toolu_01XX69xcBh8uRAz3ebbnZTX4)
+---TOOL_USE_END(toolu_01E1D7n9SZWuCUAsTmprouX3)
 ---RESULTS_END
 ---NOTIFICATIONS
 Recent activity:
-✓ mcp__nabu__search() → ok
-✓ mcp__nabu__query_relationships() → ok
+✓ mcp__nabu__rebuild_database() → ok
 
 ---NOTIFICATIONS_END
 ---TODOS

@@ -1,3 +1,2 @@
 Recent activity:
-✓ mcp__nabu__search() → ok
-✓ mcp__nabu__query_relationships() → ok
+✓ mcp__nabu__rebuild_database() → ok
