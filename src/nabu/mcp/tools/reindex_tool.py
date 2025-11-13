@@ -5,15 +5,15 @@ from pathlib import Path
 from typing import Any, Dict
 import time
 
+from nisaba.tools.base_tool import BaseToolResponse
 from nabu.mcp.tools.base import NabuTool
 from nisaba import ToolMarkerMutating
-from nisaba.utils.response import ErrorSeverity
 
 
 class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
     """Re-index the codebase by rebuilding the KuzuDB database."""
     
-    async def execute(self) -> Dict[str, Any]:
+    async def execute(self) -> BaseToolResponse:
         """
         Rebuild the entire KuzuDB database from scratch.
         
@@ -39,41 +39,13 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
             
             # Validate paths
             if not repo_path:
-                return self._error_response(
-                    ValueError("Repository path not configured"),
-                    start_time,
-                    severity=ErrorSeverity.FATAL,
-                    recovery_hint=(
-                        "Repository path not set in configuration. "
-                        "Restart MCP server with --repo-path argument pointing to codebase directory."
-                    ),
-                    context={"config_repo_path": None}
-                )
+                return self.response_error("Repository path not configured")
             
             if not repo_path.exists():
-                return self._error_response(
-                    FileNotFoundError(f"Repository path not found: {repo_path}"),
-                    start_time,
-                    recovery_hint=(
-                        "Repository path does not exist. Check: "
-                        "(1) Path is correct and absolute, "
-                        "(2) Directory has not been moved or deleted, "
-                        "(3) Correct file permissions. "
-                        "Update MCP server --repo-path argument if location changed."
-                    ),
-                    context={"repo_path": str(repo_path)}
-                )
+                return self.response_error("Repository path not found: {repo_path}")
             
             if not db_path:
-                return self._error_response(
-                    ValueError("Database path not configured"),
-                    start_time,
-                    severity=ErrorSeverity.FATAL,
-                    recovery_hint=(
-                        "Database path not set in configuration. "
-                        "Restart MCP server with --db-path argument."
-                    )
-                )
+                return self.response_error("Database path not configured")
             
             self.logger().info(f"Re-indexing repository: {repo_path}")
             self.logger().info(f"Target database: {db_path}")
@@ -82,80 +54,10 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
             loop = asyncio.get_event_loop()
             result = await loop.run_in_executor(None, self._rebuild_database)
             
-            return self._success_response({
-                "status": "completed",
-                "repository_path": str(repo_path),
-                **result
-            }, start_time)
-        
-        except FileNotFoundError as e:
-            return self._error_response(
-                e,
-                start_time,
-                recovery_hint=(
-                    "File or directory not found during reindex. "
-                    "Check that --repo-path points to valid directory with code files. "
-                    "Ensure proper file permissions."
-                ),
-                context={"repo_path": str(repo_path), "db_path": str(db_path)}
-            )
-        
-        except PermissionError as e:
-            return self._error_response(
-                e,
-                start_time,
-                severity=ErrorSeverity.FATAL,
-                recovery_hint=(
-                    "Permission denied during reindex. Check: "
-                    "(1) Write permissions on database directory, "
-                    "(2) Read permissions on repository directory, "
-                    "(3) Not running as restricted user. "
-                    "May need to adjust file permissions or run with appropriate user."
-                ),
-                context={"repo_path": str(repo_path), "db_path": str(db_path)}
-            )
-        
-        except RuntimeError as e:
-            error_str = str(e)
-            
-            if "Found directory at db-path" in error_str:
-                return self._error_response(
-                    e,
-                    start_time,
-                    recovery_hint=(
-                        "Database path points to directory, expected file path. "
-                        "Change --db-path to point to .kuzu file (e.g., ./nabu.kuzu), not directory."
-                    ),
-                    context={"db_path": str(db_path)}
-                )
-            
-            return self._error_response(
-                e,
-                start_time,
-                recovery_hint=(
-                    "Runtime error during database rebuild. Common causes: "
-                    "(1) Corrupted source files in repository, "
-                    "(2) Out of disk space, "
-                    "(3) Parsing errors in code. "
-                    "Check server logs for detailed error messages."
-                ),
-                context={"repo_path": str(repo_path), "error": error_str[:200]}
-            )
+            return self.response_success(result)
         
         except Exception as e:
-            self.logger().error(f"Re-index failed: {e}", exc_info=True)
-            return self._error_response(
-                e,
-                start_time,
-                recovery_hint=(
-                    "Unexpected error during reindex. Check: "
-                    "(1) Sufficient disk space available, "
-                    "(2) No corrupted files in repository, "
-                    "(3) KuzuDB dependencies installed correctly. "
-                    "See server logs for detailed stack trace."
-                ),
-                context={"repo_path": str(repo_path), "db_path": str(db_path), "error_type": type(e).__name__}
-            )
+            return self.response_exception(e, "Unexpected error during reindex.")
     
     def _rebuild_database(self) -> Dict[str, Any]:
         """Heavy lifting - rebuild database (runs in thread pool)."""

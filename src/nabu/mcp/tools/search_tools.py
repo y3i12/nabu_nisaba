@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict, Any, List
 
 from nabu.mcp.tools.base import NabuTool
+from nisaba.tools.base_tool import BaseToolResponse
 from nabu.mcp.utils.snippet_extractor import extract_snippets
 from nabu.mcp.utils.regex_helpers import extract_keywords_from_regex as _extract_keywords_from_regex
 
@@ -103,7 +104,7 @@ class SearchTool(NabuTool):
         context_lines: int = 3,
         max_snippets: int = 5,
         compact_metadata: bool = True
-    ) -> Dict[str, Any]:
+    ) -> BaseToolResponse:
         """
         Execute unified search with automatic mechanism fusion.
 
@@ -164,28 +165,17 @@ class SearchTool(NabuTool):
 
             # Validate parameters
             if not query or not query.strip():
-                return self._error_response(
-                    ValueError("Query cannot be empty"),
-                    start_time,
-                    recovery_hint="Provide a search query (keywords, natural language, or code)"
-                )
+                return self.response_error("Query cannot be empty")
 
             if k < 1 or k > 50:
-                return self._error_response(
-                    ValueError(f"k must be between 1 and 50, got {k}"),
-                    start_time
-                )
+                return self.response_error(f"k must be between 1 and 50, got {k}")
 
             # Validate regex pattern if is_regex_input
             if is_regex_input:
                 try:
                     re.compile(query.strip())
                 except re.error as e:
-                    return self._error_response(
-                        ValueError(f"Invalid regex pattern: {e}"),
-                        start_time,
-                        recovery_hint="Check regex syntax. Use escaping for special chars: \\. \\( \\) \\[ \\] \\*"
-                    )
+                    return self.response_error(f"Invalid regex pattern: {e}")
 
             # Always run FTS + Semantic, optionally add regex search
             # Fetch k*3 candidates from each to compensate for post-fusion filtering
@@ -254,7 +244,7 @@ class SearchTool(NabuTool):
                         del item['content']
 
             # Build response
-            return self._success_response({
+            return self.response_success({
                 "query": query.strip(),
                 "results": final,
                 "metadata": {
@@ -264,15 +254,10 @@ class SearchTool(NabuTool):
                     "candidates_after_fusion": len(fused),
                     "returned": len(final)
                 }
-            }, start_time)
+            })
 
         except Exception as e:
-            self.logger().error(f"Unified search failed: {e}", exc_info=True)
-            return self._error_response(
-                e, start_time,
-                recovery_hint="Check database health with show_status(detail_level='debug')",
-                context={"query": query[:100], "error_type": type(e).__name__}
-            )
+            return self.response_exception(e, "Search failed")
 
     async def _fts_search(
         self,

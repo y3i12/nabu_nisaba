@@ -304,13 +304,15 @@ class AugmentInjector:
 
             status_bar = f"{self._generate_status_bar(body, visible_tools)}"
 
-            workspace_text = f"<system-reminder>\n--- WORKSPACE ---{(
-                                    f"\n{status_bar}"
-                                    f"\n{self.structural_view_cache.load()}"
-                                    f"{visible_tools}" # this has a newline when populated
-                                    f"\n{self.notifications_cache.load()}"
-                                    f"\n{self.todos_cache.load()}"
-                                )}\n</system-reminder>"
+            workspace_text = (
+                f"<system-reminder>\n--- WORKSPACE ---"
+                f"\n{status_bar}"
+                f"\n{self.structural_view_cache.load()}"
+                f"{visible_tools}" # this has a newline when populated
+                f"\n{self.notifications_cache.load()}"
+                f"\n{self.todos_cache.load()}"
+                f"\n</system-reminder>"
+            )
             
             body['messages'].append( 
                 {

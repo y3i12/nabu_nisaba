@@ -1,12 +1,11 @@
 """Vector search tools for semantic code discovery using CodeBERT embeddings."""
 
 from pathlib import Path
-from typing import Any, Dict, Optional
 import time
 
 from nabu.mcp.tools.base import NabuTool
+from nisaba.tools.base_tool import BaseToolResponse
 from nabu.mcp.tools.search_tools import SearchTool
-from nisaba.utils.response import ErrorSeverity
 
 
 def _compute_clone_clusters(clone_pairs: list) -> list:
@@ -113,7 +112,7 @@ class FindClonesTool(NabuTool):
         max_results: int = 50,
         exclude_same_file: bool = True,
         min_function_size: int = 10
-    ) -> Dict[str, Any]:
+    ) -> BaseToolResponse:
         """
         Find duplicate or nearly-identical implementations using vector similarity.
 
@@ -162,9 +161,7 @@ class FindClonesTool(NabuTool):
 
             # Validate parameters
             if not 0.0 <= min_similarity <= 1.0:
-                return self._error_response(
-                    ValueError(f"min_similarity must be between 0.0 and 1.0, got {min_similarity}")
-                )
+                return self.response_error(f"min_similarity must be between 0.0 and 1.0, got {min_similarity}")
 
             warnings = [f"min_similarity={min_similarity} is quite low, may produce false positives"] if min_similarity < 0.60 else None
 
@@ -181,17 +178,11 @@ class FindClonesTool(NabuTool):
 
                 # Check if search succeeded
                 if not search_result.get('success', False):
-                    return self._error_response(
-                        ValueError(f"Search failed: {search_result.get('error', 'Unknown error')}"),
-                        recovery_hint="Try a different query or check database health"
-                    )
+                    return self.response_error(f"Search failed: {search_result.get('error', 'Unknown error')}")
 
                 search_results = search_result.get('data', {}).get('results', [])
                 if not search_results:
-                    return self._success_response(
-                        self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size),
-                        warnings=[f"No frames found matching query: '{query}'"]
-                    )
+                    return self.response_success(self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size))
 
                 # Extract frame IDs from search results
                 target_frame_ids = [item['id'] for item in search_results]
@@ -224,11 +215,11 @@ class FindClonesTool(NabuTool):
                 frames_result = self.db_manager.execute(frames_query, {"min_size": min_function_size})
 
             if not frames_result or not hasattr(frames_result, 'get_as_df'):
-                return self._success_response(self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size), warnings=warnings)
+                return self.response_success(self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size))
 
             frames_df = frames_result.get_as_df()
             if frames_df.empty:
-                return self._success_response(self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size), warnings=warnings)
+                return self.response_success(self._empty_clone_response(query, query_k, min_similarity, max_results, exclude_same_file, min_function_size))
 
             # Find clones for each frame
             clone_pairs = []
@@ -334,7 +325,7 @@ class FindClonesTool(NabuTool):
                 "largest_cluster_size": max((c["node_count"] for c in clone_clusters), default=0)
             }
 
-            return self._success_response({
+            return self.response_success({
                 "clone_pairs": clone_pairs[:max_results],
                 "clone_clusters": clone_clusters,
                 "summary": {
@@ -353,13 +344,10 @@ class FindClonesTool(NabuTool):
                     "excluded_same_file": exclude_same_file,
                     "min_function_size": min_function_size
                 }
-            }, warnings=warnings)
+            })
 
         except Exception as e:
-            self.logger().error(f"Clone detection failed: {e}", exc_info=True)
-            return self._error_response(e,
-                context={"min_similarity": min_similarity, "error_type": type(e).__name__}
-            )
+            return self.response_exception(e)
 
     def _empty_clone_response(self, query, query_k, min_sim, max_res, exclude_same, min_size):
         return {

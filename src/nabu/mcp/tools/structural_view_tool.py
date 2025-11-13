@@ -1,10 +1,11 @@
 """MCP tool for managing structural codebase tree view."""
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Optional
 from pathlib import Path
 
 from nabu.mcp.tools.base import NabuTool
+from nisaba.tools.base_tool import BaseToolResponse
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ class StructuralViewTool(NabuTool):
         path: Optional[str] = None,
         query: Optional[str] = None,
         depth: Optional[int] = None
-    ) -> Dict[str, Any]:
+    ) -> BaseToolResponse:
         """
         Execute structural view operation.
 
@@ -62,11 +63,7 @@ class StructuralViewTool(NabuTool):
             # Validate operation
             valid_ops = ['expand', 'collapse', 'search', 'clear_search', 'reset']
             if operation not in valid_ops:
-                return self._error_response(
-                    ValueError(f"Invalid operation: {operation}"),
-                    start_time,
-                    recovery_hint=f"Valid operations: {', '.join(valid_ops)}"
-                )
+                return self.response_error(f"Invalid operation: {operation}, valid operations: {', '.join(valid_ops)}")
 
             # Check indexing
             indexing_check = self._check_indexing_status()
@@ -86,61 +83,40 @@ class StructuralViewTool(NabuTool):
 
             elif operation == 'expand':
                 if not path:
-                    return self._error_response(
-                        ValueError("expand requires 'path' parameter"),
-                        start_time
-                    )
+                    return self.response_error("expand requires 'path' parameter")
 
                 # Resolve path using shared _resolve_frame (supports CODEBASE, partial paths, CONTAINS matching)
                 results = await self._resolve_frame(path)
                 if not results:
-                    return self._error_response(
-                        ValueError(f"Path not found: {path}"),
-                        start_time,
-                        recovery_hint="Use search() to find correct path"
-                    )
+                    return self.response_error(f"Path not found: {path}")
                 qname = results[0]['qualified_name']
 
                 success = self.tui.expand(qname)
                 if not success:
-                    return self._error_response(
-                        ValueError(f"Failed to expand: {path}"),
-                        start_time
-                    )
+                    return self.response_error(f"Failed to expand: {path}")
 
                 message = f"Expanded: {path}"
 
             elif operation == 'collapse':
                 if not path:
-                    return self._error_response(
-                        ValueError("collapse requires 'path' parameter"),
-                        start_time
-                    )
+                    return self.response_error("collapse requires 'path' parameter")
 
                 # Resolve path using shared _resolve_frame (supports CODEBASE, partial paths, CONTAINS matching)
                 results = await self._resolve_frame(path)
                 if not results:
-                    return self._error_response(
-                        ValueError(f"Path not found: {path}"),
-                        start_time
-                    )
+                    return self.response_error(f"Path not found: {path}")
+                
                 qname = results[0]['qualified_name']
-
                 success = self.tui.collapse(qname)
+
                 if not success:
-                    return self._error_response(
-                        ValueError(f"Failed to collapse: {path}"),
-                        start_time
-                    )
+                    return self.response_error(f"Failed to collapse: {path}")
 
                 message = f"Collapsed: {path}"
 
             elif operation == 'search':
                 if not query:
-                    return self._error_response(
-                        ValueError("search requires 'query' parameter"),
-                        start_time
-                    )
+                    return self.response_error("search requires 'query' parameter")
 
                 matches = await self.tui.search(query)
                 message = f"Search: '{query}' ({len(matches)} matches)"
@@ -158,23 +134,15 @@ class StructuralViewTool(NabuTool):
             # Get state summary
             state = self.tui.get_state_summary()
 
-            return self._success_response({
+            return self.response_success({
                 'operation': operation,
                 'message': f"{message}, {state['expanded_count']} node(s) expanded, {state['search_hits']} search hit(s)",
-                #'cached_frames': state['cached_frames'],
-                #'expanded_count': state['expanded_count'],
                 'search_hits': state['search_hits'],
-                #'file_path': str(self.view_file)
-            }, start_time)
+            })
 
         except Exception as e:
             logger.error(f"Structural view operation failed: {e}", exc_info=True)
-            return self._error_response(
-                e,
-                start_time,
-                recovery_hint="Check database health with show_status()",
-                context={'operation': operation, 'path': path, 'query': query}
-            )
+            return self.response_exception(e)
 
     def _write_state(self, tree_markdown: str):
         """

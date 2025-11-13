@@ -7,14 +7,9 @@ with support for hierarchical name matching and recursive skeleton generation.
 
 import logging
 import time
-from pathlib import Path
-from typing import Any, Dict
 
-from nabu.mcp.tools.base import NabuTool, detect_regex_pattern
-from nabu.core.frame_types import FrameNodeType
-from nisaba.utils.response import ErrorSeverity
-from nabu.language_handlers.formatters import formatter_registry
-from nabu.core.skeleton_builder import SkeletonBuilder, SkeletonOptions
+from nabu.mcp.tools.base import NabuTool
+from nisaba.tools.base_tool import BaseToolResponse
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +34,7 @@ class ShowStructureTool(NabuTool):
         include_metrics: bool = False,
         max_callers: int = 10,
         is_regex: bool = False
-    ) -> Dict[str, Any]:
+    ) -> BaseToolResponse:
         """
         Get skeleton view of frame (CLASS, CALLABLE, or PACKAGE) with configurable detail.
 
@@ -107,24 +102,13 @@ class ShowStructureTool(NabuTool):
 
             valid_levels = ["minimal", "guards", "structure"]
             if detail_level not in valid_levels:
-                return self._error_response(
-                    ValueError(f"Invalid detail_level: {detail_level}. Must be one of: {valid_levels}"),
-                    start_time
-                )
+                return self.response_error(f"Invalid detail_level: {detail_level}. Must be one of: {valid_levels}")
 
             if max_recursion_depth < 0 or max_recursion_depth > 3:
-                return self._error_response(
-                    ValueError(f"Invalid max_recursion_depth: {max_recursion_depth}. Must be between 0 and 3."),
-                    start_time
-                )
+                return self.response_error(f"Invalid max_recursion_depth: {max_recursion_depth}. Must be between 0 and 3.")
 
             if self.db_manager is None:
-                return self._error_response(
-                    RuntimeError("Database manager not initialized"),
-                    start_time,
-                    severity=ErrorSeverity.FATAL,
-                    recovery_hint="Database not initialized. Check db_path and restart MCP server."
-                )
+                return self.response_error("Database manager not initialized")
 
             # ========== STEP 2: FRAME RESOLUTION (MCP CONCERN) ==========
             supported_types_filter = "CLASS|CALLABLE|PACKAGE"
@@ -161,24 +145,7 @@ class ShowStructureTool(NabuTool):
                 unsupported_types = {f['type'] for f in all_matches}
                 logger.warning(f"Pattern '{target}' matched {len(all_matches)} frames but all are unsupported types: {unsupported_types}")
 
-            if not frame_matches:
-                if is_regex:
-                    hint = (
-                        f"Regex pattern '{target}' matched {len(all_matches)} frames "
-                        f"but none were CLASS/CALLABLE/PACKAGE types. "
-                        f"Try: search(query='{target}', is_regex_input=True, frame_type_filter='') to see all matches."
-                    )
-                else:
-                    hint = (
-                        f"No frame matching '{target}' found. "
-                        f"Try: search(query='{target}', k=20) or map_codebase() to explore available frames."
-                    )
-
-                return self._error_response(
-                    ValueError(f"Frame not found: {target}"),
-                    start_time,
-                    recovery_hint=hint
-                )
+                return self.response_error(f"Frame not found: {target}")
 
             # ========== SINGLE MATCH PATH ==========
             if len(frame_matches) == 1:
@@ -186,11 +153,7 @@ class ShowStructureTool(NabuTool):
 
                 # Validate language support (could be in service, but keeping MCP concerns here)
                 if not frame_data.get("language"):
-                    return self._error_response(
-                        ValueError(f"Frame has no language information: {target}"),
-                        start_time,
-                        recovery_hint="This frame might be external or improperly parsed."
-                    )
+                    return self.response_error(f"Frame has no language information: {target}")
 
                 # Call service (business logic extracted)
                 from nabu.services.skeleton_service import SkeletonRequest
@@ -258,23 +221,11 @@ class ShowStructureTool(NabuTool):
                     "estimated_tokens": total_tokens
                 }
 
-            return self._success_response(data)
+            return self.response_success(data)
 
         except ValueError as e:
             # Catch service-level validation errors
-            return self._error_response(
-                e,
-                start_time,
-                recovery_hint="Check that the frame exists and language is supported."
-            )
-        except Exception as e:
-            self.logger().error(f"Frame skeleton generation failed for '{target}': {e}", exc_info=True)
-            return self._error_response(
-                e,
-                start_time,
-                recovery_hint="Try: (1) Verify frame exists with search() or map_codebase(), (2) Check parameters.",
-                context={"target": target, "detail_level": detail_level}
-            )
+            return self.response_exception(e, "Error showing structure")
 
     def __init__(self, factory):
         super().__init__(factory)
