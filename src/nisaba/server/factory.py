@@ -8,7 +8,6 @@ import logging
 from mcp.server.fastmcp import FastMCP
 from nisaba import MCPFactory
 from nisaba.augments import get_augment_manager
-from nisaba.guidance import WorkflowGuidance
 from nisaba.server.config import NisabaConfig
 from nisaba.tools.base_tool import BaseTool
 

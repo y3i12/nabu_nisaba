@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from nabu.file_watcher import FileWatcher
 
 from nabu.mcp.config.nabu_config import NabuConfig
-from nisaba.guidance import WorkflowGuidance
 from nisaba.augments import get_augment_manager
 
 logger = logging.getLogger(__name__)
@@ -29,7 +28,6 @@ class NabuAgent(Agent):
     - Incremental updaters
     - Auto-indexing
     - File watchers
-    - Workflow guidance (augments-based)
 
     The agent handles resource lifecycle (initialization and cleanup)
     and state mutations (codebase switching).
@@ -63,10 +61,6 @@ class NabuAgent(Agent):
         # Augments management
         self.augment_manager = get_augment_manager()
         logger.info(f"📚 Augments manager initialized: {len(self.augment_manager.available_augments)} augments available")
-
-        # Workflow guidance (augments-based only)
-        self.guidance = WorkflowGuidance(augment_manager=self.augment_manager)
-        logger.info("✨ Augments-based guidance enabled")
 
     def activate_codebase(self, name: str) -> None:
         """

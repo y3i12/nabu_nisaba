@@ -10,8 +10,6 @@ from mcp.server.fastmcp import FastMCP
 from nabu.mcp.factory import NabuMCPFactory
 from nabu.mcp.config.nabu_config import NabuConfig
 from nabu.mcp.tools.base import NabuTool
-from nabu.mcp.guidance_config import NABU_GUIDANCE_GRAPH
-from nisaba.guidance import WorkflowGuidance
 
 logger = logging.getLogger(__name__)
 
@@ -74,19 +72,6 @@ class NabuMCPFactorySingleProcess(NabuMCPFactory):
         # During __init__, agent might not exist yet
         if hasattr(self, 'agent'):
             self.agent.auto_indexer = value
-
-    @property
-    def guidance(self):
-        """
-        Delegate to agent's guidance for nisaba BaseTool integration.
-
-        Nisaba's BaseTool._record_guidance() checks self.factory.guidance,
-        so we expose agent's guidance system at factory level.
-        """
-        return self.agent.guidance if hasattr(self, 'agent') else None
-
-    # Note: session_tracker is accessed via agent directly
-    # Tools should use: self.factory.agent.session_tracker or self.agent.session_tracker
 
     def _iter_tools(self) -> Iterator[NabuTool]:
         """

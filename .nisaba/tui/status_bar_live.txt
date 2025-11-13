@@ -1,3 +1,3 @@
 SYSTEM(7k) | TOOLS(14k) | AUG(12k) | COMPTRANS(0k)
-MSG(18k) | WORKPACE(0k) | STVIEW(0k) | RESULTS(25k)
-MODEL(claude-sonnet-4-5-20250929) | 78k/200k
+MSG(14k) | WORKPACE(0k) | STVIEW(0k) | RESULTS(32k)
+MODEL(claude-sonnet-4-5-20250929) | 80k/200k

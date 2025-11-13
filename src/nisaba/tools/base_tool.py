@@ -195,13 +195,11 @@ class BaseTool(ABC):
         """
         Execute tool with automatic timing and error handling.
 
-        Wrapper around execute() that adds timing and optional guidance tracking.
-
         Args:
             **kwargs: Tool-specific parameters
 
         Returns:
-            Tool execution result with timing and optional guidance metadata
+            Tool execution result with timing
         """
         try:
             result = await self.execute(**kwargs)

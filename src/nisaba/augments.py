@@ -494,20 +494,6 @@ class AugmentManager:
             'affected': [ augment.path ]
         }
 
-    def get_related_tools(self, tool_name: str) -> List[str]:
-        """
-        Get tools related to the given tool based on active augments.
-
-        This is used by guidance system to provide tool associations.
-
-        Args:
-            tool_name: Name of tool to find relations for
-
-        Returns:
-            List of related tool names
-        """
-        return self._tool_associations.get(tool_name, [])
-
     def _match_pattern(self, pattern: str) -> Set[str]:
         """
         Match augment paths against a pattern.

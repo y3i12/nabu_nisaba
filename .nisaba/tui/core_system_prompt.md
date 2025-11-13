@@ -192,17 +192,19 @@ M .nisaba/mcp_servers.json
  M .nisaba/tui/notification_view.md
  M .nisaba/tui/status_bar_live.txt
  M .nisaba/workspace.md
- M src/nabu/mcp/tools/base.py
- M src/nisaba/factory.py
+ M src/nabu/mcp/agent.py
+ M src/nabu/mcp/factory_impl.py
+ D src/nabu/mcp/guidance_config.py
+ M src/nisaba/__init__.py
+ M src/nisaba/agent.py
+ M src/nisaba/augments.py
+ D src/nisaba/guidance.py
+ M src/nisaba/server/factory.py
  M src/nisaba/tools/base_tool.py
- M src/nisaba/utils/__init__.py
- D src/nisaba/utils/response.py
- M src/nisaba/wrapper/proxy.py
- M src/nisaba/wrapper/request_modifier.py
 
 Recent commits:
+c67a334 nabu tool fix itr 3 + removal of some deadcode + guidance is starting to become deadcode
 59dc90d nabu fixes 2
 68e1e0e nabu fix itr 1: nabu tool`
 fe05114 cleanup
 24dc06c todo tool
-d58f21d collapsed tool persistance
