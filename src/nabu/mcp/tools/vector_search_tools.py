@@ -347,7 +347,7 @@ class FindClonesTool(NabuTool):
             })
 
         except Exception as e:
-            return self.response_exception(e)
+            return self.response_exception(e, "Find clones tool failed")
 
     def _empty_clone_response(self, query, query_k, min_sim, max_res, exclude_same, min_size):
         return {

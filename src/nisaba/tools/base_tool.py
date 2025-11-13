@@ -207,7 +207,7 @@ class BaseTool(ABC):
             return result
 
         except Exception as e:
-            return self.response_exception(e)
+            return self.response_exception(e, "Tool execution exception")
 
     @classmethod
     def is_optional(cls) -> bool:
@@ -412,6 +412,8 @@ class BaseTool(ABC):
     @classmethod
     def response_exception(cls, e:Exception, message:Any = None) -> BaseToolResponse:
         """Return exception response."""
-        error_message =  f"{message} - {type(e).__name__}: {str(e)}"
-        return cls.response_error(message=error_message, exc_info=True)
+        if message is None:
+            return cls.response_error(message=f"Exception - {type(e).__name__}: {str(e)}", exc_info=True)
+        else:
+            return cls.response_error(message=f"{message} - {type(e).__name__}: {str(e)}", exc_info=True)
 
