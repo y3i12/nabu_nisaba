@@ -437,6 +437,9 @@ class RequestModifier:
         # Load existing state if available (BEFORE processing messages)
         self._load_state_file(session_path)
 
+        # Store session ID for state persistence
+        self.state.session_id = current_session_id
+
         self._write_to_file(session_path / 'original_context.json', json.dumps(body, indent=2, ensure_ascii=False), "Original request written")
 
         body = self._process_request_recursive(body)
@@ -474,6 +477,27 @@ class RequestModifier:
         except Exception as e:
             logger.error(f"Failed to load state from {state_file}: {e}")
             # Keep fresh state on error
+
+    def _save_state_file(self) -> None:
+        """
+        Save current state to disk.
+
+        Persists tool_result_state (including window_state changes from hide/show operations)
+        so visibility settings survive across requests.
+        """
+        if not self.state.session_id:
+            logger.debug("No session ID, skipping state save")
+            return
+
+        session_path = Path(self.cache_path / self.state.session_id)
+        session_path.mkdir(exist_ok=True, parents=True)
+        state_file = session_path / 'state.json'
+
+        try:
+            state_data = json.dumps(self.state.to_dict(), indent=2, ensure_ascii=False)
+            self._write_to_file(state_file, state_data, f"State saved: {len(self.state.tool_result_state)} tools tracked")
+        except Exception as e:
+            logger.error(f"Failed to save state to {state_file}: {e}")
 
 
     def _write_to_file(self, file_path:Path, content: str, log_message: str | None  = None) -> None:
@@ -526,7 +550,10 @@ class RequestModifier:
             else:
                 not_found.append(tool_id)
                 logger.debug(f"Tool result not found: {tool_id}")
-        
+
+        # Persist state changes to disk
+        self._save_state_file()
+
         return {
             'modified': modified
         }
@@ -563,7 +590,10 @@ class RequestModifier:
             else:
                 not_found.append(tool_id)
                 logger.debug(f"Tool result not found: {tool_id}")
-        
+
+        # Persist state changes to disk
+        self._save_state_file()
+
         return {
             'modified': modified,
             'not_found': not_found

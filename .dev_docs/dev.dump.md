@@ -56,13 +56,16 @@ git submodule update --init test/test_github_projects
     - [ ] unify proxy logic into state machine
     - [ ] notifications rework?
     - [ ] removal
-        - [ ] guidance
+        - [x] guidance
         - [ ] pitch & when
-        - [ ] execute with timing
+        - [x] execute with timing
 - [ ] nabu priming
     - [ ] file watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
     - [ ] rethink previously disabled tools
     - [ ] ... TBD
+- [ ] nisaba future work
+    - [ ] full message control
+    - [ ] message compaction by "promotion"
 
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 #################################################################################################
@@ -149,15 +152,4 @@ can you think on what's the best way for you to proceed with this, which are the
 ##     ##   ##        ##          ##   ##   ##          ##   ##     ##        ##   ##        #
  #       ###         #              ###    #              ###      #            ###           #
 
-Check deadcode:
-```python
-from nabu.mcp.utils.workflow_helpers import (
-    calculate_risk_score,
-    calculate_centrality_score,
-    calculate_core_score,
-    generate_mermaid_graph,
-    aggregate_affected_files,
-    generate_change_recommendations,
-    find_test_files_for_class
-)
-```
+we've implemented a guidance system in the past in nabu, then half transfered responsibilities to nisaba and it was never properly used. considering its usage and maintenance level, i'd like to opt out and remove what's left of the guidance system. what you think of this?
