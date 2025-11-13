@@ -11,17 +11,9 @@ from pathlib import Path
 import time
 import logging
 
-from nabu.mcp.tools.base import NabuTool, detect_regex_pattern
-from nabu.mcp.tools.show_structure_tools import ShowStructureTool
-from nabu.mcp.utils.workflow_helpers import (
-    calculate_risk_score,
-    calculate_centrality_score,
-    calculate_core_score,
-    generate_mermaid_graph,
-    aggregate_affected_files,
-    generate_change_recommendations,
-    find_test_files_for_class
-)
+from nabu.mcp.tools.base import NabuTool
+from nisaba.tools.base_tool import BaseToolResponse
+
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +32,8 @@ class CheckImpactTool(NabuTool):
         max_depth: int = 2,
         risk_assessment: bool = True,
         include_test_coverage: bool = True,
-        visualization: str = 'mermaid',
         is_regex: bool = False
-    ) -> Dict[str, Any]:
+    ) -> BaseToolResponse:
         """
         Analyze the impact of changing a specific code element.
         
@@ -92,10 +83,7 @@ class CheckImpactTool(NabuTool):
                 return indexing_check
 
             if max_depth < 1 or max_depth > 3:
-                return self._error_response(
-                    ValueError("max_depth must be between 1 and 3"),
-                    start_time
-                )
+                return self.response_error("max_depth must be between 1 and 3")
             
             logger.info(f"🎯 Starting impact_analysis_workflow: {target} (depth={max_depth})")
 
@@ -121,11 +109,7 @@ class CheckImpactTool(NabuTool):
                 logger.info(f"FTS fuzzy resolution: using '{target_frames[0]['qualified_name']}' with {len(alternatives)} alternatives")
 
             if not target_frames:
-                return self._error_response(
-                    ValueError(f"Target not found: {target}"),
-                    start_time,
-                    recovery_hint="Verify target name is correct. Try show_structure() or map_codebase() to find it."
-                )
+                return self.response_error(f"Target not found: {target}")
 
             # ========== SINGLE TARGET PATH ==========
             if len(target_frames) == 1:
@@ -219,16 +203,11 @@ class CheckImpactTool(NabuTool):
                     ]
                 }
 
-            return self._success_response(results)
+            return self.response_success(results)
             
         except Exception as e:
             logger.error(f"impact_analysis_workflow failed for '{target}': {e}", exc_info=True)
-            return self._error_response(
-                e,
-                start_time,
-                recovery_hint="Verify target exists and database is accessible.",
-                context={"target": target, "max_depth": max_depth}
-            )
+            return self.response_exception(e, "Check impact tool failed")
 
     def __init__(self, factory):
         super().__init__(factory)

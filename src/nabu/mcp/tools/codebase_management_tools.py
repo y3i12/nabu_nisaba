@@ -1,13 +1,13 @@
 """Codebase management tools for multi-codebase support."""
 
-from typing import Dict, Any, Optional
 from nabu.mcp.tools.base import NabuTool
+from nisaba.tools.base_tool import BaseToolResponse
 
 
 class ActivateCodebaseTool(NabuTool):
     """Switch active codebase for subsequent queries."""
     
-    async def execute(self, codebase: str) -> Dict[str, Any]:
+    async def execute(self, codebase: str) -> BaseToolResponse:
         """
         Activate a codebase by name.
         
@@ -25,11 +25,7 @@ class ActivateCodebaseTool(NabuTool):
         # Validate codebase exists
         if codebase not in self.config.codebases:
             available = list(self.config.codebases.keys())
-            return self._error_response(
-                ValueError(f"Unknown codebase: {codebase}"),
-                start_time,
-                recovery_hint=f"Available codebases: {', '.join(available)}"
-            )
+            return self.response_error(f"Unknown codebase: {codebase}, available: {', '.join(available)}")
         
         # Update active codebase
         old_active = self.config.active_codebase
@@ -42,20 +38,13 @@ class ActivateCodebaseTool(NabuTool):
         
         cb_config = self.config.codebases[codebase]
         
-        return self._success_response({
-            "status": "activated",
-            "codebase": codebase,
-            "previous_active": old_active,
-            "role": cb_config.role,
-            "repo_path": str(cb_config.repo_path),
-            "db_path": str(cb_config.db_path)
-        }, start_time)
+        return self.response_success(f"codebase changed from `{old_active}` to `{codebase}` ({str(cb_config.repo_path)})")
 
 
 class ListCodebasesTool(NabuTool):
     """List all registered codebases with their configurations."""
     
-    async def execute(self) -> Dict[str, Any]:
+    async def execute(self) -> BaseToolResponse:
         """
         List all registered codebases.
         
@@ -80,8 +69,8 @@ class ListCodebasesTool(NabuTool):
                 "watch_enabled": cb_config.watch_enabled
             })
         
-        return self._success_response({
+        return self.response_success({
             "codebases": codebases,
             "active_codebase": self.config.active_codebase,
             "total_count": len(codebases)
-        }, start_time)
+        })

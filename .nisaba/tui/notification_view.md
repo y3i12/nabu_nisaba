@@ -1,3 +1,3 @@
 Recent activity:
-✓ Grep() → ok
-✓ Grep() → ok
+✓ mcp__nabu__search() → ok
+✓ mcp__nabu__query_relationships() → ok

@@ -10,8 +10,7 @@ import re
 from contextvars import ContextVar
 
 # Import from framework
-from nisaba.tools.base_tool import BaseTool
-from nisaba.utils.response import ResponseBuilder, ErrorSeverity
+from nisaba.tools.base_tool import BaseTool, BaseToolResponse
 
 from nabu.mcp.utils.regex_helpers import extract_keywords_from_regex
 
@@ -91,12 +90,6 @@ class NabuTool(BaseTool):
 
     @classmethod
     def nisaba(cls) -> bool:
-        """
-        Nabu tools are not nisaba-certified (they use ResponseBuilder formatting).
-
-        Returns:
-            False - nabu tools use custom response formatting
-        """
         return False
 
     # Agent access property (explicit pattern acknowledgment)
@@ -200,7 +193,7 @@ class NabuTool(BaseTool):
         
         return self.config.codebases[target]
 
-    def _check_indexing_status(self, codebase: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def _check_indexing_status(self, codebase: Optional[str] = None) -> Optional[BaseToolResponse]:
         """
         Check if codebase is being indexed and return error response if so.
 
@@ -222,36 +215,13 @@ class NabuTool(BaseTool):
         status = self.factory.auto_indexer.get_status(target)
 
         if status.state in (IndexingState.UNINDEXED, IndexingState.QUEUED):
-            return self._error_response(
-                RuntimeError(f"Codebase '{target}' is queued for indexing"),
-                severity=ErrorSeverity.WARNING,
-                recovery_hint=(
-                    f"Database is being prepared. State: {status.state.value}. "
-                    "Check show_status() for progress."
-                )
-            )
+            return self.response_error(f"Codebase '{target}' is queued for indexing"            )
 
         if status.state == IndexingState.INDEXING:
-            elapsed = time.time() - status.started_at if status.started_at else 0
-            return self._error_response(
-                RuntimeError(f"Codebase '{target}' is currently being indexed"),
-                severity=ErrorSeverity.WARNING,
-                recovery_hint=(
-                    f"Indexing in progress ({elapsed:.1f}s elapsed). "
-                    "This may take several minutes for large codebases. "
-                    "Check show_status() for updates."
-                )
-            )
+            return self.response_error(f"Codebase '{target}' is currently being indexed")
 
         if status.state == IndexingState.ERROR:
-            return self._error_response(
-                RuntimeError(f"Codebase '{target}' indexing failed"),
-                severity=ErrorSeverity.ERROR,
-                recovery_hint=(
-                    f"Auto-indexing failed: {status.error_message}. "
-                    "Use rebuild_database() tool to retry manually."
-                )
-            )
+            return self.response_error(f"Codebase '{target}' indexing failed")
 
         # State is INDEXED - all good
         return None
@@ -826,33 +796,7 @@ class NabuTool(BaseTool):
             return execute_doc.strip().split('\n')[0]
         return class_doc.strip()
 
-    # Note: get_tool_pitch, get_tool_examples, get_tool_tips, and get_tool_patterns
-    # are now inherited from nisaba.BaseTool base class
-    # Note: execute() is also inherited from nisaba.BaseTool base class
-
-    def _base_response_to_dict(self, response) -> Dict[str, Any]:
-        """
-        Convert BaseToolResponse to Dict for MCP protocol compatibility.
-
-        Args:
-            response: BaseToolResponse from execute() or error handlers
-
-        Returns:
-            Dict representation for MCP protocol
-        """
-        from nisaba.tools.base_tool import BaseToolResponse
-
-        if isinstance(response, BaseToolResponse):
-            # Extract message (could be dict or simple value)
-            if response.success:
-                return response.message if isinstance(response.message, dict) else {"data": response.message}
-            else:
-                return response.message if isinstance(response.message, dict) else {"error": response.message}
-
-        # Already a dict, return as-is
-        return response
-
-    async def execute_with_timing(self, **kwargs) -> Dict[str, Any]:
+    async def execute_tool(self, **kwargs) -> BaseToolResponse:
         """
         Execute tool with automatic timing and codebase context switching.
 
@@ -883,13 +827,7 @@ class NabuTool(BaseTool):
         # Validate requested codebase if specified
         if requested_codebase is not None:
             if requested_codebase not in self.factory.db_managers:
-                available = list(self.factory.db_managers.keys())
-                error_response = self._error_response(
-                    ValueError(f"Unknown codebase: '{requested_codebase}'"),
-                    recovery_hint=f"Available codebases: {', '.join(available)}. Use list_codebases() to see all registered codebases."
-                )
-                # Convert BaseToolResponse to Dict for MCP protocol
-                return self._base_response_to_dict(error_response)
+                return self.response_error(f"Unknown codebase: '{requested_codebase}' (available: {', '.join(list(self.factory.db_managers.keys()))})")
 
         # Set codebase context for this execution (thread-safe via contextvars)
         token = _current_codebase_context.set(requested_codebase)
@@ -898,33 +836,20 @@ class NabuTool(BaseTool):
             # Execute tool (returns BaseToolResponse)
             result = await self.execute(**kwargs)
 
-            # Convert to dict for guidance recording
-            result_dict = self._base_response_to_dict(result)
-
-            # Record in guidance system using parent class method
-            self._record_guidance(self.get_name(), kwargs, result_dict)
-
-            return result_dict
+            return self._success_response(result)
 
         except Exception as e:
-            self.logger().error(f"Tool execution failed: {e}", exc_info=True)
-            error_response = self._error_response(e)
-            return self._base_response_to_dict(error_response)
+            error_response = self.response_exception(e)
+            return error_response
 
         finally:
             # ALWAYS restore context (critical for async safety)
             _current_codebase_context.reset(token)
     
-    def _success_response(
-        self,
-        data: Any,
-        warnings: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None
-    ):
+    
+    def _success_response(self, data: BaseToolResponse) -> BaseToolResponse:
         """
-        Create standardized success response using ResponseBuilder.
-
-        Wraps ResponseBuilder dict output in BaseToolResponse for consistency.
+        Create formatted output
 
         Args:
             data: Response payload
@@ -932,7 +857,7 @@ class NabuTool(BaseTool):
             metadata: Optional operation metadata
 
         Returns:
-            BaseToolResponse containing ResponseBuilder formatted dict
+            formatted output
         """
         # Format data according to requested output format
         from nabu.mcp.formatters import get_formatter_registry
@@ -940,55 +865,11 @@ class NabuTool(BaseTool):
         try:
             formatter_registry = get_formatter_registry()
             formatter = formatter_registry.get_formatter(self._output_format)
-            # Round floats before formatting (so markdown gets clean numbers)
-            from nisaba.utils.response import ResponseBuilder as RB
-            data = RB._round_floats(data)
-            formatted_data = formatter.format(data, tool_name=self.get_name())
+            formatted_data = formatter.format(data.message, tool_name=self.get_name())
         except ValueError as e:
             # Unsupported format - log warning and fall back to JSON
             self.logger().warning(f"Output format error: {e}. Falling back to JSON.")
-            formatted_data = data
-
-        # Build ResponseBuilder dict
-        response_dict = ResponseBuilder.success(
-            data=formatted_data,
-            warnings=warnings,
-            metadata=metadata
-        )
+            formatted_data = data.message
 
         # Wrap in BaseToolResponse
-        return self.response_success(message=response_dict)
-    
-    def _error_response(
-        self,
-        error: Exception,
-        severity: ErrorSeverity = ErrorSeverity.ERROR,
-        recovery_hint: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None
-    ):
-        """
-        Create standardized error response using ResponseBuilder.
-
-        Wraps ResponseBuilder dict output in BaseToolResponse for consistency.
-
-        Args:
-            error: Exception that occurred
-            severity: Error severity level
-            recovery_hint: Suggested recovery action
-            context: Error context information
-
-        Returns:
-            BaseToolResponse containing ResponseBuilder formatted dict
-        """
-        # Build ResponseBuilder dict
-        error_dict = ResponseBuilder.error(
-            error=error,
-            severity=severity,
-            recovery_hint=recovery_hint,
-            context=context
-        )
-
-        # Wrap in BaseToolResponse
-        return self.response_error(message=error_dict)
-    
-    # Note: is_optional(), is_dev_only(), is_mutating() inherited from BaseTool
+        return self.response_success(message=formatted_data)

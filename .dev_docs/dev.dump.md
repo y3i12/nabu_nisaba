@@ -148,3 +148,16 @@ can you think on what's the best way for you to proceed with this, which are the
 #      #    #    #    #      #    #    #    #      #    #    #    # #    #    #    #    #    ##
 ##     ##   ##        ##          ##   ##   ##          ##   ##     ##        ##   ##        #
  #       ###         #              ###    #              ###      #            ###           #
+
+Check deadcode:
+```python
+from nabu.mcp.utils.workflow_helpers import (
+    calculate_risk_score,
+    calculate_centrality_score,
+    calculate_core_score,
+    generate_mermaid_graph,
+    aggregate_affected_files,
+    generate_change_recommendations,
+    find_test_files_for_class
+)
+```

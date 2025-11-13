@@ -3,14 +3,14 @@
 from typing import Any, Dict, Optional
 import time
 
+from nisaba.tools.base_tool import BaseToolResponse
 from nabu.mcp.tools.base import NabuTool
-from nisaba.utils.response import ErrorSeverity
 
 
 class QueryRelationshipsTool(NabuTool):
     """Execute Cypher queries against the KuzuDB graph database."""
     
-    async def execute(self, cypher_query: str, timeout_ms: Optional[int] = None) -> Dict[str, Any]:
+    async def execute(self, cypher_query: str, timeout_ms: Optional[int] = None) -> BaseToolResponse:
         """
         Execute Cypher queries against the KuzuDB graph database.
         
@@ -97,27 +97,11 @@ class QueryRelationshipsTool(NabuTool):
 
             # Validate database manager
             if self.db_manager is None:
-                return self._error_response(
-                    RuntimeError("Database manager not initialized"),
-                    start_time,
-                    severity=ErrorSeverity.FATAL,
-                    recovery_hint=(
-                        "Database manager not initialized. Check --db-path argument and ensure database exists. "
-                        "Restart MCP server if needed. If database file is missing, use reindex() tool to rebuild it."
-                    ),
-                    context={"db_path": str(self.get_codebase_config().db_path) if self.get_codebase_config() else "not set"}
-                )
+                return self.response_error("Database manager not initialized")
             
             # Validate query not empty
             if not cypher_query or not cypher_query.strip():
-                return self._error_response(
-                    ValueError("Empty Cypher query provided"),
-                    start_time,
-                    recovery_hint=(
-                        "Provide a non-empty Cypher query string. "
-                        "See memory 'kuzu_cypher' for query examples and patterns."
-                    )
-                )
+                return self.response_error("Empty Cypher query provided")
             
             # Execute query with timeout
             result = self.db_manager.execute(cypher_query, load_extensions=True, timeout_ms=actual_timeout)
@@ -137,66 +121,7 @@ class QueryRelationshipsTool(NabuTool):
                     "columns": []
                 }
             
-            return self._success_response(data)
-        
-        except RuntimeError as e:
-            error_str = str(e)
-            
-            # Detect timeout errors
-            if "timeout" in error_str.lower() or "interrupted" in error_str.lower():
-                return self._error_response(
-                    e,
-                    start_time,
-                    severity=ErrorSeverity.ERROR,
-                    recovery_hint=(
-                        f"Query exceeded timeout ({actual_timeout}ms = {actual_timeout/1000:.1f}s). Consider: "
-                        "(1) Adding LIMIT clause to reduce result size, "
-                        "(2) Bounding path traversals with depth limits (e.g., [:Edge*1..5] instead of [:Edge*]), "
-                        "(3) Adding WHERE filters early to reduce search space, "
-                        "(4) Using specific edge types (e.g., [:Edge {type: 'CONTAINS'}]) instead of all edges."
-                    ),
-                    context={"query": cypher_query[:500], "timeout_ms": actual_timeout}
-                )
-            
-            # Detect Cypher syntax errors
-            if "Parser exception" in error_str or "Invalid input" in error_str:
-                return self._error_response(
-                    e,
-                    start_time,
-                    recovery_hint=(
-                        "Invalid Cypher syntax detected. Common issues: "
-                        "(1) Missing or mismatched quotes, "
-                        "(2) Invalid MATCH pattern (use parentheses for nodes: (n:Frame)), "
-                        "(3) Wrong property access syntax (use n.property not n->property), "
-                        "(4) Unsupported regex operators (use CONTAINS instead of =~). "
-                        "See memory 'kuzu_cypher' for correct syntax examples."
-                    ),
-                    context={"query": cypher_query[:500], "error_location": error_str}
-                )
-            
-            # Other runtime errors
-            return self._error_response(
-                e,
-                start_time,
-                recovery_hint=(
-                    "Query execution failed. Verify: "
-                    "(1) Database is initialized (try show_status() tool), "
-                    "(2) Query references existing node/edge types (Frame, CALLS, CONTAINS, etc.), "
-                    "(3) Property names are correct. "
-                    "See memory 'kuzu_cypher' for schema information."
-                ),
-                context={"query": cypher_query[:500]}
-            )
+            return self.response_success(data)
         
         except Exception as e:
-            self.logger().error(f"Query failed: {cypher_query[:100]}...", exc_info=True)
-            return self._error_response(
-                e,
-                start_time,
-                recovery_hint=(
-                    "Unexpected error during query execution. "
-                    "Check that query doesn't contain SQL syntax (this is Cypher, not SQL). "
-                    "See memory 'kuzu_cypher' for Cypher query examples."
-                ),
-                context={"query": cypher_query[:500], "error_type": type(e).__name__}
-            )
+            return self.response_exception(e, f"Unexpected error during query execution")

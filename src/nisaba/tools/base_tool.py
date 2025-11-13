@@ -191,36 +191,7 @@ class BaseTool(ABC):
         """
         pass
 
-    def _record_guidance(self, tool_name: str, params: Dict[str, Any], result: Dict[str, Any]) -> None:
-        """
-        Record tool call in guidance system and add suggestions to result.
-
-        This method can be called by subclasses that override execute_with_timing().
-        Modifies result dict in-place to add _guidance field if suggestions available.
-
-        Args:
-            tool_name: Name of the tool that was executed
-            params: Parameters passed to the tool
-            result: Result dict (modified in-place)
-        """
-        if hasattr(self.factory, 'guidance') and self.factory.guidance is not None:
-            try:
-                self.factory.guidance.record_tool_call(
-                    tool_name=tool_name,
-                    params=params,
-                    result=result
-                )
-
-                # Optionally add suggestions to result metadata
-                suggestions = self.factory.guidance.get_suggestions()
-                if suggestions:
-                    result["_guidance"] = suggestions
-
-            except Exception as guidance_error:
-                # Don't fail tool execution if guidance fails
-                self.logger().warning(f"Guidance tracking failed: {guidance_error}")
-
-    async def execute_with_timing(self, **kwargs) -> Dict[str, Any]:
+    async def execute_tool(self, **kwargs) -> BaseToolResponse:
         """
         Execute tool with automatic timing and error handling.
 
@@ -232,23 +203,13 @@ class BaseTool(ABC):
         Returns:
             Tool execution result with timing and optional guidance metadata
         """
-        start_time = time.time()
-
         try:
             result = await self.execute(**kwargs)
-
-            # Record in guidance system (subclasses can also call this)
-            self._record_guidance(self.get_name(), kwargs, result)
 
             return result
 
         except Exception as e:
-            self.logger().error(f"Tool execution failed: {e}", exc_info=True)
-            return {
-                "success": False,
-                "error": str(e),
-                "error_type": type(e).__name__
-            }
+            return self.response_exception(e)
 
     @classmethod
     def is_optional(cls) -> bool:

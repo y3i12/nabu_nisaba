@@ -1,21 +1,16 @@
 """Observability tools for monitoring database health."""
 
-from typing import Any, Dict, Optional
+from typing import Optional
 import time
 
 from nabu.mcp.tools.base import NabuTool
-from nisaba import ToolMarkerOptional, ToolMarkerDevOnly
-from nisaba.utils.response import ErrorSeverity
+from nisaba.tools.base_tool import BaseToolResponse
 
 
 class ShowStatusTool(NabuTool):
     """Unified observability: codebase health + database diagnostics."""
     
-    async def execute(
-        self,
-        codebase: Optional[str] = None,
-        detail_level: str = "summary"
-    ) -> Dict[str, Any]:
+    async def execute(self, codebase: Optional[str] = None, detail_level: str = "summary" ) -> BaseToolResponse:
         """
         Unified status and diagnostics for codebases and database.
         
@@ -35,22 +30,14 @@ class ShowStatusTool(NabuTool):
         # Validate detail_level
         valid_levels = ["summary", "detailed", "debug"]
         if detail_level not in valid_levels:
-            return self._error_response(
-                ValueError(f"Invalid detail_level: {detail_level}. Must be one of {valid_levels}"),
-                start_time,
-                recovery_hint=f"Use detail_level in {valid_levels}"
-            )
+            return self.response_error(f"Invalid detail_level: {detail_level}. Must be one of {valid_levels}")
         
         target_codebases = [codebase] if codebase else list(self.config.codebases.keys())
         
         # Validate if specific codebase requested
         if codebase and codebase not in self.config.codebases:
             available = list(self.config.codebases.keys())
-            return self._error_response(
-                ValueError(f"Unknown codebase: {codebase}"),
-                start_time,
-                recovery_hint=f"Available codebases: {', '.join(available)}"
-            )
+            return self.response_error(f"Unknown codebase: {codebase}, available: {', '.join(available)}")
         
         # Gather codebase status
         codebases_info = []
@@ -160,16 +147,6 @@ class ShowStatusTool(NabuTool):
                 response_data["database"] = db_info
                 
             except Exception as e:
-                return self._error_response(
-                    e,
-                    start_time,
-                    severity=ErrorSeverity.ERROR,
-                    recovery_hint=(
-                        "Failed to retrieve database diagnostics. "
-                        "Codebase status available but database stats unavailable. "
-                        "Check database connection or consider rebuild_database()."
-                    ),
-                    context={"detail_level": detail_level}
-                )
+                return self.response_error(e, "Failed to retrieve database diagnostics.")
         
-        return self._success_response(response_data)
+        return self.response_success(response_data)

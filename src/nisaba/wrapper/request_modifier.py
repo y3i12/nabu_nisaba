@@ -215,7 +215,16 @@ class RequestModifier:
             full_text = tool_state.get('tool_result_content', '')
             logger.debug(f"    Tool {toolu_id} is visible, adding header to content")
             self.state._p_state = RMPState.UPDATE_AND_CONTINUE
-            self.__add_tool_view(toolu_id, tool_state.get('tool_output', ''))
+
+            tool_output = tool_state.get('tool_output', '')
+            # try:
+            #     tool_output_json = json.dumps(tool_output)
+            #     if isinstance(tool_output_json, dict) and 'success' in tool_output_json and 'message' in tool_output_json and len(tool_output_json.keys()) == 2:
+            #         tool_output = tool_output_json.get('message', tool_output)
+            # except:
+            #     pass
+
+            self.__add_tool_view(toolu_id, tool_output)
             return [{"type": "text", "text": full_text}] #
         # Tool is hidden - replace with compact version
         return f"tool_use_id: {toolu_id} (hidden)"

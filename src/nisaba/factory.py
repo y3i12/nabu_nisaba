@@ -276,12 +276,17 @@ class MCPFactory(ABC):
         # Get tool name for lock
         tool_name = tool_instance.get_name()
 
+        # this is the entry point for mcp execute() method in nisaba
         func_code = f"""
 async def typed_wrapper({param_list}):
+    from dataclasses import asdict
+    
     kwargs = {kwargs_build}
     tool_lock = factory._get_tool_lock("{tool_name}")
+    
     async with tool_lock:
-        return await tool_instance.execute_with_timing(**kwargs)
+        response = await tool_instance.execute_tool(**kwargs)
+        return asdict(response) if not isinstance(response, dict) else response
 """
 
         # Execute to create the function
