@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Dict, Optional
 from datetime import datetime
 
-from nisaba.structured_file import JsonStructuredFile
+from nisaba.workspace_files import WorkspaceFiles
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +23,8 @@ class MCPServerRegistry:
 
     Manages .nisaba/mcp_servers.json in project root for server discovery.
     Automatically cleans up stale entries (dead processes).
-    
-    Now uses JsonStructuredFile for automatic caching, locking, and race prevention.
+
+    Uses WorkspaceFiles singleton for shared cache consistency across components.
     """
 
     REGISTRY_VERSION = "1.0"
@@ -34,25 +34,22 @@ class MCPServerRegistry:
         Initialize registry.
 
         Args:
-            registry_path: Path to registry JSON file.
-                          Defaults to .nisaba/mcp_servers.json in cwd.
+            registry_path: Path to registry JSON file (legacy parameter).
+                          Ignored in favor of WorkspaceFiles singleton.
+                          Logs warning if different from singleton path.
         """
-        if registry_path is None:
-            registry_path = Path.cwd() / ".nisaba" / "mcp_servers.json"
+        # Use shared singleton instead of creating own instance
+        self._file = WorkspaceFiles.instance().mcp_servers
+        self.registry_path = self._file.file_path
 
-        self.registry_path = Path(registry_path)
-        
-        # Use JsonStructuredFile for automatic caching and locking
-        self._file = JsonStructuredFile(
-            file_path=self.registry_path,
-            name="mcp_registry",
-            default_factory=lambda: {
-                "version": self.REGISTRY_VERSION,
-                "servers": {}
-            }
-        )
-        
-        logger.debug(f"MCPServerRegistry initialized: {self.registry_path}")
+        # Validate registry_path if provided (backward compatibility)
+        if registry_path is not None and Path(registry_path) != self.registry_path:
+            logger.warning(
+                f"Custom registry_path {registry_path} ignored, "
+                f"using WorkspaceFiles singleton: {self.registry_path}"
+            )
+
+        logger.debug(f"MCPServerRegistry initialized via WorkspaceFiles singleton: {self.registry_path}")
 
     def register_server(self, server_id: str, server_info: dict) -> None:
         """
