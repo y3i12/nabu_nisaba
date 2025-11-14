@@ -12,15 +12,18 @@ class ShowStatusTool(NabuTool):
     
     async def execute(self, codebase: Optional[str] = None, detail_level: str = "summary" ) -> BaseToolResponse:
         """
-        Unified status and diagnostics for codebases and database.
-        
-        Progressive disclosure based on detail level:
-        - summary: Frame counts and health status only (default)
+        Show status and diagnostics for codebases and database.
+
+        Progressive disclosure based on detail level: summary provides frame counts and
+        health status, detailed adds configuration, debug includes full diagnostics.
+
+        Detail levels:
+        - summary: Frame counts and health status (default)
         - detailed: Add database connections and codebase configuration
         - debug: Full diagnostics including connection pool internals
-        
-        :param codebase: Optional specific codebase to show (defaults to all)
-        :param detail_level: Level of detail - "summary", "detailed", or "debug"
+
+        :param codebase: Specific codebase to show (defaults to all)
+        :param detail_level: Level of detail - "summary", "detailed", or "debug" (default "summary")
         :return: Status information with frame counts and optional database diagnostics
         """
         start_time = time.time()

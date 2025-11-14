@@ -46,7 +46,18 @@ class StructuralViewTool(NabuTool):
         depth: Optional[int] = None
     ) -> BaseToolResponse:
         """
-        Execute structural view operation.
+        Execute operation on structural tree view.
+
+        Manages interactive structural tree navigation with operations to expand/collapse
+        nodes, search for patterns, and reset view state. State persists in-memory and
+        renders to workspace.
+
+        Operations:
+        - expand: Show children of collapsed node (requires path)
+        - collapse: Hide children of expanded node (requires path)
+        - search: Mark matching nodes with ● (requires query)
+        - clear_search: Remove search markers
+        - reset: Collapse all to root, optionally auto-expand to depth
 
         :param operation: Operation type ("expand", "collapse", "search", "clear_search", "reset")
         :param path: Target path for expand/collapse (e.g., "nisaba/factory")

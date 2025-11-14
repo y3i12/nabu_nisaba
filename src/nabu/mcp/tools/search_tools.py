@@ -106,29 +106,27 @@ class SearchTool(NabuTool):
         compact_metadata: bool = True
     ) -> BaseToolResponse:
         """
-        Execute unified search with FTS + natural language and code patterns
+        Execute unified search combining FTS, semantic, and code-vector mechanisms.
 
-        Always runs FTS + Semantic search in parallel and fuses results using
-        Reciprocal Rank Fusion (RRF). Optionally adds regex pattern matching.
-        No query type detection needed - RRF automatically weights each 
-        mechanism's contribution.
+        Runs multiple search mechanisms in parallel and fuses results using Reciprocal
+        Rank Fusion. Mechanisms automatically weighted based on relevance. Set
+        is_regex_input=True when query is a regex pattern for syntactic matching.
 
-        Use is_regex_input=True for explicit regex patterns.
-        
-        Usage Patterns:
-        - Keywords/NL queries (default) → FTS + Semantic automatically balances
-        - Code snippets → semantic search automatically handles code patterns
-        - Regex patterns → Set is_regex_input=True for syntactic pattern matching
-        - Consensus items (found by multiple mechanisms) automatically rank higher via RRF
-        - Default settings work for 99% of cases
-        
+        Parameter guidance:
+        - k: Number of results to return (default 10, range 1-50)
+        - is_regex_input: Enable for regex patterns (default False)
+        - conjunctive: Require all keywords present (default False, OR logic)
+        - frame_type_filter: Post-fusion filter (default "CALLABLE|CLASS")
+        - context_lines: Snippet context size (default 3)
+        - compact_metadata: Token efficiency mode (default True)
+
         :param query: Search query (keywords, natural language, code snippet, or regex pattern)
         :param k: Number of final results to return (default 10)
-        :param is_regex_input: Use regex pattern matching (default False, enable when query is regex pattern)
+        :param is_regex_input: Use regex pattern matching (default False)
         :param conjunctive: BM25 AND logic - all keywords must match (default False)
         :param K: BM25 term frequency saturation (default 1.2, range 0.1-5.0)
         :param B: BM25 length normalization (default 0.75, range 0.0-1.0)
-        :param frame_type_filter: Regex filter for frame types (default "CALLABLE|CLASS"), applied post-fusion
+        :param frame_type_filter: Regex filter for frame types (default "CALLABLE|CLASS")
         :param context_lines: Lines of context around matches in snippets (default 3)
         :param max_snippets: Maximum snippet windows per result (default 5)
         :param compact_metadata: Strip verbose metadata for token efficiency (default True)

@@ -116,21 +116,29 @@ class FindClonesTool(NabuTool):
         """
         Find duplicate or nearly-identical implementations using vector similarity.
 
-        Usful for code quality reviews, refactoring planning, architecture audits, 
-        targeted pattern consolidation.
+        Detects copy-pasted code or similar logic across the codebase that could be
+        consolidated. Supports whole-codebase scanning or targeted pattern detection
+        via semantic query. Uses high similarity threshold to find actual clones, not
+        just related code.
 
-        Automatically detects copy-pasted code or similar logic that could be
-        consolidated. Supports both whole-codebase scanning and targeted pattern
-        detection. Uses high similarity threshold (default 0.75) to find actual
-        clones, not just related code.
+        Similarity guidance:
+        - min_similarity=0.85+: Strong extraction candidates (likely copy-paste)
+        - min_similarity=0.75: High-similarity detection (default, recommended)
+        - min_similarity=0.65-0.75: Near-duplicates (aggressive detection)
+        - min_similarity<0.60: May produce false positives
 
-        :param query: Optional semantic query to find clones OF matching frames (default None = find all clones)
-        :param query_k: Number of search results to use as clone sources when query is provided (default 20)
+        Severity categories:
+        - CRITICAL (≥0.833): Almost identical, strong consolidation candidate
+        - HIGH (≥0.666): Very similar, review for consolidation
+        - MEDIUM (0.60-0.666): Somewhat similar, manual review
+
+        :param query: Optional semantic query to find clones OF matching frames (default None = scan all)
+        :param query_k: Number of search results to use as clone sources when query provided (default 20)
         :param min_similarity: Minimum similarity for clone detection (default 0.75, range 0.60-1.0)
         :param max_results: Maximum clone pairs to return (default 50)
-        :param exclude_same_file: If True, only find clones in different files (default True)
-        :param min_function_size: Minimum function size in lines (default 10, ignore trivial functions)
-        :return: List of clone pairs with similarity scores, severity, and refactoring recommendations
+        :param exclude_same_file: Only find clones in different files (default True)
+        :param min_function_size: Minimum function size in lines (default 10, ignores trivial functions)
+        :return: Clone pairs with similarity scores, severity, clusters, and refactoring recommendations
         """
         start_time = time.time()
 

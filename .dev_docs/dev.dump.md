@@ -27,13 +27,6 @@ nabu db reindex --db-path ./pybind11.kuzu --repo-path .
 
 # poor man's file watch
 watch "ls -lh *.kuzu* |  awk '{print \$5,\$7,\$8,\$9}'"
-
-# Unregister all submodules (keeps .gitmodules, removes working tree)
-git submodule deinit test/test_github_projects
-
-# To bring them back when You need them:
-git submodule update --init test/test_github_projects
-
 ```
 
  #       ###         #              ###    #              ###      #            ###           #
@@ -49,26 +42,13 @@ git submodule update --init test/test_github_projects
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 
 **[ ] TODO; [x] DONE; [-] IN PROGRESS; [=] IMPLEMENTED;**
-- [-] nabu needs to get back to life
-- [ ] nisaba primimg
-    - [x] place messages back in the stream - preserve the original flow as much as possible
-    - [x] cli cleanup
-    - [x] file caches need to become a singleton
-    - [ ] removal
-        - [x] guidance
-        - [=] pitch & when - now cleaning up docstrings
-        - [x] execute with timing
 - [ ] nabu priming
     - [ ] cli cleanup
     - [ ] file watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
-    - [ ] rethink previously disabled tools
-    - [ ] ... TBD
 - [ ] nisaba future work
-    - [ ] notifications rework?
-    - [ ] augment.update (autorefresh)
     - [ ] full message control
     - [ ] message compaction by "promotion"
-    - [ ] memory
+    - [ ] memory...ish?
 
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 #################################################################################################
@@ -158,5 +138,3 @@ can you think on what's the best way for you to proceed with this, which are the
 #      #    #    #    #      #    #    #    #      #    #    #    # #    #    #    #    #    ##
 ##     ##   ##        ##          ##   ##   ##          ##   ##     ##        ##   ##        #
  #       ###         #              ###    #              ###      #            ###           #
-
----

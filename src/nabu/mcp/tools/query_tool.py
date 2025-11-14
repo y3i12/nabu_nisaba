@@ -13,20 +13,19 @@ class QueryRelationshipsTool(NabuTool):
     async def execute(self, cypher_query: str, timeout_ms: Optional[int] = None) -> BaseToolResponse:
         """
         Execute Cypher queries against the KuzuDB graph database.
-        
-        This tool allows you to run read and write Cypher queries to explore
-        the codebase structure, relationships, and metadata stored in the KuzuDB
-        graph database.
-        
-        Tips:
-        - Use LIMIT - Nabu databases can be large; limit results to avoid overwhelming output
-        - Filter by frame type early - Specify `{type: $type}` to narrow searches
-        - Check confidence scores - For CALLS edges, verify `confidence` field to assess reliability
-        - JSON metadata - Edge metadata is JSON type; use `json_extract(e.metadata, 'key')` not `CONTAINS`
 
-        :param cypher_query: The Cypher query string to execute against the database
-        :param timeout_ms: Query timeout in milliseconds (optional, defaults to 5000ms if not specified)
-        :return: JSON object containing query results with rows, columns, and execution metrics
+        Allows read and write Cypher queries to explore codebase structure, relationships,
+        and metadata. Use LIMIT clauses to avoid overwhelming output on large codebases.
+
+        Query tips:
+        - Use LIMIT to constrain result size
+        - Filter by frame type early: `WHERE f.type = 'CLASS'`
+        - Check confidence on CALLS edges: `WHERE e.confidence >= 0.8`
+        - JSON metadata requires json_extract(): `json_extract(e.metadata, 'key')`
+
+        :param cypher_query: Cypher query string to execute
+        :param timeout_ms: Query timeout in milliseconds (default 5000)
+        :return: Query results with rows, columns, and execution metrics
         """
         start_time = time.time()
         

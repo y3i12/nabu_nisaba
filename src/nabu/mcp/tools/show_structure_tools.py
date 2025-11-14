@@ -36,63 +36,33 @@ class ShowStructureTool(NabuTool):
         is_regex: bool = False
     ) -> BaseToolResponse:
         """
-        Get skeleton view of frame (CLASS, CALLABLE, or PACKAGE) with configurable detail + optional 
-        relationships. Progressive disclosure: start simple, add relationships as needed.
+        Generate skeleton view of frame with configurable detail level.
 
-        Useful for understanding packages, classes, or functions. Use include_relationships for 
-        comprehensive class analysis.
-
-        Supports hierarchical name matching similar to serena's find_symbol:
-        - Simple name: "MyClass" matches any frame with that name
-        - Hierarchical path: "utils/MyClass" or "MyClass/my_method"
-        - Qualified name: "nabu.mcp.utils.extract_snippets"
-
-        For PACKAGE frames, recursively generates skeletons for contained classes and functions.
-        For CLASS frames, shows class structure with methods.
-        For CALLABLE frames, shows function/method signature with control flow.
+        Supports CLASS, CALLABLE, and PACKAGE frames using hierarchical name matching.
+        For PACKAGE frames, recursively generates skeletons for contained elements.
+        Progressive disclosure design: start minimal, add detail as needed.
 
         Detail levels:
-        - minimal: Just signatures (default) - cleanest, most token-efficient
-        - guards: Include top-level guards & validation - shows behavioral hints
-        - structure: Include all control flow - comprehensive structure view
+        - minimal: Signatures only (default, most token-efficient)
+        - guards: Add top-level guards and validation (behavioral hints)
+        - structure: Include all control flow (comprehensive view)
 
-        Relationship features (for CLASS frames only):
-        - include_relationships=True: Add inheritance, callers, and dependencies
-        - include_metrics=True: Add complexity metrics and analysis
-        - max_callers: Control number of calling sites returned (default 10)
-
-        Usage Tips:
-        - Start with simple skeleton: show_structure(target="MyClass")
-        - Add relationships when needed: include_relationships=True
-        - Use max_recursion_depth=0 to see only the target frame
-        - Use max_recursion_depth=1 to see target + immediate children
-        - Query packages to see all contained classes and functions at once
-        
-        Common Usage Patterns:
-        Simple skeleton (fast, token-efficient):
-        ```python
-        show_structure(target="MyClass")
-        ```
-        Comprehensive class analysis:
-        ```python
-        show_structure(target="MyClass", include_relationships=True, include_metrics=True)
-        ```
-        Query a package to see all its contents:
-        ```python
-        show_structure(target="nabu.mcp.utils", max_recursion_depth=1)
-        ```
+        Relationship features (CLASS frames only):
+        - include_relationships: Add inheritance, callers, dependencies
+        - include_metrics: Add complexity metrics and analysis
+        - max_callers: Control number of calling sites (default 10)
 
         :param target: Hierarchical path to frame (e.g., "MyClass", "utils/MyClass", "MyClass/my_method")
-        :param detail_level: Detail level - "minimal", "guards", or "structure"
-        :param structure_detail_depth: How deep to include control flow nesting (ONLY applies when detail_level="structure")
-        :param include_docstrings: Whether to include docstrings in output
-        :param include_private: Whether to include private methods/fields (names starting with _)
-        :param max_recursion_depth: Maximum depth for recursive skeleton generation (0-3, default 1)
-        :param include_relationships: Whether to include inheritance, callers, dependencies (CLASS frames only)
-        :param include_metrics: Whether to include complexity metrics (CLASS frames only)
-        :param max_callers: Maximum number of calling sites to return (default 10)
-        :param is_regex: Treat target as regex pattern (default False). Set to True for regex matching.
-        :return: Dict with skeleton and optional relationship/metric data
+        :param detail_level: Detail level - "minimal", "guards", or "structure" (default "minimal")
+        :param structure_detail_depth: Control flow nesting depth when detail_level="structure" (default 1)
+        :param include_docstrings: Include docstrings in output (default False)
+        :param include_private: Include private methods/fields (default True)
+        :param max_recursion_depth: Recursive skeleton depth for packages (default 1, range 0-3)
+        :param include_relationships: Add inheritance, callers, dependencies for CLASS frames (default False)
+        :param include_metrics: Add complexity metrics for CLASS frames (default False)
+        :param max_callers: Maximum calling sites to return (default 10)
+        :param is_regex: Treat target as regex pattern (default False)
+        :return: Skeleton with optional relationship and metric data
         """
         start_time = time.time()
 
