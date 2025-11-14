@@ -175,7 +175,11 @@ class RequestModifier:
                                         # Nisaba tools: no header, just plain output
                                         tool_output if is_nisaba
                                         # Regular tools: add header + separator
-                                        else f"tool_use_id: {toolu_id}"
+                                        else (
+                                            f"tool_use_id: {toolu_id}\n"
+                                            f"---\n"
+                                            f"{tool_output}"
+                                        )
                                     )
         }
         
@@ -582,7 +586,11 @@ class RequestModifier:
                 self.state.tool_result_state[tool_id]['window_state'] = 'visible'
                 # Restore full content format
                 tool_obj = self.state.tool_result_state[tool_id]
-                tool_obj['tool_result_content'] = f"tool_use_id: {tool_id}\n"
+                tool_obj['tool_result_content'] = (
+                    f"tool_use_id: {tool_id}\n"
+                    f"---\n"
+                    f"{tool_obj.get('tool_output', '')}"
+                )
                 # Re-add to RESULTS workspace section
                 self.__add_tool_view(tool_id, tool_obj.get('tool_output', ''))
                 modified.append(tool_id)
