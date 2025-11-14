@@ -35,24 +35,22 @@ class CheckImpactTool(NabuTool):
         is_regex: bool = False
     ) -> BaseToolResponse:
         """
-        Analyze the impact of changing a specific code element, finding the blast 
-        radius of code changes. 
+        Analyze impact of changing a code element to determine blast radius.
 
-        This workflow traverses the dependency graph to find all code that would
-        be affected by changes to the specified element. Essential for safe
-        refactoring and understanding blast radius.
-        
-        Depth Selection:
-        - max_depth=1 - Direct dependents only. Fast, use for small changes or initial assessment.
-        - max_depth=2 (default) - Extended impact including indirect dependents. Recommended for most refactoring.
-        - max_depth=3 - Full traversal. Use for critical components or widespread API changes. Can be slow on large codebases.
-        - risk_assessment=True (default) - Enable to get risk scores. Disable only if you just need the dependency list.
-        
+        Traverses dependency graph to find all code affected by changes to the specified
+        element. Returns dependency tree with risk assessment and test coverage analysis.
+
+        Depth guidance:
+        - max_depth=1: Direct dependents only (fast, initial assessment)
+        - max_depth=2: Extended impact with indirect dependents (recommended)
+        - max_depth=3: Full propagation (critical components, slower)
+
         :param target: Frame identifier (name, qualified name, or hierarchical path)
-        :param max_depth: How many levels deep to traverse (1=direct, 2=extended, 3=full)
-        :param risk_assessment: Whether to calculate risk scores
-        :param is_regex: Treat target as regex pattern (default False). Set to True for regex matching.
-        :return: Comprehensive impact analysis with dependency tree and risk assessment
+        :param max_depth: Dependency traversal depth (default 2, range 1-3)
+        :param risk_assessment: Calculate risk scores (default True)
+        :param include_test_coverage: Include test coverage analysis (default True)
+        :param is_regex: Treat target as regex pattern (default False)
+        :return: Impact analysis with dependency tree and risk assessment
         """
         start_time = time.time()
         

@@ -16,12 +16,12 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
     async def execute(self) -> BaseToolResponse:
         """
         Rebuild the entire KuzuDB database from scratch.
-        
-        This tool performs a complete re-indexing of the codebase by parsing
-        all files and recreating the database. Use with caution as this is
-        a time-consuming operation that will replace the existing database.
-        
-        :return: Execution details
+
+        Performs complete re-indexing of the codebase by parsing all files and
+        recreating the database. Time-consuming operation that replaces the existing
+        database. Use when database is corrupted or after significant codebase changes.
+
+        :return: Execution details with frame statistics and total frame count
         """
         start_time = time.time()
         

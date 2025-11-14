@@ -1,18 +1,1 @@
-{
-  "version": "1.0",
-  "servers": {
-    "nisaba_883767": {
-      "name": "nisaba",
-      "pid": 883767,
-      "stdio_active": true,
-      "http": {
-        "enabled": true,
-        "host": "localhost",
-        "port": 9973,
-        "url": "http://localhost:9973"
-      },
-      "started_at": "2025-11-14T10:52:43.878193Z",
-      "cwd": "/home/y3i12/nabu_nisaba"
-    }
-  }
-}
+{}
