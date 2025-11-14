@@ -6,7 +6,7 @@ from nisaba.registry import ToolRegistry, RegisteredTool
 from nisaba.config import MCPConfig, MCPContext
 from nisaba.markers import ToolMarker, ToolMarkerOptional, ToolMarkerDevOnly, ToolMarkerMutating
 from nisaba.schema_utils import sanitize_for_openai_tools
-from nisaba.cli import (
+from nisaba.cli_utils import (
     AutoRegisteringGroup,
     OutputFormat,
     ToolsCommandGroup,

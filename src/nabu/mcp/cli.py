@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 from nisaba import ToolRegistry
-from nisaba.cli import (
+from nisaba.cli_utils import (
     OutputFormat,
     format_tool_list,
     format_context_list,
