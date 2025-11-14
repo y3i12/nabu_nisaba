@@ -9,15 +9,13 @@ class ActivateCodebaseTool(NabuTool):
     
     async def execute(self, codebase: str) -> BaseToolResponse:
         """
-        Activate a codebase by name.
+        Switch active codebase context by name. Use it to explore a different codebase
         
         Sets the specified codebase as active. Subsequent tool calls will
         default to this codebase unless explicitly overridden.
         
         :param codebase: Name of codebase to activate
         :return: Confirmation with codebase details
-        :meta pitch: Switch active codebase context
-        :meta when: When you want to explore a different codebase
         """
         import time
         start_time = time.time()
@@ -52,8 +50,6 @@ class ListCodebasesTool(NabuTool):
         paths, roles, and active status.
         
         :return: List of codebase configurations
-        :meta pitch: View all registered codebases
-        :meta when: When you need to see available codebases
         """
         import time
         start_time = time.time()

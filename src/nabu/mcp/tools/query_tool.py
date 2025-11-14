@@ -18,68 +18,12 @@ class QueryRelationshipsTool(NabuTool):
         the codebase structure, relationships, and metadata stored in the KuzuDB
         graph database.
         
-        :meta pitch: Your main tool for structural analysis. Use AFTER fts_query to dig deeper into relationships.
-        :meta when: After discovery phase, when you need precise relationship queries
-        :meta emoji: 🏗️
-        :meta tips: **Query Strategy:**
-            - **Discovery → Structure → Details** - Start broad with `fts_query`, narrow with Cypher `query`, verify with `content` property
-            - **Always use LIMIT** - Nabu databases can be large; limit results to avoid overwhelming output
-            - **Filter by frame type early** - Specify `{type: 'CLASS'}` or `{type: 'CALLABLE'}` to narrow searches
-            - **Check confidence scores** - For CALLS edges, verify `confidence` field to assess reliability
-            - **JSON metadata** - Edge metadata is JSON type; use `json_extract(e.metadata, 'key')` not `CONTAINS`
-        :meta examples: **Introspection Queries:**
+        Tips:
+        - Use LIMIT - Nabu databases can be large; limit results to avoid overwhelming output
+        - Filter by frame type early - Specify `{type: $type}` to narrow searches
+        - Check confidence scores - For CALLS edges, verify `confidence` field to assess reliability
+        - JSON metadata - Edge metadata is JSON type; use `json_extract(e.metadata, 'key')` not `CONTAINS`
 
-            Get complete schema information:
-            ```cypher
-            CALL SHOW_TABLES() RETURN *
-            ```
-
-            Count all nodes and edges:
-            ```cypher
-            MATCH (f:Frame) WITH count(f) as frames
-            MATCH ()-[e:Edge]->() WITH frames, count(e) as edges
-            RETURN frames, edges
-            ```
-
-            Find all property names:
-            ```cypher
-            CALL TABLE_INFO('Frame') RETURN name, type
-            ```
-        :meta patterns: **Field Usage Queries (USES Edges):**
-
-            USES edges track which methods access class fields. Each edge contains metadata about the field access:
-            - `field_name`: The name of the field being accessed
-            - `access_type`: "read", "write", or "both"
-            - `line`: Line number where the access occurs
-
-            Find all methods using a specific field:
-            ```cypher
-            MATCH (m:Frame {type: 'CALLABLE'})-[u:Edge {type: 'USES'}]->(c:Frame {type: 'CLASS'})
-            WHERE json_extract(u.metadata, 'field_name') = '"my_field"'
-            RETURN m.qualified_name, 
-                   json_extract(u.metadata, 'field_name') as field,
-                   json_extract(u.metadata, 'access_type') as access
-            ```
-
-            Find all fields used by a method:
-            ```cypher
-            MATCH (m:Frame {qualified_name: 'MyClass.my_method'})-[u:Edge {type: 'USES'}]->(c:Frame)
-            RETURN json_extract(u.metadata, 'field_name') as field,
-                   json_extract(u.metadata, 'access_type') as access,
-                   json_extract(u.metadata, 'line') as line
-            ```
-
-            Find write-only fields (potential dead code):
-            ```cypher
-            MATCH (c:Frame {type: 'CLASS'})<-[u:Edge {type: 'USES'}]-()
-            WHERE json_extract(u.metadata, 'access_type') = '"write"'
-            AND NOT EXISTS {
-              MATCH (c)<-[r:Edge {type: 'USES'}]-()
-              WHERE json_extract(r.metadata, 'access_type') IN ['"read"', '"both"']
-            }
-            RETURN c.qualified_name, 
-                   json_extract(u.metadata, 'field_name') as unused_field
-            ```
         :param cypher_query: The Cypher query string to execute against the database
         :param timeout_ms: Query timeout in milliseconds (optional, defaults to 5000ms if not specified)
         :return: JSON object containing query results with rows, columns, and execution metrics

@@ -36,7 +36,11 @@ class ShowStructureTool(NabuTool):
         is_regex: bool = False
     ) -> BaseToolResponse:
         """
-        Get skeleton view of frame (CLASS, CALLABLE, or PACKAGE) with configurable detail.
+        Get skeleton view of frame (CLASS, CALLABLE, or PACKAGE) with configurable detail + optional 
+        relationships. Progressive disclosure: start simple, add relationships as needed.
+
+        Useful for understanding packages, classes, or functions. Use include_relationships for 
+        comprehensive class analysis.
 
         Supports hierarchical name matching similar to serena's find_symbol:
         - Simple name: "MyClass" matches any frame with that name
@@ -48,38 +52,36 @@ class ShowStructureTool(NabuTool):
         For CALLABLE frames, shows function/method signature with control flow.
 
         Detail levels:
-        - **minimal**: Just signatures (default) - cleanest, most token-efficient
-        - **guards**: Include top-level guards & validation - shows behavioral hints
-        - **structure**: Include all control flow - comprehensive structure view
+        - minimal: Just signatures (default) - cleanest, most token-efficient
+        - guards: Include top-level guards & validation - shows behavioral hints
+        - structure: Include all control flow - comprehensive structure view
 
         Relationship features (for CLASS frames only):
-        - **include_relationships=True**: Add inheritance, callers, and dependencies
-        - **include_metrics=True**: Add complexity metrics and analysis
-        - **max_callers**: Control number of calling sites returned (default 10)
+        - include_relationships=True: Add inheritance, callers, and dependencies
+        - include_metrics=True: Add complexity metrics and analysis
+        - max_callers: Control number of calling sites returned (default 10)
 
-        :meta pitch: Get frame skeleton + optional relationships. Progressive disclosure: start simple, add relationships as needed.
-        :meta when: Understanding packages, classes, or functions. Use include_relationships for comprehensive class analysis.
-        :meta emoji: 🔍
-        :meta tips: **Usage Tips:**
-            - Start with simple skeleton: show_structure(target="MyClass")
-            - Add relationships when needed: include_relationships=True
-            - Use max_recursion_depth=0 to see only the target frame
-            - Use max_recursion_depth=1 to see target + immediate children
-            - Query packages to see all contained classes and functions at once
-        :meta examples: **Common Usage Patterns:**
+        Usage Tips:
+        - Start with simple skeleton: show_structure(target="MyClass")
+        - Add relationships when needed: include_relationships=True
+        - Use max_recursion_depth=0 to see only the target frame
+        - Use max_recursion_depth=1 to see target + immediate children
+        - Query packages to see all contained classes and functions at once
+        
+        Common Usage Patterns:
+        Simple skeleton (fast, token-efficient):
+        ```python
+        show_structure(target="MyClass")
+        ```
+        Comprehensive class analysis:
+        ```python
+        show_structure(target="MyClass", include_relationships=True, include_metrics=True)
+        ```
+        Query a package to see all its contents:
+        ```python
+        show_structure(target="nabu.mcp.utils", max_recursion_depth=1)
+        ```
 
-            Simple skeleton (fast, token-efficient):
-            ```python
-            show_structure(target="MyClass")
-            ```
-            Comprehensive class analysis:
-            ```python
-            show_structure(target="MyClass", include_relationships=True, include_metrics=True)
-            ```
-            Query a package to see all its contents:
-            ```python
-            show_structure(target="nabu.mcp.utils", max_recursion_depth=1)
-            ```
         :param target: Hierarchical path to frame (e.g., "MyClass", "utils/MyClass", "MyClass/my_method")
         :param detail_level: Detail level - "minimal", "guards", or "structure"
         :param structure_detail_depth: How deep to include control flow nesting (ONLY applies when detail_level="structure")

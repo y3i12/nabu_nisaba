@@ -35,39 +35,19 @@ class CheckImpactTool(NabuTool):
         is_regex: bool = False
     ) -> BaseToolResponse:
         """
-        Analyze the impact of changing a specific code element.
-        
+        Analyze the impact of changing a specific code element, finding the blast 
+        radius of code changes. 
+
         This workflow traverses the dependency graph to find all code that would
         be affected by changes to the specified element. Essential for safe
         refactoring and understanding blast radius.
         
-        :meta pitch: Find the blast radius of your changes. Traverses the dependency graph to show what would be affected.
-        :meta when: Before refactoring or when assessing risk of changes
-        :meta emoji: 💥
-        :meta tips: **Depth Selection:**
-            - **max_depth=1** - Direct dependents only. Fast, use for small changes or initial assessment.
-            - **max_depth=2** (default) - Extended impact including indirect dependents. Recommended for most refactoring.
-            - **max_depth=3** - Full traversal. Use for critical components or widespread API changes. Can be slow on large codebases.
-            - **risk_assessment=True** (default) - Enable to get risk scores. Disable only if you just need the dependency list.
-        :meta examples: **Common Use Cases:**
-
-            Quick impact check before minor change:
-            ```python
-            # Fast check of direct dependents
-            impact_analysis_workflow(
-                qualified_name="my_package.MyClass.helper_method",
-                max_depth=1
-            )
-            ```
-
-            Standard refactoring analysis:
-            ```python
-            # Full analysis with risk and tests
-            impact_analysis_workflow(
-                qualified_name="my_package.MyClass",
-                max_depth=2
-            )
-            ```
+        Depth Selection:
+        - max_depth=1 - Direct dependents only. Fast, use for small changes or initial assessment.
+        - max_depth=2 (default) - Extended impact including indirect dependents. Recommended for most refactoring.
+        - max_depth=3 - Full traversal. Use for critical components or widespread API changes. Can be slow on large codebases.
+        - risk_assessment=True (default) - Enable to get risk scores. Disable only if you just need the dependency list.
+        
         :param target: Frame identifier (name, qualified name, or hierarchical path)
         :param max_depth: How many levels deep to traverse (1=direct, 2=extended, 3=full)
         :param risk_assessment: Whether to calculate risk scores
