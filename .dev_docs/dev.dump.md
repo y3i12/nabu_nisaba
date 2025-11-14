@@ -104,9 +104,9 @@ understand our crazy-vergiginous-sexy work in the code and what it does.
 explain in the PR what was implemented and what it does.
 ignore all documentation and text files (the ones in `.dev_docs/`), i have a lot of transcripts commited.
 the new augment files definitely can give you very good information of what was implemented.
-watch out with the system prompt in `.nisaba/system_prompt.md` no need to read it, it is in your first message.
+watch out with the system prompt in `.nisaba/system_prompt.md` no need to read it, it is in your first message. also do not diff `.nisaba/tui/` it contains a considerable amount of state and markdown files.
 ```
-can you think on what's the best way for you to proceed with this, which are the necessary augments, load the augments (no augment loading is also fine), think on how to use the tools in your benefit, investigate the changes and then prepare a PR message? before before creating the PR itself, prompt me for approval. the idea is that you build context prior to execution, knowing that good context improves code synthesis and stability across requests.
+can you think on what'sc the best way for you to proceed with this, which are the necessary augments, load the augments (no augment loading is also fine), think on how to use the tools in your benefit, investigate the changes and then prepare a PR message? before before creating the PR itself, prompt me for approval. the idea is that you build context prior to execution, knowing that good context improves code synthesis and stability across requests.
 
 -------------------------------------------------------------------------------------------------
 

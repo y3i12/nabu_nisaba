@@ -1,1 +1,31 @@
-{}
+{
+  "servers": {
+    "nisaba_908557": {
+      "name": "nisaba",
+      "pid": 908557,
+      "stdio_active": true,
+      "http": {
+        "enabled": true,
+        "host": "localhost",
+        "port": 9973,
+        "url": "http://localhost:9973"
+      },
+      "started_at": "2025-11-14T12:01:08.937499Z",
+      "cwd": "/home/y3i12/nabu_nisaba"
+    },
+    "nabu_mcp_908740": {
+      "name": "nabu_mcp",
+      "pid": 908740,
+      "stdio_active": true,
+      "http": {
+        "enabled": true,
+        "host": "0.0.0.0",
+        "port": 1338,
+        "url": "http://localhost:1338"
+      },
+      "started_at": "2025-11-14T12:01:21.025646Z",
+      "cwd": "/home/y3i12/nabu_nisaba"
+    }
+  },
+  "version": "1.0"
+}

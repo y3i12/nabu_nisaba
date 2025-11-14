@@ -212,7 +212,7 @@ If you use this in research, please cite:
   author = {Yuri Ivatchkovitch},
   year = {2025},
   url = {https://github.com/y3i12/nabu_nisaba},
-  note = {Research prototype v0.1-alpha - Implements online knowledge compilation and cognitive scaffolding patterns}
+  note = {Research prototype v0.0.1-alpha-2 - Implements online knowledge compilation and cognitive scaffolding patterns}
 }
 
 Theoretical foundation:
