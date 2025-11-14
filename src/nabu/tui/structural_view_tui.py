@@ -13,6 +13,7 @@ from nabu.tui.viewable_frame import ViewableFrame
 from nabu.core.frames import FrameNodeType
 from nabu.db.kuzu_manager import KuzuConnectionManager
 from nisaba.structured_file import JsonStructuredFile
+from nisaba.workspace_files import WorkspaceFiles
 
 logger = logging.getLogger(__name__)
 

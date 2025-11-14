@@ -66,7 +66,7 @@ Working directory: /home/y3i12/nabu_nisaba
 Is directory a git repo: Yes
 Platform: linux
 OS Version: Linux 6.6.87.2-microsoft-standard-WSL2
-Today's date: 2025-11-13
+Today's date: 2025-11-14
 </env>
 You are powered by the model named Sonnet 4.5. The exact model ID is claude-sonnet-4-5-20250929.
 
@@ -185,18 +185,27 @@ Current branch: nisaba_refactor_nabu_base_work
 Main branch (you will usually use this for PRs): 
 
 Status:
-M .dev_docs/dev.dump.md
- M .nisaba/mcp_servers.json
+M .nisaba/mcp_servers.json
  M .nisaba/modified_context.json
+ M .nisaba/tui/augment_state.json
+ M .nisaba/tui/augment_view.md
+ M .nisaba/tui/core_system_prompt.md
  M .nisaba/tui/notification_state.json
  M .nisaba/tui/notification_view.md
  M .nisaba/tui/status_bar_live.txt
+ M .nisaba/tui/system_prompt.md
  M .nisaba/workspace.md
- M src/nisaba/wrapper/request_modifier.py
+ M scripts/precompact_extract.py
+ M src/nabu/mcp/tools/structural_view_tool.py
+ M src/nabu/tui/structural_view_tui.py
+ M src/nisaba/tools/todo.py
+ M src/nisaba/wrapper/proxy.py
+?? .nisaba/augments/dev_mode_architecture_reference/workspace_files_singleton.md
+?? src/nisaba/workspace_files.py
 
 Recent commits:
+1f1fa93 cli cleanup
+473fb43 tool use back to messages
+0beecfa fix on error response
+58dbd0e guidance removal
 21564bc guidance removal
-c67a334 nabu tool fix itr 3 + removal of some deadcode + guidance is starting to become deadcode
-59dc90d nabu fixes 2
-68e1e0e nabu fix itr 1: nabu tool`
-fe05114 cleanup

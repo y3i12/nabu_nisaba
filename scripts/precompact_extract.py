@@ -13,6 +13,10 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
+# Add src to path for nisaba imports
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+from nisaba.workspace_files import WorkspaceFiles
+
 
 def extract_transcript(jsonl_path: Path, session_id: str) -> str:
     """
@@ -129,10 +133,10 @@ def main():
             sys.exit(0)
 
         # Accumulate with existing transcript (prepend old history)
-        output_path = Path.cwd() / '.nisaba' / 'tui' / 'compacted_transcript.md'
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(output_path.read_text() + "\n\n" + new_transcript)
-        print(f"Transcript saved: {output_path}", file=sys.stderr)
+        cache = WorkspaceFiles.instance().transcript
+        existing = cache.content if cache.content else ""
+        cache.write(existing + "\n\n" + new_transcript)
+        print(f"Transcript saved via WorkspaceFiles singleton", file=sys.stderr)
 
         # Exit 0: Allow CLI compaction to proceed
         sys.exit(0)
