@@ -43,9 +43,6 @@ class YourTool(NisabaTool):
 
         Explains what the tool does, when to use it, parameters, etc.
 
-        :meta pitch: Short pitch for when to use this tool
-        :meta when: Specific use cases
-
         Args:
             param1: Description of param1
             param2: Description of param2 (optional)
@@ -87,7 +84,6 @@ class YourTool(NisabaTool):
 - Implement `async def execute()`
 - Use type hints (auto-generates schema)
 - Docstring with Args/Returns (parsed for MCP schema)
-- `:meta pitch:` and `:meta when:` for guidance
 - Return dict with `success` and `data`/`error`
 - Write to `.nisaba/*.md` files with tag delimiters
 

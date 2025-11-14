@@ -680,24 +680,14 @@ class NabuTool(BaseTool):
             
             # Build param description map
             param_descriptions = {
-                param.arg_name: param.description 
-                for param in docstring.params 
+                param.arg_name: param.description
+                for param in docstring.params
                 if param.description
             }
-            
-            # Extract meta fields for enhanced documentation
-            meta_fields = {}
-            if hasattr(docstring, 'meta') and docstring.meta:
-                for meta in docstring.meta:
-                    if hasattr(meta, 'args') and len(meta.args) >= 2:
-                        # For :meta pitch: syntax, args = ['meta', 'pitch']
-                        if meta.args[0] == 'meta':
-                            meta_fields[meta.args[1]] = meta.description
         else:
             # Fallback if docstring_parser not available
             description = docstring_text.strip()
             param_descriptions = {}
-            meta_fields = {}
         
         # Build parameter schema
         properties = {}
@@ -772,8 +762,7 @@ class NabuTool(BaseTool):
                 "type": "object",
                 "properties": properties,
                 "required": required
-            },
-            "meta": meta_fields
+            }
         }
     
     @classmethod

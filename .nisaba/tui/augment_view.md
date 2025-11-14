@@ -27,8 +27,6 @@
     - system_prompt_injection_legitimacy
     - tui_frames_architecture
     - workspace_files_singleton
-  documentation/
-    - doc_gaps
   foundation/
     - manifold_geometry_computation
     - nisaba_infrastructure_flow

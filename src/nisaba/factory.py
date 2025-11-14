@@ -126,26 +126,6 @@ class MCPFactory(ABC):
             dev_mode=self.config.dev_mode
         )
 
-    def _generate_tool_documentation(
-        self,
-        categorize_fn: Optional[Callable[[str, type], str]] = None
-    ) -> str:
-        """
-        Generate tool documentation using generic generator.
-
-        Args:
-            categorize_fn: Optional categorization function
-                          Signature: (tool_name, tool_class) -> category_name
-                          Default: Single "Tools" category
-
-        Returns:
-            Markdown documentation string
-        """
-        from nisaba.documentation import ToolDocumentationGenerator
-        enabled_tools = self._filter_enabled_tools()
-        generator = ToolDocumentationGenerator(self.registry, enabled_tools, categorize_fn)
-        return generator.generate_documentation()
-
     def _load_template_engine(
         self,
         template_path: Optional[Path] = None,
