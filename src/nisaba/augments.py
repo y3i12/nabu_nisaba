@@ -11,6 +11,7 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Dict, List, Set, Optional, Tuple
 from nisaba.structured_file import JsonStructuredFile
+from nisaba.workspace_files import WorkspaceFiles
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +76,18 @@ class AugmentManager:
         Args:
             augments_dir: Directory containing augment files
             composed_file: Path to composed augments output file
-        """        
+        """
         self.augments_dir = Path(augments_dir)
         self.composed_file = Path(composed_file)
+
+        # Verify composed_file matches WorkspaceFiles singleton (safety check)
+        expected_path = WorkspaceFiles.instance().augments.file_path
+        if self.composed_file.resolve() != expected_path.resolve():
+            logger.warning(
+                f"AugmentManager composed_file {self.composed_file} differs from "
+                f"WorkspaceFiles.augments {expected_path}. Using singleton path."
+            )
+            self.composed_file = expected_path
 
         # All available augments (loaded from disk)
         self.available_augments: Dict[str, Augment] = {}
@@ -591,9 +601,9 @@ class AugmentManager:
         if not self.active_augments:
             # Only augment tree, no active augments
             content = parts[0] if parts else ""
-            self.composed_file.parent.mkdir(parents=True, exist_ok=True)
-            self.composed_file.write_text(content, encoding='utf-8')
-            logger.info("No active augments - wrote augment tree only")
+            # Write via singleton (updates cache + file atomically)
+            WorkspaceFiles.instance().augments.write(content)
+            logger.info("No active augments - wrote augment tree only via singleton")
             return
 
         # Group augments by group
@@ -626,10 +636,7 @@ class AugmentManager:
         parts.append("\n".join(lines))
         content = "\n\n".join(parts)
 
-        # Ensure parent directory exists
-        self.composed_file.parent.mkdir(parents=True, exist_ok=True)
+        # Write via singleton (updates cache + file atomically)
+        WorkspaceFiles.instance().augments.write(content)
 
-        # Write composed file
-        self.composed_file.write_text(content, encoding='utf-8')
-
-        logger.info(f"Composed {len(self.active_augments)} augments to {self.composed_file}")
+        logger.info(f"Composed {len(self.active_augments)} augments via singleton")

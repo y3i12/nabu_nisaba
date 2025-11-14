@@ -185,7 +185,10 @@ Current branch: nisaba_refactor_nabu_base_work
 Main branch (you will usually use this for PRs): 
 
 Status:
-M .nisaba/mcp_servers.json
+M .dev_docs/dev.dump.md
+M  .nisaba/augments/dev_mode_architecture_reference/workspace_files_singleton.md
+M  .nisaba/augments/foundation/nisaba_infrastructure_flow.md
+ M .nisaba/mcp_servers.json
  M .nisaba/modified_context.json
  M .nisaba/tui/augment_state.json
  M .nisaba/tui/augment_view.md
@@ -193,19 +196,13 @@ M .nisaba/mcp_servers.json
  M .nisaba/tui/notification_state.json
  M .nisaba/tui/notification_view.md
  M .nisaba/tui/status_bar_live.txt
- M .nisaba/tui/system_prompt.md
  M .nisaba/workspace.md
- M scripts/precompact_extract.py
- M src/nabu/mcp/tools/structural_view_tool.py
- M src/nabu/tui/structural_view_tui.py
- M src/nisaba/tools/todo.py
- M src/nisaba/wrapper/proxy.py
-?? .nisaba/augments/dev_mode_architecture_reference/workspace_files_singleton.md
-?? src/nisaba/workspace_files.py
+M  src/nisaba/augments.py
+M  src/nisaba/wrapper/proxy.py
 
 Recent commits:
+432c7c4 mcp registry to adopt workspace file singleton
+cbf8731 workspace file singleton implementation
 1f1fa93 cli cleanup
 473fb43 tool use back to messages
 0beecfa fix on error response
-58dbd0e guidance removal
-21564bc guidance removal

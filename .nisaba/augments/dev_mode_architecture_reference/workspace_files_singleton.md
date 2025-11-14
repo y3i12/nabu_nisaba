@@ -195,6 +195,47 @@ def main():
 
 **Uses:** `transcript` cache for compaction hook
 
+### MCPServerRegistry (src/nisaba/mcp_registry.py)
+
+```python
+class MCPServerRegistry:
+    def __init__(self, registry_path: Optional[Path] = None):
+        # Use shared singleton instead of creating own instance
+        self._file = WorkspaceFiles.instance().mcp_servers
+        self.registry_path = self._file.file_path
+
+        # Validate registry_path if provided (backward compatibility)
+        if registry_path is not None and Path(registry_path) != self.registry_path:
+            logger.warning(
+                f"Custom registry_path {registry_path} ignored, "
+                f"using WorkspaceFiles singleton: {self.registry_path}"
+            )
+```
+
+**Uses:** `mcp_servers` cache for server discovery registry
+
+### AugmentManager (src/nisaba/augments.py)
+
+```python
+class AugmentManager:
+    def __init__(self, augments_dir: Path, composed_file: Path):
+        # Verify composed_file matches WorkspaceFiles singleton
+        expected_path = WorkspaceFiles.instance().augments.file_path
+        if self.composed_file.resolve() != expected_path.resolve():
+            logger.warning(
+                f"AugmentManager composed_file {self.composed_file} differs from "
+                f"WorkspaceFiles.augments {expected_path}. Using singleton path."
+            )
+            self.composed_file = expected_path
+
+    def _compose_and_write(self) -> None:
+        """Compose active augments and write via WorkspaceFiles singleton."""
+        # ... composition logic ...
+        WorkspaceFiles.instance().augments.write(content)
+```
+
+**Uses:** `augments` cache for composed augments output
+
 ---
 
 ## Synchronization Guarantees
@@ -281,6 +322,13 @@ print(f"Structural view lines: {files.structural_view.line_count}")
 - Existing code continues to work unchanged
 - Can remove aliases after verification
 
+**Latest refactoring (Complete WorkspaceFiles Adoption):**
+- MCPServerRegistry refactored to use singleton (eliminated duplicate cache instances)
+- AugmentManager dual write paths fixed (now writes via singleton)
+- Proxy notification write fixed (now uses singleton)
+- FileCache class removed (dead code, 40 lines deleted)
+- Zero cache duplication vulnerabilities remain
+
 ---
 
 ## Usage Guidelines
@@ -345,7 +393,8 @@ scripts/
 ```
 WorkspaceFiles
     ├─ depends on: StructuredFileCache, JsonStructuredFile
-    └─ used by: Proxy, TodoTool, StructuralViewTool, precompact_extract
+    └─ used by: Proxy, TodoTool, StructuralViewTool, precompact_extract,
+                MCPServerRegistry, AugmentManager
 
 StructuredFileCache
     ├─ mtime-based caching

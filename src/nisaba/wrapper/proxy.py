@@ -61,48 +61,6 @@ def get_request_modifier():
     return _REQUEST_MODIFIER_INSTANCE
 
 
-class FileCache:
-    """Manages file loading with mtime-based caching."""
-
-    def __init__(self, file_path: Path, name: str = "file", tag: str = "TAG"):
-        """
-        Initialize file cache.
-
-        Args:
-            file_path: Path to the file to cache
-            name: Human-readable name for logging
-        """
-        self.file_path = file_path
-        self.name = name
-        self.tag = tag
-        self.content: str = ""
-        self._last_mtime: Optional[float] = None
-
-    def load(self) -> str:
-        """
-        Load content from file if modified since last load.
-
-        Returns:
-            File content (empty string if file doesn't exist)
-        """
-        if not self.file_path.exists():
-            if self._last_mtime is not None:  # Only warn if file existed before
-                logger.warning(f"{self.name} not found: {self.file_path}")
-            self.content = ""
-            self._last_mtime = None
-            return self.content
-
-        current_mtime = self.file_path.stat().st_mtime
-
-        # Only reload if file changed (or first load)
-        if current_mtime != self._last_mtime:
-            self.content = f"\n---{self.tag}\n{self.file_path.read_text()}\n---{self.tag}_END"
-            logger.info(f"Loaded {self.name} from {self.file_path} ({len(self.content)} chars)")
-            self._last_mtime = current_mtime
-
-        return self.content
-
-
 class AugmentInjector:
     """
     mitmproxy addon that injects augments content into Anthropic API requests.
@@ -464,8 +422,8 @@ class AugmentInjector:
     
     def _write_notifications(self, notifications: List[str]) -> None:
         """
-        Write notifications to file.
-        
+        Write notifications via WorkspaceFiles singleton.
+
         Args:
             notifications: List of notification strings
         """
@@ -475,9 +433,9 @@ class AugmentInjector:
             content += "\n".join(notifications) + "\n"
         else:
             content += "(no recent activity)\n"
-        
-        notifications_file = Path("./.nisaba/tui/notification_view.md")
-        notifications_file.write_text(content)
+
+        # Write via singleton (updates cache + file atomically)
+        self.files.notifications.write(content)
     
 
     def _estimate_tokens(self, text: str) -> int:
