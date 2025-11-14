@@ -51,6 +51,7 @@ git submodule update --init test/test_github_projects
 **[ ] TODO; [x] DONE; [-] IN PROGRESS; [=] IMPLEMENTED;**
 - [-] nabu needs to get back to life
 - [ ] nisaba primimg
+    - [ ] place messages back in the stream - preserve the original flow as much as possible
     - [ ] file caches need to become a singleton
     - [ ] augment.update (autorefresh)
     - [ ] unify proxy logic into state machine
@@ -151,5 +152,3 @@ can you think on what's the best way for you to proceed with this, which are the
 #      #    #    #    #      #    #    #    #      #    #    #    # #    #    #    #    #    ##
 ##     ##   ##        ##          ##   ##   ##          ##   ##     ##        ##   ##        #
  #       ###         #              ###    #              ###      #            ###           #
-
-we've implemented a guidance system in the past in nabu, then half transfered responsibilities to nisaba and it was never properly used. considering its usage and maintenance level, i'd like to opt out and remove what's left of the guidance system. what you think of this?

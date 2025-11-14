@@ -308,7 +308,7 @@ class AugmentInjector:
                 f"<system-reminder>\n--- WORKSPACE ---"
                 f"\n{status_bar}"
                 f"\n{self.structural_view_cache.load()}"
-                f"{visible_tools}" # this has a newline when populated
+                # f"{visible_tools}" # this has a newline when populated
                 f"\n{self.notifications_cache.load()}"
                 f"\n{self.todos_cache.load()}"
                 f"\n</system-reminder>"
