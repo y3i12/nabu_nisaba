@@ -106,43 +106,22 @@ class SearchTool(NabuTool):
         compact_metadata: bool = True
     ) -> BaseToolResponse:
         """
-        Execute unified search with automatic mechanism fusion.
+        Execute unified search with FTS + natural language and code patterns
 
         Always runs FTS + Semantic search in parallel and fuses results using
         Reciprocal Rank Fusion (RRF). Optionally adds regex pattern matching.
         No query type detection needed - RRF automatically weights each 
         mechanism's contribution.
 
-        :meta pitch: Unified search with automatic FTS + semantic fusion. P³ consensus handles both natural language and code patterns.
-        :meta when: Default search tool for all queries. Use is_regex_input=True for explicit regex patterns.
-        :meta emoji: 🔍
-        :meta tips: **Usage Patterns:**
-            - Keywords/NL queries (default) → FTS + Semantic fusion automatically balances
-            - Code snippets → P³ semantic search automatically handles code patterns
-            - Regex patterns → Set is_regex_input=True for syntactic pattern matching
-            - Consensus items (found by multiple mechanisms) automatically rank higher via RRF
-            - Default settings work for 99% of cases
-        :meta examples: **Unified search:**
-            ```python
-            # Default: FTS + Semantic (for keywords, natural language, and code)
-            search(query="error handling database", k=10)
-            search(query="def connect():\n    return psycopg2.connect(...)", k=10)
-
-            # Regex pattern matching (hybrid: direct name match + FTS-filtered content)
-            search(
-                query="class (FindCodeTool|SemanticSearchTool)",
-                is_regex_input=True,
-                k=20
-            )
-
-            # Complex regex patterns with content search
-            search(
-                query="import.*from.*tools.*(Search|Query)",
-                is_regex_input=True,
-                k=15
-            )
-            ```
-
+        Use is_regex_input=True for explicit regex patterns.
+        
+        Usage Patterns:
+        - Keywords/NL queries (default) → FTS + Semantic automatically balances
+        - Code snippets → semantic search automatically handles code patterns
+        - Regex patterns → Set is_regex_input=True for syntactic pattern matching
+        - Consensus items (found by multiple mechanisms) automatically rank higher via RRF
+        - Default settings work for 99% of cases
+        
         :param query: Search query (keywords, natural language, code snippet, or regex pattern)
         :param k: Number of final results to return (default 10)
         :param is_regex_input: Use regex pattern matching (default False, enable when query is regex pattern)

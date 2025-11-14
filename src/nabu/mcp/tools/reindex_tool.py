@@ -21,13 +21,7 @@ class RebuildDatabaseTool(NabuTool, ToolMarkerMutating):
         all files and recreating the database. Use with caution as this is
         a time-consuming operation that will replace the existing database.
         
-        :meta pitch: Full database rebuild. Slow but thorough. Only use when database is corrupted or after major structural changes.
-        :meta when: Database corrupted, schema changes, or initial database creation
-        :meta emoji: 🔄
-        :meta tips: **When to Reindex:**
-            - **Major codebase refactoring** - After moving/renaming many files or packages
-            **Warning:** This is a SLOW operation (minutes for large codebases). Avoid using unnecessarily.
-        :return: JSON object confirming successful database rebuild with frame statistics and counts
+        :return: Execution details
         """
         start_time = time.time()
         

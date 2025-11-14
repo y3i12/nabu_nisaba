@@ -22,8 +22,6 @@ class ShowStatusTool(NabuTool):
         :param codebase: Optional specific codebase to show (defaults to all)
         :param detail_level: Level of detail - "summary", "detailed", or "debug"
         :return: Status information with frame counts and optional database diagnostics
-        :meta pitch: View codebase health and database status
-        :meta when: Check system health, frame counts, or debug database issues
         """
         start_time = time.time()
         

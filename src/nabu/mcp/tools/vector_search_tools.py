@@ -116,33 +116,14 @@ class FindClonesTool(NabuTool):
         """
         Find duplicate or nearly-identical implementations using vector similarity.
 
+        Usful for code quality reviews, refactoring planning, architecture audits, 
+        targeted pattern consolidation.
+
         Automatically detects copy-pasted code or similar logic that could be
         consolidated. Supports both whole-codebase scanning and targeted pattern
         detection. Uses high similarity threshold (default 0.75) to find actual
         clones, not just related code.
 
-        :meta pitch: Find duplicated code across entire codebase or target specific patterns for refactoring.
-        :meta when: Code quality reviews, refactoring planning, architecture audits, targeted pattern consolidation
-        :meta emoji: 👯
-        :meta tips: **Similarity Thresholds (P³ Consensus):**
-            - **0.833-1.0**: Almost identical (likely copy-paste) - **CRITICAL**
-            - **0.666-0.832**: Very similar patterns - **HIGH priority** for refactoring
-            - **0.60-0.665**: Somewhat similar - Review case-by-case - **MEDIUM**
-        :meta examples: **Standard clone detection:**
-            ```python
-            # Find all clones across codebase
-            find_clones(
-                min_similarity=0.75,
-                exclude_same_file=True
-            )
-
-            # Find clones of specific pattern (targeted detection)
-            find_clones(
-                query="database connection management",
-                query_k=20,
-                min_similarity=0.75
-            )
-            ```
         :param query: Optional semantic query to find clones OF matching frames (default None = find all clones)
         :param query_k: Number of search results to use as clone sources when query is provided (default 20)
         :param min_similarity: Minimum similarity for clone detection (default 0.75, range 0.60-1.0)

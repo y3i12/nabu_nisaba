@@ -48,9 +48,6 @@ class StructuralViewTool(NabuTool):
         """
         Execute structural view operation.
 
-        :meta pitch: Interactive codebase tree navigation with expand/collapse/search
-        :meta when: Building mental model of codebase structure, navigating hierarchy
-        :meta emoji: 🗺️
         :param operation: Operation type ("expand", "collapse", "search", "clear_search", "reset")
         :param path: Target path for expand/collapse (e.g., "nisaba/factory")
         :param query: Search query string (for search operation)
