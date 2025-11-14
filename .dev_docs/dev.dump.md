@@ -51,7 +51,8 @@ git submodule update --init test/test_github_projects
 **[ ] TODO; [x] DONE; [-] IN PROGRESS; [=] IMPLEMENTED;**
 - [-] nabu needs to get back to life
 - [ ] nisaba primimg
-    - [ ] place messages back in the stream - preserve the original flow as much as possible
+    - [x] place messages back in the stream - preserve the original flow as much as possible
+    - [-] cli cleanup
     - [ ] file caches need to become a singleton
     - [ ] augment.update (autorefresh)
     - [ ] unify proxy logic into state machine
@@ -61,6 +62,7 @@ git submodule update --init test/test_github_projects
         - [ ] pitch & when
         - [x] execute with timing
 - [ ] nabu priming
+    - [ ] cli cleanup
     - [ ] file watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
     - [ ] rethink previously disabled tools
     - [ ] ... TBD
