@@ -54,22 +54,21 @@ git submodule update --init test/test_github_projects
     - [x] place messages back in the stream - preserve the original flow as much as possible
     - [x] cli cleanup
     - [x] file caches need to become a singleton
-    - [ ] augment.update (autorefresh)
-    - [ ] unify proxy logic into state machine
-    - [ ] notifications rework?
     - [ ] removal
         - [x] guidance
-        - [ ] pitch & when
+        - [=] pitch & when - now cleaning up docstrings
         - [x] execute with timing
 - [ ] nabu priming
-    - [ ]
     - [ ] cli cleanup
     - [ ] file watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
     - [ ] rethink previously disabled tools
     - [ ] ... TBD
 - [ ] nisaba future work
+    - [ ] notifications rework?
+    - [ ] augment.update (autorefresh)
     - [ ] full message control
     - [ ] message compaction by "promotion"
+    - [ ] memory
 
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ## #
 #################################################################################################
@@ -89,7 +88,7 @@ hey, can you refer to your existing system prompt, introspect about it and say h
 
 -------------------------------------------------------------------------------------------------
 
-considering we want to achieve:
+considering:
 ```markdown
 
 ```
@@ -161,11 +160,3 @@ can you think on what's the best way for you to proceed with this, which are the
  #       ###         #              ###    #              ###      #            ###           #
 
 ---
-
-we finished the implementation described by the augment you just loaded in the previous session.
-see changes with:
-`git diff 1f1fa93cae2b81144d7edc03d32fef6aba5c0650 -- *.py`
-
-i wonder: are there other parts of the system that would benefit from this infrastructure adoption?
-
-having this in mind, load augments that might help you with the investigation process, investigate about it and state your findings.

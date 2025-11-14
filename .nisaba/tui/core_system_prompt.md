@@ -186,23 +186,27 @@ Main branch (you will usually use this for PRs):
 
 Status:
 M .dev_docs/dev.dump.md
-M  .nisaba/augments/dev_mode_architecture_reference/workspace_files_singleton.md
-M  .nisaba/augments/foundation/nisaba_infrastructure_flow.md
+ M .nisaba/augments/dev_mode_architecture_reference/nisaba_tool_implementation.md
+ D .nisaba/augments/documentation/doc_gaps.md
  M .nisaba/mcp_servers.json
  M .nisaba/modified_context.json
- M .nisaba/tui/augment_state.json
  M .nisaba/tui/augment_view.md
  M .nisaba/tui/core_system_prompt.md
  M .nisaba/tui/notification_state.json
  M .nisaba/tui/notification_view.md
  M .nisaba/tui/status_bar_live.txt
  M .nisaba/workspace.md
-M  src/nisaba/augments.py
-M  src/nisaba/wrapper/proxy.py
+ M src/nabu/mcp/tools/base.py
+ D src/nabu/tui/file_window.py
+ D src/nabu/tui/file_windows_manager.py
+ D src/nisaba/documentation.py
+ M src/nisaba/factory.py
+ M src/nisaba/tools/base_tool.py
+?? src/.nisaba/
 
 Recent commits:
+721903a mcp registry to adopt workspace file singleton part 2
 432c7c4 mcp registry to adopt workspace file singleton
 cbf8731 workspace file singleton implementation
 1f1fa93 cli cleanup
 473fb43 tool use back to messages
-0beecfa fix on error response
