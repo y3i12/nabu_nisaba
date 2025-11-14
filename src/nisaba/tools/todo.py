@@ -4,12 +4,10 @@ Todo management tool for nisaba workspace.
 from typing import Any, Dict, List, TYPE_CHECKING
 from pathlib import Path
 from nisaba.tools.base_operation_tool import BaseOperationTool, Operation
-from nisaba.structured_file import StructuredFileCache
+from nisaba.workspace_files import WorkspaceFiles
 
 if TYPE_CHECKING:
     from nisaba.factory import MCPFactory
-
-TODO_FILE_CACHE:StructuredFileCache|None = None
 
 class TodoTool(BaseOperationTool):
     """Todo list operations in workspace
@@ -25,14 +23,8 @@ class TodoTool(BaseOperationTool):
     
     @classmethod
     def get_todo_file_cache(cls):
-        global TODO_FILE_CACHE
-        if TODO_FILE_CACHE is None:
-            TODO_FILE_CACHE = StructuredFileCache(
-                file_path=Path("./.nisaba/tui/todo_view.md"),
-                name="todo",
-                tag=None  # No tag wrapping for todos
-            )
-        return TODO_FILE_CACHE
+        """Get shared todos cache from WorkspaceFiles singleton."""
+        return WorkspaceFiles.instance().todos
 
     @classmethod
     def nisaba(cls) -> bool:

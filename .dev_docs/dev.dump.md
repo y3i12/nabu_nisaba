@@ -52,8 +52,8 @@ git submodule update --init test/test_github_projects
 - [-] nabu needs to get back to life
 - [ ] nisaba primimg
     - [x] place messages back in the stream - preserve the original flow as much as possible
-    - [-] cli cleanup
-    - [ ] file caches need to become a singleton
+    - [x] cli cleanup
+    - [-] file caches need to become a singleton
     - [ ] augment.update (autorefresh)
     - [ ] unify proxy logic into state machine
     - [ ] notifications rework?
@@ -62,6 +62,7 @@ git submodule update --init test/test_github_projects
         - [ ] pitch & when
         - [x] execute with timing
 - [ ] nabu priming
+    - [ ]
     - [ ] cli cleanup
     - [ ] file watch -> drop indexes before processing, create them back afterwards - must lock in the same way as rebuild db
     - [ ] rethink previously disabled tools
@@ -101,6 +102,10 @@ considering that we want to:
 
 ```
 can you think on what's needed to implement it, which are the necessary augments, load/unload augments (no augment loading is also fine), think on how to use the tools in your benefit, do your research and then detail the required code change to implement it? before executing prompt me for approval. the idea is that you build context prior to execution, knowing that good context improves code synthesis and stability across requests.
+
+-------------------------------------------------------------------------------------------------
+
+can you think on what's needed to implemented it, do research if needed and then detail the required code changes? before implementing prompt me for approval. the idea is that you build context prior to execution, knowing that good context improves code synthesis and stability across requests. 
 
 -------------------------------------------------------------------------------------------------
 
@@ -154,3 +159,4 @@ can you think on what's the best way for you to proceed with this, which are the
 #      #    #    #    #      #    #    #    #      #    #    #    # #    #    #    #    #    ##
 ##     ##   ##        ##          ##   ##   ##          ##   ##     ##        ##   ##        #
  #       ###         #              ###    #              ###      #            ###           #
+ 

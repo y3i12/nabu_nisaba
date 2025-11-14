@@ -16,6 +16,7 @@ import tiktoken
 from logging.handlers import RotatingFileHandler
 from mitmproxy import http
 from nisaba.structured_file import JsonStructuredFile, StructuredFileCache
+from nisaba.workspace_files import WorkspaceFiles
 from nisaba.wrapper.request_modifier import RequestModifier
 from pathlib import Path
 from typing import Optional, List, TYPE_CHECKING
@@ -132,48 +133,19 @@ class AugmentInjector:
         # Unified mode (shared AugmentManager)
         self.augment_manager = augment_manager
 
-        # File-based caching for augments and system prompt
-        self.augments_cache = StructuredFileCache(
-            Path("./.nisaba/tui/augment_view.md"),
-            "augments",
-            "AUGMENTS"
-        )
-        self.system_prompt_cache = StructuredFileCache(
-            Path("./.nisaba/tui/system_prompt.md"),
-            "system prompt",
-            "USER_SYSTEM_PROMPT_INJECTION"
-        )
-        self.core_system_prompt_cache = StructuredFileCache(
-            Path("./.nisaba/tui/core_system_prompt.md"),
-            "Core system prompt",
-            "CORE_SYSTEM_PROMPT"
-        )
-        self.transcript_cache = StructuredFileCache(
-            Path("./.nisaba/tui/compacted_transcript.md"),
-            "last session transcript",
-            "COMPACTED_TRANSCRIPT"
-        )
-        self.structural_view_cache = StructuredFileCache(
-            Path("./.nisaba/tui/structural_view.md"),
-            "structural view",
-            "STRUCTURAL_VIEW"
-        )
-        self.todos_cache = StructuredFileCache(
-            Path("./.nisaba/tui/todo_view.md"),
-            "todos",
-            "TODOS"
-        )
-        self.notifications_cache = StructuredFileCache(
-            Path("./.nisaba/tui/notification_view.md"),
-            "notifications",
-            "NOTIFICATIONS"
-        )
-        self.checkpoint_file = JsonStructuredFile(
-            file_path=Path("./.nisaba/tui/notification_state.json"),
-            name="notification_state",
-            default_factory=lambda: { "session_id": "", "last_tool_id_seen": "" }
-        )
-        
+        # Get shared workspace files singleton
+        self.files = WorkspaceFiles.instance()
+
+        # Aliases for backward compatibility (existing code uses these names)
+        self.augments_cache = self.files.augments
+        self.system_prompt_cache = self.files.system_prompt
+        self.core_system_prompt_cache = self.files.core_system_prompt
+        self.transcript_cache = self.files.transcript
+        self.structural_view_cache = self.files.structural_view
+        self.todos_cache = self.files.todos
+        self.notifications_cache = self.files.notifications
+        self.checkpoint_file = self.files.notification_state
+
         self.filtered_tools:set[str] = { "TodoWrite" }
         self.core_system_prompt_tokens:int = 0
 

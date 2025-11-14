@@ -6,6 +6,7 @@ from pathlib import Path
 
 from nabu.mcp.tools.base import NabuTool
 from nisaba.tools.base_tool import BaseToolResponse
+from nisaba.workspace_files import WorkspaceFiles
 
 logger = logging.getLogger(__name__)
 
@@ -145,13 +146,12 @@ class StructuralViewTool(NabuTool):
 
     def _write_state(self, tree_markdown: str):
         """
-        Write tree state to file.
+        Write tree state to file via WorkspaceFiles singleton.
 
         Args:
             tree_markdown: Complete tree markdown
         """
-        # Wrap with delimiters for proxy injection
-        content = f"{tree_markdown}"
-        self.view_file.write_text(content)
-        logger.info(f"Structural view updated: {self.view_file}")
+        # Write via shared cache
+        WorkspaceFiles.instance().structural_view.write(tree_markdown)
+        logger.info(f"Structural view updated via WorkspaceFiles singleton")
 
