@@ -93,7 +93,7 @@ Session-aware delta detection:
 2. Load checkpoint (last_tool_id_seen)
 3. Find new tool calls (after checkpoint)
 4. Build notification markdown
-5. Write to `.nisaba/notifications.md`
+5. **Write via WorkspaceFiles.notifications singleton**
 
 **Result:** Only shows tools since last checkpoint (no duplicates on restart)
 
@@ -102,15 +102,15 @@ Session-aware delta detection:
 **Filters native tools** from tool definitions:
 - Read, Write, Edit, Glob, Grep, Bash, TodoWrite removed
 
-**Loads all FileCaches** (mtime-based, only reload if changed):
+**Loads all workspace sections via WorkspaceFiles singleton** (mtime-based, only reload if changed):
 - system_prompt (user inception)
 - augments (loaded augments content)
 - structural_view (TUI tree)
-- file_windows (open file content)
-- tool_result_windows (grep/bash/read results)
 - notifications (recent tool activity)
 - todos (task list)
 - transcript (compressed history)
+
+All loaded via `WorkspaceFiles.instance()` - guaranteed cache consistency.
 
 **Injects into system[1]["text"]:**
 ```
@@ -119,8 +119,6 @@ CORE_SYSTEM_PROMPT
 STATUS_BAR (dynamic token counts)
 AUGMENTS
 STRUCTURAL_VIEW
-FILE_WINDOWS
-TOOL_RESULT_WINDOWS
 NOTIFICATIONS
 TODOS
 LAST_SESSION_TRANSCRIPT
@@ -157,10 +155,10 @@ LAST_SESSION_TRANSCRIPT
 7. _process_notifications():
    - Sees toolu_abc123 is new
    - Generates notification
-   - Writes to .nisaba/notifications.md
+   - Writes via WorkspaceFiles.notifications singleton
 
 8. _inject_augments():
-   - tool_result_windows_cache.load() checks mtime
+   - WorkspaceFiles.instance().load() checks mtime for all sections
    - File changed! Reloads content
    - Injects into system prompt
 
@@ -196,10 +194,12 @@ Sections persist across turns → IDE-like spatial awareness.
 - **State loads on startup** → `window_state: visible/hidden` survives restarts
 - `collapse_all()` → tools stay hidden across `--continue`
 
-**2. FileCache is the sync mechanism**
+**2. WorkspaceFiles singleton is the sync mechanism**
+- All workspace file operations go through singleton
 - mtime-based reload (efficient, zero-latency if unchanged)
 - Wraps with `---TAG ... ---TAG_END`
-- Single source of truth: `.nisaba/*.md` files
+- Single source of truth: Singleton cache instances
+- Guaranteed consistency across all components
 
 **3. Notifications are session-aware**
 - Checkpoint tracks last_tool_id_seen
@@ -217,6 +217,13 @@ Sections persist across turns → IDE-like spatial awareness.
 - Future requests show compact version
 - Saves tokens for old tool outputs
 - **State persists across restarts** → hidden tools stay hidden
+
+**6. WorkspaceFiles singleton eliminates cache duplication**
+- All components share same cache instances
+- AugmentManager writes via singleton (not direct file I/O)
+- Proxy notifications write via singleton
+- MCPServerRegistry uses singleton for mcp_servers.json
+- Impossible to have stale cached state
 
 ---
 
